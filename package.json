@@ -1,0 +1,44 @@
+{
+  "name": "shopee-analytics-observer",
+  "version": "1.0.0",
+  "description": "Chrome extension that observes Shopee pages and displays analytics data from intercepted API calls",
+  "main": "manifest.json",
+  "scripts": {
+    "build": "echo 'Extension ready for installation'",
+    "test": "echo 'Open debug.js in browser console for testing'",
+    "preview": "open preview.html"
+  },
+  "keywords": [
+    "shopee",
+    "analytics",
+    "chrome-extension",
+    "ecommerce",
+    "api-interceptor"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "files": [
+    "manifest.json",
+    "background.js",
+    "content.js",
+    "injected.js",
+    "styles.css",
+    "*.png",
+    "*.svg"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/shopee-analytics-observer.git"
+  },
+  "browser": {
+    "chrome": ">=88.0"
+  },
+  "permissions": [
+    "activeTab",
+    "webRequest",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://shopee.co.id/*"
+  ]
+}

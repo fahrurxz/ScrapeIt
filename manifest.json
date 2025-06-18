@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Shopee Analytics Observer",
+  "version": "1.0",
+  "description": "Observes Shopee pages and displays analytics data from intercepted API calls",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png", 
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "webRequest",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://shopee.co.id/*"
+  ],  "content_scripts": [
+    {
+      "matches": ["https://shopee.co.id/*"],
+      "js": [
+        "modules/utils.js",
+        "modules/dataExtractor.js", 
+        "modules/productProcessor.js",
+        "modules/uiGenerator.js",
+        "modules/modalManager.js",
+        "modules/eventHandlers.js",
+        "modules/uiUpdater.js",
+        "content.js"
+      ],
+      "css": ["styles.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },  "web_accessible_resources": [
+    {
+      "resources": ["injected.js", "test_reload.js"],
+      "matches": ["https://shopee.co.id/*"]
+    }
+  ]
+}

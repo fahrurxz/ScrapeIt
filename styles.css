@@ -1,0 +1,2371 @@
+/* Global Font Family - Modern System Font Stack */
+* {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* Ensure all TS components use the system font */
+.ts, .ts *, 
+[class*="ts-"], [class*="ts-"] * {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* Styles for Shopee Analytics UI */
+.ts-shopee {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+  margin: 20px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: white;
+  border: 1px solid #e5e7eb;
+}
+.ts-trend-item, .ts-perf-item, .ts-stat-item {
+    background: none !important;
+    padding: 0px !important;
+}
+
+.ts-stat-container {
+  padding: 16px;
+}
+
+.ts-stat-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-logo-small {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.ts-text-black\/\[0\.5\] {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ts-ml-1 {
+  margin-left: 4px;
+}
+
+.ts-ml-auto {
+  margin-left: auto;
+}
+
+.ts-mr-1 {
+  margin-right: 4px;
+}
+
+.ts-leading-none {
+  line-height: 1;
+}
+
+.ts-tabs {
+  display: flex;
+  margin-left: 16px;
+  gap: 16px;
+}
+
+.ts-tabs a {
+  padding: 8px 12px;
+  text-decoration: none;
+  color: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.ts-tab-active {
+  background-color: #f3f4f6;
+  color: rgba(0, 0, 0, 0.9) !important;
+  font-weight: 500;
+}
+
+.ts-tabs a:hover {
+  background-color: #f9fafb;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.ts-underline {
+  text-decoration: underline;
+}
+
+.ts-text-sky-500 {
+  color: #0ea5e9;
+}
+
+.ts-grid-stat {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ts-col-span-3 {
+  grid-column: span 3;
+}
+
+.ts-col-start-4 {
+  grid-column-start: 4;
+}
+
+.ts-grid-multirow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ts-text-center {
+  text-align: center;
+}
+
+.ts-text-black\/\[0\.75\] {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.ts-grid-multirow h4 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-grid-multirow label {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  display: block;
+}
+
+.ts-items-center {
+  align-items: center;
+}
+
+.ts-justify-center {
+  justify-content: center;
+}
+
+.ts-flex {
+  display: flex;
+}
+
+.ts-relative {
+  position: relative;
+}
+
+.ts-btn {
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.ts-bg-orange-600 {
+  background-color: #ea580c;
+}
+
+.ts-hover\:bg-orange-700:hover {
+  background-color: #c2410c;
+}
+
+.ts-active\:bg-orange-800:active {
+  background-color: #9a3412;
+}
+
+.ts-px-4 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.ts-py-2 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.ts-text-base {
+  font-size: 16px;
+}
+
+.ts-text-white {
+  color: white;
+}
+
+.ts-rounded-lg {
+  border-radius: 8px;
+}
+
+.ts-mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ts-overflow-hidden {
+  overflow: hidden;
+}
+
+.ts-transition-all {
+  transition: all 0.2s;
+}
+
+.ts-absolute {
+  position: absolute;
+}
+
+.ts-h-3 {
+  height: 12px;
+}
+
+.ts-w-3 {
+  width: 12px;
+}
+
+.ts-top-0 {
+  top: 0;
+}
+
+.ts-right-0 {
+  right: 0;
+}
+
+.ts--mt-1 {
+  margin-top: -4px;
+}
+
+.ts--mr-1 {
+  margin-right: -4px;
+}
+
+.ts-animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.its-nline-flex {
+  display: inline-flex;
+}
+
+.ts-h-full {
+  height: 100%;
+}
+
+.ts-w-full {
+  width: 100%;
+}
+
+.ts-rounded-full {
+  border-radius: 50%;
+}
+
+.ts-bg-red-400 {
+  background-color: #f87171;
+}
+
+.ts-bg-red-500 {
+  background-color: #ef4444;
+}
+
+.ts-opacity-75 {
+  opacity: 0.75;
+}
+
+.ts-inline-flex {
+  display: inline-flex;
+}
+
+.ts-footer-text {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.ts-text-blue-500 {
+  color: #3b82f6;
+}
+
+.ts-footer-text b {
+  font-weight: 600;
+}
+
+/* Loading animation */
+.ts-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #ea580c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Tab content styles */
+.ts-tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ts-gap-6 {
+  gap: 24px;
+}
+
+/* Market size specific styles */
+#ts-tab-market .ts-grid-multirow {
+  gap: 20px;
+}
+
+#ts-tab-market h4 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Volume tab specific styles */
+#ts-tab-volume .ts-grid-multirow {
+  gap: 16px;
+}
+
+/* Button variations */
+.ts-bg-blue-600 {
+  background-color: #2563eb;
+}
+
+.ts-hover\:bg-blue-700:hover {
+  background-color: #1d4ed8;
+}
+
+.ts-bg-blue-400 {
+  background-color: #60a5fa;
+}
+
+.ts-bg-blue-500 {
+  background-color: #3b82f6;
+}
+
+/* Market size grid adjustments */
+.ts-grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Detailed Analysis Modal Styles - Tokpee Style */
+.ts-modal-overlay {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+     tab-size: 4;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+  font-feature-settings: normal !important;
+  font-variation-settings: normal !important;
+  -webkit-tap-highlight-color: transparent !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.ts-modal-container {
+  background: white;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 1700px;
+  max-width: 95vw;
+  min-height: 80vh;
+  margin: auto;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.ts-modal-content {
+  background: #f8f8f8;
+  position: relative;
+}
+
+.ts-modal-header {
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  height: 60px;
+}
+
+.ts-modal-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.ts-logo-medium {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  border-radius: 0.375rem;
+  margin-right: 0.75rem;
+}
+
+.ts-modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.ts-modal-title-section h2 {
+  margin: 0;
+}
+
+.ts-modal-title-section p {
+  margin: 0.25rem 0 0 0;
+}
+
+.ts-modal-header-right {
+  margin-left: auto;
+  margin-right: 1rem;
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ts-modal-timestamp {
+  margin-right: 0.5rem;
+}
+
+.ts-modal-refresh {
+  color: #0ea5e9;
+  text-decoration: underline;
+}
+
+.ts-modal-close {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ts-modal-close svg {
+  fill: #6b7280;
+}
+
+.ts-modal-close:hover svg {
+  fill: #374151;
+}
+
+.ts-modal-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ts-modal-tabs {
+  display: flex;
+  border-bottom: 2px solid #f3f4f6;
+  background: white;
+  padding: 0 32px;
+  overflow-x: auto;
+}
+
+.ts-modal-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.ts-modal-tab:hover {
+  color: #ea580c;
+  background: #fff7ed;
+}
+
+.ts-modal-tab-active {
+  color: #ea580c !important;
+  border-bottom-color: #ea580c !important;
+  background: #fff7ed !important;
+}
+
+.ts-tab-icon {
+  font-size: 16px;
+}
+
+/* Tab Content Panels */
+.ts-modal-tab-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+.ts-modal-tab-panel {
+  padding: 32px;
+  min-height: 100%;
+}
+
+.ts-modal-tab-panel[style*="display: none"] {
+  display: none !important;
+}
+
+.ts-modal-tab-panel[style*="display: block"] {
+  display: block !important;
+}
+
+/* OVERVIEW LAYOUT */
+.ts-overview-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Summary Cards */
+.ts-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.ts-summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.ts-summary-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.ts-card-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.ts-card-content h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.ts-card-content p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+}
+
+/* Products Overview Section */
+.ts-products-overview {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.ts-section-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-section-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.ts-section-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Products Grid Compact */
+.ts-products-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* PRODUCTS SECTION */
+.ts-products-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.ts-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Product Filters */
+.ts-products-filters {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ts-filter-group {
+  display: flex;
+  gap: 16px;
+}
+
+.ts-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ts-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.ts-checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.ts-checkbox input[type="checkbox"]:checked + .ts-checkmark {
+  background: #ea580c;
+  border-color: #ea580c;
+}
+
+.ts-checkbox input[type="checkbox"]:checked + .ts-checkmark::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* View Toggle */
+.ts-view-toggle {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ts-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: white;
+  font-size: 14px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ts-toggle-btn:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.ts-toggle-active {
+  background: #ea580c !important;
+  color: white !important;
+}
+
+.ts-toggle-btn svg {
+  fill: currentColor;
+}
+
+/* Sort Options */
+.ts-sort-options {
+  display: flex;
+  align-items: center;
+}
+
+.ts-select {
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.ts-select:focus {
+  outline: none;
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+}
+
+/* Products Grid Full */
+.ts-products-grid-full {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ANALYTICS SECTION */
+.ts-analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Chart Section */
+.ts-chart-section {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.ts-chart-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+}
+
+.ts-chart-placeholder {
+  height: 300px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: end;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.ts-chart-bars {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
+}
+
+.ts-chart-bar {
+  background: linear-gradient(to top, #ea580c 0%, #f97316 100%);
+  border-radius: 2px 2px 0 0;
+  min-height: 4px;
+  flex: 1;
+  transition: all 0.2s;
+}
+
+.ts-chart-bar:hover {
+  background: linear-gradient(to top, #c2410c 0%, #ea580c 100%);
+  transform: scaleY(1.05);
+}
+
+/* TRENDS SECTION */
+.ts-trends-section {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.ts-trending-products {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.ts-trending-products h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+}
+
+.ts-trending-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ts-trending-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ts-trending-info p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.ts-trending-metrics {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ts-trending-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ea580c;
+}
+
+.ts-trending-sold {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Market Opportunities */
+.ts-market-opportunities {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.ts-market-opportunities h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+}
+
+.ts-opportunity-score {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ea580c;
+  background: #fff7ed;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+/* Responsive adjustments for analytics and trends */
+@media (max-width: 1024px) {
+  .ts-analytics-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .ts-trends-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ts-chart-placeholder {
+    height: 150px;
+  }
+  
+  .ts-trending-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+  
+  .ts-trending-metrics {
+    justify-content: center;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ts-product-card-compact {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .ts-product-placeholder-compact {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .ts-product-performance {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .ts-product-shop-info {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .ts-product-pricing {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .ts-perf-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .ts-product-engagement {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .ts-modal-overlay {
+    padding: 10px;
+  }
+    .ts-modal-container {
+    width: 100%;
+    max-width: 100vw;
+    min-height: 90vh;
+  }
+  
+  .ts-modal-header {
+    padding: 12px 16px;
+  }
+  
+  .ts-modal-tabs {
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+  
+  .ts-modal-tab-content {
+    padding: 16px;
+  }
+  
+  .ts-modal-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .ts-modal-analysis-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+    .ts-modal-products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  
+  .ts-modal-product-card {
+    padding: 16px;
+    min-height: 260px;
+  }
+  
+  .ts-modal-summary-stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ts-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  
+  .ts-modal-container {
+    width: 100%;
+    max-width: 100vw;
+    min-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  .ts-modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .ts-modal-title {
+    font-size: 1rem;
+  }
+  
+  .ts-modal-products-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-modal-product-card {
+    min-height: 240px;
+  }
+  
+  .ts-modal-product-stats {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .ts-modal-product-metrics {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* Enhanced Modal Styling for Better UX */
+.ts-modal-tab-content {
+  padding: 24px 32px 32px 32px;
+  min-height: calc(80vh - 140px);
+}
+
+#ts-modal-products {
+  padding: 10px !important;
+}
+
+.ts-modal-products-container {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ts-modal-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.ts-modal-products-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.ts-modal-products-count {
+  font-size: 14px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* RESPONSIVE DESIGN FOR MODAL */
+@media (max-width: 768px) {
+  .ts-modal-tabs {
+    padding: 0 16px;
+  }
+  
+  .ts-modal-tab {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  
+  .ts-modal-tab-panel {
+    padding: 16px;
+  }
+  
+  .ts-summary-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .ts-products-grid-compact {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .ts-products-grid-full {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .ts-products-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .ts-products-filters {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .ts-analytics-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-trends-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-chart-placeholder {
+    height: 200px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ts-modal-tab {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .ts-tab-icon {
+    font-size: 14px;
+  }
+  
+  .ts-card-content h3 {
+    font-size: 24px;
+  }
+  
+  .ts-filter-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .ts-view-toggle {
+    width: 100%;
+  }
+  
+  .ts-toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .ts-select {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* New Product Card Styles for Image-like Layout */
+.ts-product-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-product-header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  margin-right: 12px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.ts-product-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.4em * 3); /* 3 lines max */
+}
+
+.ts-product-basic-info {
+  margin-bottom: 20px;
+}
+
+.ts-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-info-row:last-child {
+  border-bottom: none;
+}
+
+.ts-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.ts-value {
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.ts-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.ts-section-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+.ts-trend-grid {
+  grid-template-columns: 1fr !important;
+}
+.ts-performance-grid {
+  grid-template-columns: 1fr !important;
+}
+.ts-stats-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.ts-trend-grid, .ts-performance-grid, .ts-stats-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.ts-trend-item, .ts-perf-item, .ts-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.ts-trend-label, .ts-perf-label, .ts-stat-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+.ts-trend-label {
+  font-size: 12px !important;
+}
+.ts-perf-label {
+  font-size: 12px !important;
+}
+
+.ts-trend-value, .ts-perf-value, .ts-stat-value {
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 14px;
+  text-align: right;
+}
+
+.ts-trend-positive {
+  color: #059669 !important;
+}
+
+.ts-trend-negative {
+  color: #dc2626 !important;
+}
+
+/* Style for "No data" trend indicators */
+.ts-trend-no-data {
+  color: #9ca3af !important;
+  font-style: italic;
+}
+
+.ts-product-card-full {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.ts-product-card-full:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ts-no-products {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* List/Table View Styles */
+.ts-products-list {
+  width: 100%;
+}
+
+.ts-products-table {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-table-header {
+  background: #f9fafb;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.2fr 1.2fr 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-table-body {
+  background: white;
+}
+
+.ts-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.2fr 1.2fr 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.ts-table-row:hover {
+  background: #f9fafb;
+}
+
+.ts-table-row:last-child {
+  border-bottom: none;
+}
+
+.ts-col {
+  font-size: 13px;
+  color: #374151;
+}
+
+.ts-col-product {
+  display: flex;
+  align-items: center;
+}
+
+.ts-product-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-product-image-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-product-name-list {
+  font-weight: 500;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.ts-col-price,
+.ts-col-revenue-month,
+.ts-col-revenue-30 {
+  font-weight: 500;
+  color: #059669;
+}
+
+.ts-col-stock {
+  font-weight: 500;
+}
+
+.ts-col-trend {
+  font-weight: 500;
+}
+
+/* View Toggle Styles */
+.ts-view-toggle {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.ts-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ts-toggle-btn:hover {
+  color: #374151;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.ts-toggle-btn.ts-toggle-active {
+  background: white;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ts-toggle-btn svg {
+  fill: currentColor;
+}
+
+/* Sort Options Styles */
+.ts-sort-options {
+  margin-left: 12px;
+}
+
+.ts-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ts-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* List View Styles */
+.ts-products-list-full {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ts-products-list-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px 80px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.ts-product-list-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px 80px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.ts-product-list-item:hover {
+  background-color: #f8fafc;
+}
+
+.ts-product-list-item:last-child {
+  border-bottom: none;
+}
+
+.ts-list-product-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-list-product-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #111827;  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ts-list-product-shop {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.ts-list-cell {
+  font-size: 13px;
+  color: #374151;
+}
+
+.ts-col-price {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.ts-col-sold, .ts-col-sold-30 {
+  font-weight: 500;
+  font-size: 13px;
+  color: #059669;
+}
+
+.ts-col-revenue, .ts-col-revenue-30 {
+  font-weight: 500;
+  color: #7c3aed;
+}
+
+.ts-list-rating {
+  font-weight: 500;
+  color: #f59e0b;
+}
+
+.ts-list-reviews {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+
+.ts-trend-indicator {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ts-trend-positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ts-trend-negative {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.ts-trend-neutral {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Products Grid Full - Enhanced */
+.ts-products-grid-full {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.ts-product-card-full {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.ts-product-card-full:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+.ts-product-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.ts-product-image img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.4;  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ts-product-basic-info {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ts-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0px;
+  font-size: 12px;
+}
+
+.ts-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.ts-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ts-value {
+  color: #111827;
+  font-weight: 600;
+}
+
+.ts-section {
+  margin-bottom: 16px;
+}
+
+.ts-section:last-child {
+  margin-bottom: 0;
+}
+
+.ts-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ts-trend-grid, .ts-performance-grid, .ts-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ts-trend-item, .ts-perf-item, .ts-stat-item {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.ts-trend-label, .ts-perf-label, .ts-stat-label {
+  display: block;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 4px;
+}
+
+.ts-trend-value, .ts-perf-value, .ts-stat-value {
+  display: block;
+  font-size: 14px;
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Products Filter Header */
+.ts-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-products-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ts-filter-group {
+  display: flex;
+  gap: 12px;
+}
+
+.ts-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ts-checkbox input[type="checkbox"] {
+  margin-right: 6px;
+  accent-color: #3b82f6;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .ts-products-list-header,
+  .ts-product-list-item {
+    grid-template-columns: 50px 1fr 80px 70px;
+    gap: 8px;
+  }
+
+  .ts-col-sold-30, .ts-col-revenue, .ts-col-revenue-30, .ts-col-rating {
+    display: none;
+  }
+
+  .ts-products-grid-full {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-products-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .ts-products-filters {
+    justify-content: space-between;
+  }
+  
+  .ts-view-toggle {
+    align-self: flex-end;
+  }
+}
+
+/* Product Image Styles */
+.ts-product-img-compact {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.ts-product-image-compact {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-product-rank {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Enhanced Product Card Styles */
+.ts-product-card-compact {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ts-product-card-compact:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.ts-product-info-compact {
+  flex: 1;
+}
+
+.ts-product-title-compact {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+  margin: 0 0 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ts-product-shop {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.ts-product-location {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.ts-product-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 8px;
+}
+
+.ts-product-metrics-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ts-metric-compact {
+  background: #f8fafc;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #f1f5f9;
+}
+
+.ts-metric-label-compact {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 2px;
+}
+
+.ts-metric-value-compact {
+  display: block;
+  font-size: 12px;
+  color: #111827;
+  font-weight: 600;
+}
+
+.ts-product-trend-compact {
+  text-align: center;
+  padding: 4px;
+  border-radius: 4px;
+  background: #dcfce7;
+}
+
+.ts-trend-positive {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.ts-trend-negative {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.ts-trend-neutral {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+/* Tooltip Styles */
+.ts-label-with-tooltip {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ts-tooltip-icon {
+  position: relative;
+  display: inline-block;
+  color: #9ca3af;
+  cursor: help;
+  font-size: 12px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.ts-tooltip-icon:hover {
+  color: #6b7280;
+}
+
+.ts-tooltip-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(17, 24, 39, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-line;
+  width: 280px;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-weight: normal;
+}
+
+.ts-tooltip-icon::before {
+  content: '';
+  position: absolute;
+  bottom: 115%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(17, 24, 39, 0.95);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1001;
+}
+
+.ts-tooltip-icon:hover::after,
+.ts-tooltip-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Specific tooltip styling for trend labels */
+.ts-trend-item .ts-label-with-tooltip {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.ts-trend-item .ts-tooltip-icon {
+  flex-shrink: 0;
+}
+
+/* Adjust tooltip positioning for trend grid items */
+.ts-trend-grid .ts-tooltip-icon::after {
+  width: 260px;
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.ts-trend-grid .ts-tooltip-icon::before {
+  left: auto;
+  right: 15px;
+  transform: none;
+}
+
+/* For mobile responsiveness in trend grid */
+@media (max-width: 768px) {
+  .ts-trend-grid .ts-tooltip-icon::after {
+    width: 200px;
+    right: -50px;
+  }
+  
+  .ts-trend-grid .ts-tooltip-icon::before {
+    right: 35px;
+  }
+}
+
+/* Specific tooltip styling for performance labels */
+.ts-perf-item .ts-label-with-tooltip {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.ts-perf-item .ts-tooltip-icon {
+  flex-shrink: 0;
+}
+
+/* Adjust tooltip positioning for performance grid items */
+.ts-performance-grid .ts-tooltip-icon::after {
+  width: 280px;
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.ts-performance-grid .ts-tooltip-icon::before {
+  left: auto;
+  right: 15px;
+  transform: none;
+}
+
+/* For mobile responsiveness in performance grid */
+@media (max-width: 768px) {
+  .ts-performance-grid .ts-tooltip-icon::after {
+    width: 220px;
+    right: -50px;
+  }
+  
+  .ts-performance-grid .ts-tooltip-icon::before {
+    right: 35px;
+  }
+}
+
+/* Product Detail Page Styles */
+.ts-product-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.ts-product-basic-info,
+.ts-shop-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-product-basic-info h3,
+.ts-shop-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.ts-shop-details {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.ts-info-item,
+.ts-shop-item {
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ts-info-item label,
+.ts-shop-item label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.ts-info-item h4,
+.ts-shop-item h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Sales Analysis Tab Styles */
+.ts-sales-analysis-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.ts-sales-metrics {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-sales-metrics h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.ts-metric-card {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-metric-card label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.ts-metric-card h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Variants Info Styles */
+.ts-variants-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-variants-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-variants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ts-variant-tier {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-variant-tier h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ts-variant-option {
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid #dbeafe;
+}
+
+.ts-top-models {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-top-models h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-model-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-model-item:last-child {
+  border-bottom: none;
+}
+
+.ts-model-rank {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+.ts-model-name {
+  flex: 1;
+  font-size: 12px;
+  color: #374151;
+}
+
+.ts-model-sales {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Competitor Analysis Styles */
+.ts-competitor-analysis {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-competitor-analysis h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-competitor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ts-competitor-card {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-competitor-card h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-competitor-card p {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Mobile Responsive for Product Detail */
+@media (max-width: 768px) {
+  .ts-product-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ts-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ts-competitor-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-shop-details {
+    grid-template-columns: 1fr;
+  }
+}
