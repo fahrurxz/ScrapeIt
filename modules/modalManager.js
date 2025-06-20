@@ -22,10 +22,21 @@ class ShopeeModalManager {
     // Attach modal event listeners
     this.attachDetailModalListeners(observer);
   }
-
   static createDetailModalHTML(stats, observer) {
     const pageTypeText = ShopeeUIGenerator.getPageTypeText(observer);
     const lastUpdate = new Date().toLocaleString('id-ID');
+    
+    // Tentukan title berdasarkan page type
+    let modalTitle;
+    let modalSubtitle;
+    
+    if (observer.currentPageType === 'shop') {
+      modalTitle = `Analisis Detail Toko${stats.shopStats && stats.shopStats.shopName ? ` - ${stats.shopStats.shopName}` : ''}`;
+      modalSubtitle = 'Temukan produk trending dan peluang bisnis dari toko ini';
+    } else {
+      modalTitle = `Analisis Detail ${pageTypeText}`;
+      modalSubtitle = 'Temukan produk trending dan peluang bisnis';
+    }
     
     return `
       <div id="ts-detail-modal" class="ts-modal-overlay">
@@ -36,8 +47,8 @@ class ShopeeModalManager {
               <div class="ts-modal-header-left">
                 <div class="ts-logo-medium"></div>
                 <div class="ts-modal-title-section">
-                  <h2 class="ts-modal-title">Analisis Detail ${pageTypeText}</h2>
-                  <p class="ts-modal-subtitle">Temukan produk trending dan peluang bisnis</p>
+                  <h2 class="ts-modal-title">${modalTitle}</h2>
+                  <p class="ts-modal-subtitle">${modalSubtitle}</p>
                 </div>
               </div>
               <div class="ts-modal-header-right">
@@ -398,13 +409,318 @@ class ShopeeModalManager {
     
     // Re-generate content with appropriate view
     const products = ShopeeProductProcessor.extractProductsFromAPI(60, observer);
-    if (!products || products.length === 0) return;
-
-    if (viewType === 'list') {
+    if (!products || products.length === 0) return;    if (viewType === 'list') {
       container.innerHTML = ShopeeUIGenerator.generateProductListView(products);
     } else {
       container.innerHTML = ShopeeUIGenerator.generateFullProductGrid({ productCount: products.length }, observer);
     }
+  }
+
+  static showModal(title, content) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('ts-simple-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Create simple modal structure
+    const modalHTML = `
+      <div id="ts-simple-modal" class="ts-modal-overlay">
+        <div class="ts-modal-container" style="max-width: 800px;">
+          <div class="ts-modal-content">
+            <div class="ts-modal-header">
+              <h2 class="ts-modal-title">${title}</h2>
+              <button class="ts-modal-close" id="ts-simple-modal-close">×</button>
+            </div>
+            <div class="ts-modal-body">
+              ${content}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const modalElement = document.createElement('div');
+    modalElement.innerHTML = modalHTML;
+    document.body.appendChild(modalElement.firstElementChild);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+    
+    // Add close event listener
+    const closeBtn = document.getElementById('ts-simple-modal-close');
+    const overlay = document.getElementById('ts-simple-modal');
+    
+    const closeModal = () => {
+      overlay.remove();
+      document.body.style.overflow = '';
+    };
+    
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {      if (e.target === overlay) closeModal();
+    });
+    
+    // ESC key to close
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', escHandler);
+      }
+    });
+  }
+
+  static showProductDetailModal(product, observer) {
+    console.log('🔍 Showing product detail modal for:', product.name);
+    
+    const modalHTML = `
+      <div id="ts-product-detail-modal" class="ts-modal-overlay">
+        <div class="ts-modal-container">
+          <div class="ts-modal-content">
+            <div class="ts-modal-header">
+              <div class="ts-modal-header-left">
+                <div class="ts-logo-medium"></div>
+                <div class="ts-modal-title-section">
+                  <h2 class="ts-modal-title">Detail Produk</h2>
+                  <p class="ts-modal-subtitle">${product.name}</p>
+                </div>
+              </div>
+              <div class="ts-modal-header-right">
+                <button class="ts-modal-close" id="ts-modal-close">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="ts-modal-body">
+              <div class="ts-product-detail-container">
+                <div class="ts-product-detail-image">
+                  <img src="${product.image}" alt="${product.name}" />
+                </div>
+                <div class="ts-product-detail-info">
+                  <div class="ts-product-detail-section">
+                    <h3>Informasi Produk</h3>
+                    <div class="ts-detail-grid">
+                      <div class="ts-detail-item">
+                        <span class="ts-detail-label">Harga:</span>
+                        <span class="ts-detail-value">${ShopeeUtils.formatCurrency(product.price)}</span>
+                      </div>
+                      <div class="ts-detail-item">
+                        <span class="ts-detail-label">Terjual 30 Hari:</span>
+                        <span class="ts-detail-value">${ShopeeUtils.formatNumber(product.sold30d)}</span>
+                      </div>
+                      <div class="ts-detail-item">
+                        <span class="ts-detail-label">Omset 30 Hari:</span>
+                        <span class="ts-detail-value">${ShopeeUtils.formatCurrency(product.price * product.sold30d)}</span>
+                      </div>
+                      <div class="ts-detail-item">
+                        <span class="ts-detail-label">Total Terjual:</span>
+                        <span class="ts-detail-value">${ShopeeUtils.formatNumber(product.historicalSold || 0)}</span>
+                      </div>
+                      ${product.rating ? `
+                      <div class="ts-detail-item">
+                        <span class="ts-detail-label">Rating:</span>
+                        <span class="ts-detail-value">⭐ ${product.rating}/5</span>
+                      </div>
+                      ` : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal
+    const existingModal = document.getElementById('ts-product-detail-modal');
+    if (existingModal) existingModal.remove();
+    
+    // Add modal to document
+    const modalElement = document.createElement('div');
+    modalElement.innerHTML = modalHTML;
+    document.body.appendChild(modalElement.firstElementChild);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+    
+    // Add close functionality
+    this.attachSimpleModalListeners('ts-product-detail-modal');
+  }
+
+  static showProductAnalysisModal(product, observer) {
+    console.log('📊 Showing product analysis modal for:', product.name);
+    
+    const revenue30d = product.price * product.sold30d;
+    const estimatedMonthlyRevenue = revenue30d; // This is already 30 days
+    const competitivenessScore = this.calculateCompetitivenessScore(product, observer);
+    
+    const modalHTML = `
+      <div id="ts-product-analysis-modal" class="ts-modal-overlay">
+        <div class="ts-modal-container">
+          <div class="ts-modal-content">
+            <div class="ts-modal-header">
+              <div class="ts-modal-header-left">
+                <div class="ts-logo-medium"></div>
+                <div class="ts-modal-title-section">
+                  <h2 class="ts-modal-title">Analisis Produk</h2>
+                  <p class="ts-modal-subtitle">${product.name}</p>
+                </div>
+              </div>
+              <div class="ts-modal-header-right">
+                <button class="ts-modal-close" id="ts-modal-close">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="ts-modal-body">
+              <div class="ts-analysis-container">
+                <div class="ts-analysis-section">
+                  <h3>📊 Metrik Performa</h3>
+                  <div class="ts-metrics-grid">
+                    <div class="ts-metric-card">
+                      <div class="ts-metric-icon">💰</div>
+                      <div class="ts-metric-content">
+                        <h4>Omset Bulanan</h4>
+                        <div class="ts-metric-value">${ShopeeUtils.formatCurrency(estimatedMonthlyRevenue)}</div>
+                      </div>
+                    </div>
+                    <div class="ts-metric-card">
+                      <div class="ts-metric-icon">📈</div>
+                      <div class="ts-metric-content">
+                        <h4>Volume Penjualan</h4>
+                        <div class="ts-metric-value">${ShopeeUtils.formatNumber(product.sold30d)}/bulan</div>
+                      </div>
+                    </div>
+                    <div class="ts-metric-card">
+                      <div class="ts-metric-icon">🎯</div>
+                      <div class="ts-metric-content">
+                        <h4>Score Kompetitif</h4>
+                        <div class="ts-metric-value">${competitivenessScore}/10</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="ts-analysis-section">
+                  <h3>💡 Insight & Rekomendasi</h3>
+                  <div class="ts-insights-list">
+                    ${this.generateProductInsights(product, observer)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal
+    const existingModal = document.getElementById('ts-product-analysis-modal');
+    if (existingModal) existingModal.remove();
+    
+    // Add modal to document
+    const modalElement = document.createElement('div');
+    modalElement.innerHTML = modalHTML;
+    document.body.appendChild(modalElement.firstElementChild);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+    
+    // Add close functionality
+    this.attachSimpleModalListeners('ts-product-analysis-modal');
+  }
+
+  static calculateCompetitivenessScore(product, observer) {
+    // Simple scoring algorithm based on price, sales, and rating
+    let score = 5; // Base score
+    
+    // Price factor (lower price = higher score, but not too low)
+    if (product.price < 50000) score += 1;
+    else if (product.price > 500000) score -= 1;
+    
+    // Sales factor
+    if (product.sold30d > 100) score += 2;
+    else if (product.sold30d > 50) score += 1;
+    else if (product.sold30d < 10) score -= 1;
+    
+    // Rating factor
+    if (product.rating) {
+      if (product.rating >= 4.5) score += 2;
+      else if (product.rating >= 4.0) score += 1;
+      else if (product.rating < 3.5) score -= 1;
+    }
+    
+    return Math.max(1, Math.min(10, score));
+  }
+
+  static generateProductInsights(product, observer) {
+    const insights = [];
+    const revenue30d = product.price * product.sold30d;
+    
+    // Revenue insight
+    if (revenue30d > 10000000) {
+      insights.push('🔥 Produk ini memiliki omset tinggi! Pertimbangkan untuk mengoptimalkan stok.');
+    } else if (revenue30d < 1000000) {
+      insights.push('💡 Omset masih rendah. Coba tingkatkan promosi atau review strategi pricing.');
+    }
+    
+    // Sales volume insight
+    if (product.sold30d > 100) {
+      insights.push('📈 Volume penjualan sangat baik! Produk ini memiliki demand tinggi.');
+    } else if (product.sold30d < 10) {
+      insights.push('⚠️ Volume penjualan rendah. Perlu analisis kompetitor dan optimasi listing.');
+    }
+    
+    // Price insight
+    if (product.price < 50000) {
+      insights.push('💰 Harga kompetitif untuk market masa. Cocok untuk volume tinggi.');
+    } else if (product.price > 500000) {
+      insights.push('💎 Produk premium. Fokus pada kualitas dan layanan pelanggan.');
+    }
+    
+    // Rating insight
+    if (product.rating && product.rating >= 4.5) {
+      insights.push('⭐ Rating excellent! Pertahankan kualitas produk dan layanan.');
+    } else if (product.rating && product.rating < 4.0) {
+      insights.push('🔧 Rating perlu ditingkatkan. Review feedback pelanggan untuk improvement.');
+    }
+    
+    return insights.map(insight => `<div class="ts-insight-item">${insight}</div>`).join('');
+  }
+
+  static attachSimpleModalListeners(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    const closeModal = () => {
+      modal.remove();
+      document.body.style.overflow = 'auto';
+    };
+    
+    // Close button
+    const closeBtn = modal.querySelector('.ts-modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeModal);
+    }
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+    
+    // ESC key to close
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', escHandler);
+      }
+    });
   }
 }
 

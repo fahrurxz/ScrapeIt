@@ -5,23 +5,31 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     // Extract data based on page type and available API data
     let stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
-    console.log('📈 Extracted stats:', stats);
-
-    // Untuk category dan product pages: UI hanya di-inject jika ada data real
+    console.log('📈 Extracted stats:', stats);    // Untuk category dan product pages: UI hanya di-inject jika ada data real
     // Untuk search page: tetap menggunakan approach lama (bisa default atau real data)
     const productCountEl = document.getElementById('ts-product-count');
+    const shopStatusEl = document.getElementById('ts-shop-status');
     
-    if (stats && (observer.currentPageType === 'search' || stats.productCount > 0)) {
+    if (stats && (observer.currentPageType === 'search' || observer.currentPageType === 'shop' || stats.productCount > 0)) {
       console.log('✅ Real stats available, updating UI with actual data');
       
-      // Update product count (common for all page types)
-      if (productCountEl) {
+      // Update product count (common for all page types except shop)
+      if (productCountEl && observer.currentPageType !== 'shop') {
         productCountEl.textContent = ShopeeUtils.formatNumber(stats.productCount);
       }
       
-      // Handle product detail page with special UI elements
+      // Update shop status (for shop pages)
+      if (shopStatusEl && observer.currentPageType === 'shop') {
+        shopStatusEl.textContent = `${stats.productCount || 0} produk ditemukan`;
+      }
+        // Handle product detail page with special UI elements
       if (observer.currentPageType === 'product' && stats.productDetail) {
         this.updateProductDetailElements(stats.productDetail);
+      }
+      
+      // Handle shop page with special UI elements
+      if (observer.currentPageType === 'shop' && stats.shopStats) {
+        this.updateShopElements(stats.shopStats);
       }
       
       // Update current active tab (common for all page types)
@@ -39,10 +47,9 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
         productCountEl.textContent = '0';
       }
       
-      this.showDefaultValues(observer.currentPageType);
-    } else {
-      // Category/Product pages: ini tidak seharusnya terjadi karena UI hanya di-inject setelah ada data
-      console.log('⚠️ Category/Product page with no real data - this should not happen');
+      this.showDefaultValues(observer.currentPageType);    } else {
+      // Category/Product/Shop pages: ini tidak seharusnya terjadi karena UI hanya di-inject setelah ada data
+      console.log(`⚠️ ${observer.currentPageType} page with no real data - this should not happen`);
     }
   }static showLoadingState() {
     // DEPRECATED: No longer show loading states - always show defaults immediately
@@ -115,9 +122,77 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     this.updateElement('ts-product-popularity', `${popularityScore}/10`);
     
     // Update variants
-    this.updateProductVariants(productDetail.tierVariations || [], productDetail.models || []);
-      // Update competitor analysis
+    this.updateProductVariants(productDetail.tierVariations || [], productDetail.models || []);    // Update competitor analysis
     this.updateCompetitorAnalysis(productDetail);
+  }
+
+  static updateShopElements(shopStats) {
+    console.log('🏪 Updating shop elements with:', shopStats);
+    
+    // Update status indicator
+    this.updateElement('ts-shop-status', `${shopStats.productCount || 0} produk ditemukan`);
+    
+    // Update Summary Tab
+    const priceRange = shopStats.minPrice && shopStats.maxPrice 
+      ? `${ShopeeUtils.formatCurrency(shopStats.minPrice)} - ${ShopeeUtils.formatCurrency(shopStats.maxPrice)}`
+      : 'Tidak tersedia';
+    
+    // Update labels
+    const priceRangeLabel = document.querySelector('#ts-shop-price-range');
+    const sold30Label = document.querySelector('#ts-shop-sold-30');
+    const revenue30Label = document.querySelector('#ts-shop-revenue-30');
+    
+    if (priceRangeLabel) priceRangeLabel.textContent = 'Rentang Harga';
+    if (sold30Label) sold30Label.textContent = 'Terjual 30 hari';
+    if (revenue30Label) revenue30Label.textContent = 'Omset 30 hari';
+    
+    // Update actual values in elements
+    this.updateElement('ts-shop-price-range', priceRange);
+    this.updateElement('ts-shop-sold-30', ShopeeUtils.formatNumber(shopStats.totalSold30Days || 0));
+    this.updateElement('ts-shop-revenue-30', ShopeeUtils.formatCurrency(shopStats.totalRevenue30Days || 0));
+    
+    if (priceRangeLabel) priceRangeLabel.textContent = priceRange;
+    if (sold30Label) sold30Label.textContent = ShopeeUtils.formatNumber(shopStats.totalSold30Days || 0);
+    if (revenue30Label) revenue30Label.textContent = ShopeeUtils.formatCurrency(shopStats.totalRevenue30Days || 0);
+    
+    // Update Revenue Tab
+    this.updateElement('ts-shop-total-revenue', 'Total Omset');
+    this.updateElement('ts-shop-avg-revenue', 'Rata-rata / Bulan');
+    this.updateElement('ts-shop-revenue-trend', 'Trend Omset');
+    
+    const totalRevenueLabel = document.querySelector('#ts-shop-total-revenue + label');
+    const avgRevenueLabel = document.querySelector('#ts-shop-avg-revenue + label');
+    const revenueTrendLabel = document.querySelector('#ts-shop-revenue-trend + label');
+    
+    if (totalRevenueLabel) totalRevenueLabel.textContent = ShopeeUtils.formatCurrency(shopStats.totalHistoricalRevenue || 0);
+    if (avgRevenueLabel) avgRevenueLabel.textContent = ShopeeUtils.formatCurrency(shopStats.avgMonthlyRevenue || 0);
+    if (revenueTrendLabel) revenueTrendLabel.textContent = shopStats.revenueTrend || 'No data';
+    
+    // Update Volume Tab
+    this.updateElement('ts-shop-total-sold', 'Total Terjual');
+    this.updateElement('ts-shop-avg-sold', 'Rata-rata / Bulan');
+    this.updateElement('ts-shop-volume-trend', 'Trend Volume');
+    
+    const totalSoldLabel = document.querySelector('#ts-shop-total-sold + label');
+    const avgSoldLabel = document.querySelector('#ts-shop-avg-sold + label');
+    const volumeTrendLabel = document.querySelector('#ts-shop-volume-trend + label');
+    
+    if (totalSoldLabel) totalSoldLabel.textContent = ShopeeUtils.formatNumber(shopStats.totalHistoricalSold || 0);
+    if (avgSoldLabel) avgSoldLabel.textContent = ShopeeUtils.formatNumber(shopStats.avgMonthlySold || 0);
+    if (volumeTrendLabel) volumeTrendLabel.textContent = shopStats.volumeTrend || 'No data';
+    
+    // Update Info Tab
+    this.updateElement('ts-shop-follower', 'Followers');
+    this.updateElement('ts-shop-rating', 'Rating');
+    this.updateElement('ts-shop-products', 'Jumlah Produk');
+    
+    const followerLabel = document.querySelector('#ts-shop-follower + label');
+    const ratingLabel = document.querySelector('#ts-shop-rating + label');
+    const productsLabel = document.querySelector('#ts-shop-products + label');
+    
+    if (followerLabel) followerLabel.textContent = ShopeeUtils.formatNumber(shopStats.followerCount || 0);
+    if (ratingLabel) ratingLabel.textContent = `${(shopStats.rating || 0).toFixed(1)} ⭐`;
+    if (productsLabel) productsLabel.textContent = ShopeeUtils.formatNumber(shopStats.itemCount || 0);
   }
 
   static updateTabData(tabName, observer) {
@@ -130,9 +205,18 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
         break;
       case 'market':
         this.updateMarketTab(stats, observer);
-        break;
-      case 'volume':
+        break;      case 'volume':
         this.updateVolumeTab(stats, observer);
+        break;
+      // Shop-specific tabs
+      case 'products':
+        this.updateShopProductsTab(stats, observer);
+        break;
+      case 'revenue':
+        this.updateShopRevenueTab(stats, observer);
+        break;
+      case 'info':
+        this.updateShopInfoTab(stats, observer);
         break;
     }
   }
@@ -353,13 +437,46 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     }
     
     // Sales performance
-    const salesPerformanceEl = document.getElementById('ts-sales-performance');
-    if (salesPerformanceEl) {
+    const salesPerformanceEl = document.getElementById('ts-sales-performance');    if (salesPerformanceEl) {
       let salesLevel = 'Moderate';
       if (detail.globalSold >= 10000) salesLevel = 'High Volume';
       else if (detail.globalSold < 100) salesLevel = 'Low Volume';
       
       salesPerformanceEl.textContent = `${salesLevel} - ${ShopeeUtils.formatNumber(detail.globalSold)} total terjual`;
+    }
+  }
+
+  static updateShopRevenueTab(stats, observer) {
+    console.log('📊 Updating shop revenue tab with stats:', stats);
+    if (stats.shopStats) {
+      this.updateShopElements(stats.shopStats);
+    }
+  }
+  static updateShopProductsTab(stats, observer) {
+    console.log('🛍️ Updating shop products tab');
+    
+    // Get product cards from UI generator
+    const productCardsResult = ShopeeUIGenerator.generateShopProductCards(observer);
+    
+    // Update product count
+    const productCountEl = document.getElementById('ts-shop-products-count');
+    if (productCountEl) {
+      productCountEl.textContent = `${productCardsResult.count} produk`;
+    }
+    
+    // Update product grid
+    const productGridEl = document.getElementById('ts-shop-products-grid');
+    if (productGridEl) {
+      productGridEl.innerHTML = productCardsResult.html;
+    }
+    
+    console.log(`✅ Shop products tab updated with ${productCardsResult.count} products`);
+  }
+
+  static updateShopInfoTab(stats, observer) {
+    console.log('ℹ️ Updating shop info tab with stats:', stats);
+    if (stats.shopStats) {
+      this.updateShopElements(stats.shopStats);
     }
   }
 }

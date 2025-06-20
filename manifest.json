@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Shopee Analytics Observer",
+  "name": "ScrapeIt",
   "version": "1.0",
   "description": "Observes Shopee pages and displays analytics data from intercepted API calls",
   "icons": {

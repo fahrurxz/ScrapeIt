@@ -86,15 +86,15 @@ class ShopeeProductProcessor {
             const itemId = itemData.itemid || 0;
             const shopId = itemData.shopid || 0;
             const ctime = itemData.ctime || Date.now() / 1000;
-            const likedCount = itemData.liked_count || 0;
-            const image = displayedAsset.image || '';
+            const likedCount = itemData.liked_count || 0;            const image = displayedAsset.image || '';
             
             console.log('📦 Extracted data:', {
               name: productName,
               price: price,
               historicalSold: historicalSold,
               monthlySold: monthlySold,
-              shopName: shopName
+              shopName: shopName,
+              image: image
             });
             
             // Convert recommend_v2 structure to standard item structure dengan data yang benar
@@ -131,8 +131,7 @@ class ShopeeProductProcessor {
               image: image,
               ctime: ctime,
               liked_count: likedCount,
-              
-              // Add item_basic for compatibility dengan extractRealProductData
+                // Add item_basic for compatibility dengan extractRealProductData
               item_basic: {
                 name: productName,
                 title: productName,
@@ -174,18 +173,62 @@ class ShopeeProductProcessor {
         } else if (data.data && data.data.items) {
           items = data.data.items;
           console.log('✅ Found items in CATEGORY_DATA.data.data.items:', items.length);
+        }      } else {
+        console.log('❌ No SEARCH_DATA or CATEGORY_DATA available for category');      }
+    } else if (observer.currentPageType === 'shop') {
+      console.log('🏪 Processing SHOP_DATA for shop page');
+      console.log('🔍 Debug: observer.apiData keys:', Object.keys(observer.apiData));
+      console.log('🔍 Debug: observer.apiData structure:', observer.apiData);
+      
+      if (observer.apiData.SHOP_DATA) {
+        console.log('✅ SHOP_DATA exists:', observer.apiData.SHOP_DATA);
+        console.log('🔍 SHOP_DATA keys:', Object.keys(observer.apiData.SHOP_DATA));
+        
+        // Fix: Extract the actual shopData from the wrapper structure
+        const shopData = observer.apiData.SHOP_DATA.data || observer.apiData.SHOP_DATA;
+        console.log('🔍 Actual shopData structure:', shopData);
+        console.log('🔍 Actual shopData keys:', Object.keys(shopData));
+        
+        if (shopData.itemsData) {
+          console.log('✅ itemsData exists:', shopData.itemsData);
+          const data = shopData.itemsData.data;
+          console.log('🔍 itemsData.data structure:', data);
+            if (data.data && data.data.centralize_item_card && data.data.centralize_item_card.item_cards) {
+            items = data.data.centralize_item_card.item_cards;
+            console.log('✅ Found items in SHOP_DATA item_cards:', items.length);
+            
+            // Debug: Check first item structure for images
+            if (items.length > 0) {
+              const firstItem = items[0];
+              console.log('🔍 Debug shop item structure:', {
+                hasItemData: !!firstItem.item_data,
+                hasDisplayedAsset: !!firstItem.item_card_displayed_asset,
+                displayedAssetKeys: firstItem.item_card_displayed_asset ? Object.keys(firstItem.item_card_displayed_asset) : 'none',
+                hasImage: !!(firstItem.item_card_displayed_asset && firstItem.item_card_displayed_asset.image),
+                imageValue: firstItem.item_card_displayed_asset ? firstItem.item_card_displayed_asset.image : 'none'
+              });
+            }
+          }else if (data.items) {
+            items = data.items;
+            console.log('✅ Found items in SHOP_DATA.data.items:', items.length);
+          } else {
+            console.log('❌ No items found in expected structure');
+            console.log('🔍 Available data keys:', data ? Object.keys(data) : 'data is null');
+          }
+        } else {
+          console.log('❌ No itemsData in actual shopData');
         }
       } else {
-        console.log('❌ No SEARCH_DATA or CATEGORY_DATA available for category');
+        console.log('❌ No SHOP_DATA available for shop');
       }
-    }
-
-    console.log('📊 Total items extracted:', items.length);
+    }    console.log('📊 Total items extracted:', items.length);
 
     if (!items || items.length === 0) {
       console.log('❌ No items found, returning null');
       return null; // Return null instead of creating fake products
-    }    // Extract real product data from API items
+    }
+    
+    // Extract real product data from API items
     const maxCount = Math.min(count, items.length);
     console.log(`🔧 Processing ${maxCount} items out of ${items.length} available`);
     
@@ -205,8 +248,7 @@ class ShopeeProductProcessor {
     console.log(`📊 Final result: ${products.length} products generated from ${maxCount} items`);
     
     return products.length > 0 ? products : null;
-  }
-  static extractRealProductData(item, index) {
+  }  static extractRealProductData(item, index) {
     if (!item) {
       console.log(`❌ Item ${index} is null/undefined`);
       return null;
@@ -217,14 +259,25 @@ class ShopeeProductProcessor {
       hasPrice: !!(item.price || item.price_min),
       hasSold: !!(item.sold || item.historical_sold),
       hasItemBasic: !!item.item_basic,
+      hasDisplayedAsset: !!item.item_card_displayed_asset,
+      hasDisplayPrice: !!item.item_card_display_price,
+      hasDisplaySold: !!item.item_card_display_sold_count,
       itemKeys: Object.keys(item)
     });
 
+    // For shop items, also log the item_card_displayed_asset structure
+    if (item.item_card_displayed_asset) {
+      console.log(`🏪 Item ${index} - displayed_asset structure:`, {
+        name: item.item_card_displayed_asset.name,
+        keys: Object.keys(item.item_card_displayed_asset)
+      });
+    }
+
     // Extract from item_basic first, then fallback to other fields
     const itemBasic = item.item_basic || item;
-    
-    // Extract product name from various possible fields
+      // Extract product name from various possible fields
     let productName = null;
+    
     if (itemBasic.name) {
       productName = itemBasic.name;
     } else if (item.name) {
@@ -233,14 +286,20 @@ class ShopeeProductProcessor {
       productName = item.title;
     } else if (item.product_name) {
       productName = item.product_name;
-    }    // If no product name found, return null instead of creating fake data
+    } else if (item.item_card_displayed_asset && item.item_card_displayed_asset.name) {
+      // Shop items have name in item_card_displayed_asset
+      productName = item.item_card_displayed_asset.name;
+      console.log(`✅ Item ${index} - Found name in displayed_asset: "${productName}"`);
+    }
+    
+    // If no product name found, return null instead of creating fake data
     if (!productName) {
       console.log(`❌ Item ${index} - No product name found. Available fields:`, Object.keys(item));
       return null;
     }
 
     console.log(`✅ Item ${index} - Found name: "${productName}"`);
-
+    
     // Extract price from item_basic or item_card_display_price
     let price = 0;
     if (itemBasic.price) {
@@ -251,18 +310,25 @@ class ShopeeProductProcessor {
       price = itemBasic.item_card_display_price.price;
     } else if (item.price) {
       price = item.price;
+    } else if (item.item_card_display_price && item.item_card_display_price.price) {
+      // Shop items have price in item_card_display_price
+      price = item.item_card_display_price.price;
+      console.log(`✅ Item ${index} - Found price in display_price: ${price}`);
     }
     price = price / 100000; // Convert from cents to rupiah
 
     // REVISI: Extract total sold (global_sold_count) dan sold 30 hari
     let totalTerjual = 0; // Total terjual dari global_sold_count
     let terjual30Hari = 0; // Terjual 30 hari dari sold dibawah ctime
-    
-    // Total Terjual dari global_sold_count
+      // Total Terjual dari global_sold_count
     if (itemBasic.global_sold_count) {
       totalTerjual = itemBasic.global_sold_count;
     } else if (itemBasic.historical_sold) {
       totalTerjual = itemBasic.historical_sold;
+    } else if (item.item_card_display_sold_count && item.item_card_display_sold_count.historical_sold_count) {
+      // Shop items have historical sold in item_card_display_sold_count
+      totalTerjual = item.item_card_display_sold_count.historical_sold_count;
+      console.log(`✅ Item ${index} - Found historical sold: ${totalTerjual}`);
     }
     
     // Terjual 30 hari dari sold (biasanya ada di bawah ctime)
@@ -270,6 +336,10 @@ class ShopeeProductProcessor {
       terjual30Hari = itemBasic.sold;
     } else if (itemBasic.item_card_display_sold_count && itemBasic.item_card_display_sold_count.display_sold_count) {
       terjual30Hari = itemBasic.item_card_display_sold_count.display_sold_count;
+    } else if (item.item_card_display_sold_count && item.item_card_display_sold_count.monthly_sold_count) {
+      // Shop items have monthly sold in item_card_display_sold_count
+      terjual30Hari = item.item_card_display_sold_count.monthly_sold_count;
+      console.log(`✅ Item ${index} - Found monthly sold: ${terjual30Hari}`);
     } else {
       // Fallback: gunakan persentase dari total sold
       terjual30Hari = Math.floor(totalTerjual * 0.1); // Estimasi 10% dari total sold
@@ -311,16 +381,34 @@ class ShopeeProductProcessor {
     const stock = itemBasic.stock || 0;
 
     // Extract wishlist/liked count
-    const wishlistCount = itemBasic.liked_count || 0;
-
-    // REVISI: Generate image URL dari images array
+    const wishlistCount = itemBasic.liked_count || 0;    // REVISI: Generate image URL dari images array atau shop image structure
     let imageUrl = '📦';
-    if (itemBasic.images && itemBasic.images.length > 0) {
+    
+    // Prioritas 1: Cek shop-specific image structure (item_card_displayed_asset.image)
+    if (item.item_card_displayed_asset && item.item_card_displayed_asset.image) {
+      const shopImageId = item.item_card_displayed_asset.image;
+      imageUrl = `https://down-id.img.susercontent.com/file/${shopImageId}`;
+      console.log(`✅ Item ${index} - Found shop image: ${imageUrl}`);
+    }
+    // Prioritas 2: Standard images array dari item_basic
+    else if (itemBasic.images && itemBasic.images.length > 0) {
       // Gunakan image pertama dari array
       const imageId = itemBasic.images[0];
       imageUrl = `https://down-id.img.susercontent.com/file/${imageId}`;
-    } else if (itemBasic.image) {
+      console.log(`✅ Item ${index} - Found image from array: ${imageUrl}`);
+    } 
+    // Prioritas 3: Single image field dari item_basic
+    else if (itemBasic.image) {
       imageUrl = `https://down-id.img.susercontent.com/file/${itemBasic.image}`;
+      console.log(`✅ Item ${index} - Found single image: ${imageUrl}`);
+    }
+    // Prioritas 4: Direct image field di item level
+    else if (item.image) {
+      imageUrl = `https://down-id.img.susercontent.com/file/${item.image}`;
+      console.log(`✅ Item ${index} - Found direct image: ${imageUrl}`);
+    }
+    else {
+      console.log(`⚠️ Item ${index} - No image found, using placeholder`);
     }
 
     // Calculate trend percentage (more realistic calculation)
@@ -492,9 +580,142 @@ class ShopeeProductProcessor {
           </div>
         </div>
       `;
-    }
-    
+    }    
     return cards;
+  }
+
+  static calculateShopStats(observer) {
+    console.log('🏪 Calculating shop statistics');
+    
+    if (!observer.apiData.SHOP_DATA) {
+      console.log('❌ No shop data available');
+      return null;
+    }
+
+    const stats = {
+      // Basic info
+      shopName: '',
+      followerCount: 0,
+      rating: 0,
+      itemCount: 0,
+      
+      // Price range
+      minPrice: 0,
+      maxPrice: 0,
+      
+      // Sales data
+      totalSold30Days: 0,
+      totalRevenue30Days: 0,
+      totalHistoricalSold: 0,
+      totalHistoricalRevenue: 0,
+      
+      // Averages
+      avgMonthlySold: 0,
+      avgMonthlyRevenue: 0,
+      
+      // Trends
+      volumeTrend: 'No data',
+      revenueTrend: 'No data',
+      
+      // Other
+      productCount: 0,
+      responseRate: 0,
+      responseTime: 0
+    };    // Get shop base data
+    const shopData = observer.apiData.SHOP_DATA.data || observer.apiData.SHOP_DATA;
+    
+    if (shopData.baseData) {
+      const baseData = shopData.baseData.data.data;
+      stats.shopName = baseData.name || '';
+      stats.followerCount = baseData.follower_count || 0;
+      stats.rating = baseData.rating_star || 0;
+      stats.itemCount = baseData.item_count || 0;
+      stats.responseRate = baseData.response_rate || 0;
+      stats.responseTime = baseData.response_time || 0;
+      console.log('✅ Shop base data extracted:', {
+        name: stats.shopName,
+        followers: stats.followerCount,
+        rating: stats.rating,
+        itemCount: stats.itemCount
+      });
+    } else {
+      console.log('❌ No baseData found in shopData');
+      console.log('🔍 Available shopData keys:', Object.keys(shopData));
+    }
+
+    // Get products data
+    const products = this.extractProductsFromAPI(999, observer); // Get all products
+    if (products && products.length > 0) {
+      stats.productCount = products.length;
+      
+      const prices = [];
+      let totalSold30 = 0;
+      let totalRevenue30 = 0;
+      let totalHistoricalSold = 0;
+      let totalHistoricalRevenue = 0;
+      
+      products.forEach(product => {
+        // Price range
+        const price = product.price || 0;
+        if (price > 0) {
+          prices.push(price);
+        }
+        
+        // Sales data
+        const monthlySold = product.sold || 0;
+        const historicalSold = product.historical_sold || 0;
+        
+        totalSold30 += monthlySold;
+        totalHistoricalSold += historicalSold;
+        
+        // Revenue calculations
+        const revenue30 = price * monthlySold;
+        const historicalRevenue = price * historicalSold;
+        
+        totalRevenue30 += revenue30;
+        totalHistoricalRevenue += historicalRevenue;
+      });
+      
+      // Price range
+      if (prices.length > 0) {
+        stats.minPrice = Math.min(...prices);
+        stats.maxPrice = Math.max(...prices);
+      }
+      
+      // Totals
+      stats.totalSold30Days = totalSold30;
+      stats.totalRevenue30Days = totalRevenue30;
+      stats.totalHistoricalSold = totalHistoricalSold;
+      stats.totalHistoricalRevenue = totalHistoricalRevenue;
+      
+      // Calculate averages (assume shop has been active for some time)
+      // This is an estimation - in real scenario, we'd need shop creation date
+      const estimatedMonthsActive = Math.max(1, Math.ceil(stats.totalHistoricalSold / Math.max(1, stats.totalSold30Days)));
+      stats.avgMonthlySold = Math.round(stats.totalHistoricalSold / estimatedMonthsActive);
+      stats.avgMonthlyRevenue = Math.round(stats.totalHistoricalRevenue / estimatedMonthsActive);
+      
+      // Calculate trends (compare 30-day with average)
+      if (stats.avgMonthlySold > 0) {
+        const volumeTrendPercent = ((stats.totalSold30Days - stats.avgMonthlySold) / stats.avgMonthlySold * 100);
+        if (Math.abs(volumeTrendPercent) > 5) { // Only show trend if significant
+          stats.volumeTrend = volumeTrendPercent > 0 ? `+${volumeTrendPercent.toFixed(1)}%` : `${volumeTrendPercent.toFixed(1)}%`;
+        } else {
+          stats.volumeTrend = 'Stabil';
+        }
+      }
+      
+      if (stats.avgMonthlyRevenue > 0) {
+        const revenueTrendPercent = ((stats.totalRevenue30Days - stats.avgMonthlyRevenue) / stats.avgMonthlyRevenue * 100);
+        if (Math.abs(revenueTrendPercent) > 5) { // Only show trend if significant
+          stats.revenueTrend = revenueTrendPercent > 0 ? `+${revenueTrendPercent.toFixed(1)}%` : `${revenueTrendPercent.toFixed(1)}%`;
+        } else {
+          stats.revenueTrend = 'Stabil';
+        }
+      }
+    }
+
+    console.log('📊 Shop stats calculated:', stats);
+    return stats;
   }
 }
 

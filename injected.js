@@ -6,12 +6,12 @@
   const originalFetch = window.fetch;
   const originalXHROpen = XMLHttpRequest.prototype.open;
   const originalXHRSend = XMLHttpRequest.prototype.send;
-
   // Data storage
   window.shopeeAPIData = {
     searchData: null,
     categoryData: null,
     productData: null,
+    shopData: null,
     lastUpdate: null
   };
   // Intercept fetch requests
@@ -116,10 +116,46 @@
         timestamp: Date.now()
       };
       notifyContentScript('PRODUCT_DATA', data);
-    }
-    // Ignore other product-related APIs that are not main detail
+    }    // Ignore other product-related APIs that are not main detail
     else if (url.includes('/pdp/') && (url.includes('hot_sales') || url.includes('rating') || url.includes('review'))) {
       console.log('📋 Ignoring non-detail product API:', url);
+    }    // Process shop API
+    else if (url.includes('/shop/rcmd_items') || url.includes('/shop/get_shop_base') || url.includes('/shop/get_shop_seo')) {
+      console.log('🏪 Detected SHOP API:', url);
+      console.log('🔍 Shop API data preview:', data);
+      
+      if (!window.shopeeAPIData.shopData) {
+        window.shopeeAPIData.shopData = {};
+      }
+      
+      if (url.includes('/shop/rcmd_items')) {
+        console.log('📦 Processing shop items data');
+        window.shopeeAPIData.shopData.itemsData = {
+          url: url,
+          data: data,
+          timestamp: Date.now()
+        };
+        console.log('✅ Shop itemsData stored:', window.shopeeAPIData.shopData.itemsData);
+      } else if (url.includes('/shop/get_shop_base')) {
+        console.log('🏪 Processing shop base data');
+        window.shopeeAPIData.shopData.baseData = {
+          url: url,
+          data: data,
+          timestamp: Date.now()
+        };
+        console.log('✅ Shop baseData stored:', window.shopeeAPIData.shopData.baseData);
+      } else if (url.includes('/shop/get_shop_seo')) {
+        console.log('🔍 Processing shop SEO data');
+        window.shopeeAPIData.shopData.seoData = {
+          url: url,
+          data: data,
+          timestamp: Date.now()
+        };
+        console.log('✅ Shop seoData stored:', window.shopeeAPIData.shopData.seoData);
+      }
+      
+      console.log('🏪 Final shopData structure:', window.shopeeAPIData.shopData);
+      notifyContentScript('SHOP_DATA', window.shopeeAPIData.shopData);
     }
     
     window.shopeeAPIData.lastUpdate = Date.now();

@@ -1,10 +1,14 @@
 // UI generation functions for Shopee Analytics Observer
 class ShopeeUIGenerator {
-  
-  static createUI(observer) {
+    static createUI(observer) {
     // Check if this is a product detail page and create appropriate UI
     if (observer.currentPageType === 'product') {
       return this.createProductDetailUI(observer);
+    }
+    
+    // Check if this is a shop page and create appropriate UI
+    if (observer.currentPageType === 'shop') {
+      return this.createShopUI(observer);
     }
     
     // For other pages (search, category), use the original UI
@@ -155,7 +159,6 @@ class ShopeeUIGenerator {
       </div>
     `;
   }
-
   static getPageTypeText(observer) {
     switch (observer.currentPageType) {
       case 'search':
@@ -164,6 +167,8 @@ class ShopeeUIGenerator {
         return 'Kategori';
       case 'product':
         return 'Produk';
+      case 'shop':
+        return 'Toko';
       default:
         return 'Halaman';
     }
@@ -294,11 +299,173 @@ class ShopeeUIGenerator {
           <div class="ts-footer-text">
             <span>Data produk diambil dari API resmi Shopee.</span>
             <a href="#" class="ts-text-blue-500" id="ts-export-btn">Export Data</a>
+          </div>        </div>
+      </div>
+    `;
+  }
+
+  static createShopUI(observer) {
+    const lastUpdate = new Date().toLocaleString('id-ID');
+    
+    return `
+      <div id="ts-shop-stats" class="ts ts-shopee">
+        <div class="ts-stat-container">
+          <div class="ts-stat-header">
+            <div class="ts-logo-small"></div>
+            <span class="ts-text-black/[0.5] ts-ml-1 ts-leading-none">Data</span>            <div class="ts-tabs">
+              <a href="#" class="ts-tab-active" data-tab="summary">Ringkasan</a>
+            </div>
+            <div class="ts-text-black/[0.5] ts-ml-auto" id="ts-shop-status">Memuat Data Produk...</div>
+          </div>
+          
+          <!-- Summary Tab Content -->
+          <div id="ts-tab-summary" class="ts-tab-content">
+            <div class="" style="display: flex; justify-content: space-around;">
+              <div class="ts-col-span-6">
+                <div class="ts-grid ts-grid-multirow ts-w-full ts-text-black/[0.75] ts-grid-cols-3">
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-price-range">-</h4>
+                    <label class="">Rentang Harga</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-sold-30">-</h4>
+                    <label class="">Terjual 30 hari</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-revenue-30">-</h4>
+                    <label class="">Omset 30 hari</label>
+                  </div>
+                </div>
+              </div>              <div class="ts-col-start-7 ts-items-center ts-justify-center ts-flex">
+                <div class="ts-relative">
+                  <button class="ts-btn ts-bg-orange-600 ts-hover:bg-orange-700 ts-active:bg-orange-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-analyze-btn">
+                    Analisa Detail
+                  </button>
+                  <span class="ts-flex ts-absolute ts-h-3 ts-w-3 ts-top-0 ts-right-0 ts--mt-1 ts--mr-1">
+                    <span class="ts-animate-ping ts-absolute its-nline-flex ts-h-full ts-w-full ts-rounded-full ts-bg-red-400 ts-opacity-75"></span>
+                    <span class="ts-relative ts-inline-flex ts-rounded-full ts-h-3 ts-w-3 ts-bg-red-500"></span>
+                  </span>
+                </div>
+              </div>
+            </div>          </div>
+          
+          <!-- Products Tab Content -->
+          <div id="ts-tab-products" class="ts-tab-content" style="display: none;">
+            <div class="ts-shop-products-container">
+              <div class="ts-shop-products-header">
+                <div class="ts-shop-products-title">
+                  <h3>Daftar Produk Toko</h3>
+                  <span id="ts-shop-products-count" class="ts-products-count">0 produk</span>
+                </div>
+                <div class="ts-shop-products-controls">
+                  <select id="ts-shop-products-sort" class="ts-products-sort">
+                    <option value="revenue-desc">Omset Tertinggi</option>
+                    <option value="sold-desc">Terjual Terbanyak</option>
+                    <option value="price-desc">Harga Tertinggi</option>
+                    <option value="price-asc">Harga Terendah</option>
+                    <option value="rating-desc">Rating Tertinggi</option>
+                  </select>
+                  <button id="ts-shop-products-export" class="ts-btn-secondary">Export</button>
+                </div>
+              </div>
+              <div id="ts-shop-products-grid" class="ts-shop-products-grid">
+                <!-- Product cards will be inserted here -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Revenue Tab Content -->
+          <div id="ts-tab-revenue" class="ts-tab-content" style="display: none;">
+            <div class="" style="display: flex; justify-content: space-around;">
+              <div class="ts-col-span-6">
+                <div class="ts-grid ts-grid-multirow ts-w-full ts-text-black/[0.75] ts-grid-cols-3">
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-total-revenue">Total Omset</h4>
+                    <label class="">-</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-avg-revenue">Rata-rata / Bulan</h4>
+                    <label class="">-</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-revenue-trend">Trend Omset</h4>
+                    <label class="">-</label>
+                  </div>
+                </div>
+              </div>
+              <div class="ts-col-start-7 ts-items-center ts-justify-center ts-flex">
+                <div class="ts-relative">
+                  <button class="ts-btn ts-bg-orange-600 ts-hover:bg-orange-700 ts-active:bg-orange-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-revenue-detail-btn">Detail Omset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Volume Tab Content -->
+          <div id="ts-tab-volume" class="ts-tab-content" style="display: none;">
+            <div class="ts-grid ts-grid-cols-7 ts-grid-stat">
+              <div class="ts-col-span-6">
+                <div class="ts-grid ts-grid-multirow ts-w-full ts-text-black/[0.75] ts-grid-cols-3">
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-total-sold">Total Terjual</h4>
+                    <label class="">-</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-avg-sold">Rata-rata / Bulan</h4>
+                    <label class="">-</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-volume-trend">Trend Volume</h4>
+                    <label class="">-</label>
+                  </div>
+                </div>
+              </div>
+              <div class="ts-col-start-7 ts-items-center ts-justify-center ts-flex">
+                <div class="ts-relative">
+                  <button class="ts-btn ts-bg-orange-600 ts-hover:bg-orange-700 ts-active:bg-orange-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-volume-detail-btn">Detail Volume</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Info Tab Content -->
+          <div id="ts-tab-info" class="ts-tab-content" style="display: none;">
+            <div class="ts-grid ts-grid-cols-7 ts-grid-stat">
+              <div class="ts-col-span-6">
+                <div class="ts-grid ts-grid-multirow ts-w-full ts-text-black/[0.75] ts-grid-cols-3">
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-follower">Followers</h4>
+                    <label class="">-</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-rating">Rating</h4>
+                    <label class="">-</label>
+                  </div>
+                  <div class="ts-text-center">
+                    <h4 id="ts-shop-products">Jumlah Produk</h4>
+                    <label class="">-</label>
+                  </div>
+                </div>
+              </div>
+              <div class="ts-col-start-7 ts-items-center ts-justify-center ts-flex">
+                <div class="ts-relative">
+                  <button class="ts-btn ts-bg-orange-600 ts-hover:bg-orange-700 ts-active:bg-orange-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-info-detail-btn">Detail Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="ts-footer-text">
+            <div></div>
+          </div>
+          <div class="ts-auth-boxs">
+            <div></div>
           </div>
         </div>
       </div>
     `;
   }
+
   static generateCompactProductGrid(stats, observer) {
     // Generate compact product grid using real products from API
     const products = ShopeeProductProcessor.extractProductsFromAPI(8, observer);
@@ -362,7 +529,7 @@ class ShopeeUIGenerator {
         <div class="ts-product-card-full ${!isActive ? 'ts-product-inactive' : ''}">
           <div class="ts-product-header">
             <div class="ts-product-image">
-              <img src="${product.image}" alt="${product.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iNCIgZmlsbD0iI0Y1RjVGNSIvPgo8cGF0aCBkPSJNMTIgMTZWMjRIMjhWMTZIMTJaIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K'" />
+              <img src="${product.image}"/>
             </div>
             <div class="ts-product-info">
               <h4 class="ts-product-name">${product.name}</h4>
@@ -485,7 +652,7 @@ class ShopeeUIGenerator {
         <div class="ts-product-card-full ${!isActive ? 'ts-product-inactive' : ''}">
           <div class="ts-product-header">
             <div class="ts-product-image">
-              <img src="${product.image}" alt="${product.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iNCIgZmlsbD0iI0Y1RjVGNSIvPgo8cGF0aCBkPSJNMTIgMTZWMjRIMjhWMTZIMTJaIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K'" />
+              <img src="${product.image}" alt="${product.name}" />
             </div>
             <div class="ts-product-info">
               <h4 class="ts-product-name">${product.name}</h4>
@@ -548,7 +715,8 @@ class ShopeeUIGenerator {
 
           <div class="ts-section">
             <h5 class="ts-section-title">Potensi & Performa</h5>
-            <div class="ts-performance-grid">              <div class="ts-perf-item">
+            <div class="ts-performance-grid">
+              <div class="ts-perf-item">
                 <span class="ts-perf-label ts-label-with-tooltip">
                   % Omset Toko 
                   <span class="ts-tooltip-icon" data-tooltip="Persentase kontribusi omset produk ini terhadap total omset toko. Semakin tinggi persentase, semakin penting produk ini untuk toko">ⓘ</span>
@@ -754,6 +922,80 @@ class ShopeeUIGenerator {
         </div>
       </div>
     `;
+  }
+  static generateShopProductCards(observer) {
+    // Generate shop product cards using real products from API
+    const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer); // Get all products for shop
+    
+    if (!products || products.length === 0) {
+      return {
+        html: '<div class="ts-no-products">Tidak ada produk dengan data lengkap ditemukan</div>',
+        count: 0
+      };
+    }
+
+    let cards = '';
+    
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+      const revenue30d = product.price * product.sold30d;
+      
+      cards += `
+        <div class="ts-shop-product-card" data-product-id="${product.itemId || i}">
+          <div class="ts-shop-product-image">
+            <img src="${product.image}" alt="${product.name}" 
+                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iOCIgZmlsbD0iI0Y1RjVGNSIvPgo8cGF0aCBkPSJNMjAgMjRWMzZINDBWMjRIMjBaIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K'" />
+            <div class="ts-shop-product-rank">#${i + 1}</div>
+          </div>
+          
+          <div class="ts-shop-product-info">
+            <h4 class="ts-shop-product-title" title="${product.name}">${product.name}</h4>
+            
+            <div class="ts-shop-product-price">
+              <span class="ts-price-main">${ShopeeUtils.formatCurrency(product.price)}</span>
+            </div>
+            
+            <div class="ts-shop-product-stats">
+              <div class="ts-shop-stat-item">
+                <span class="ts-stat-label">Terjual 30 Hari:</span>
+                <span class="ts-stat-value">${ShopeeUtils.formatNumber(product.sold30d)}</span>
+              </div>
+              
+              <div class="ts-shop-stat-item ts-highlight">
+                <span class="ts-stat-label">Omset 30 Hari:</span>
+                <span class="ts-stat-value ts-revenue">${ShopeeUtils.formatCurrency(revenue30d)}</span>
+              </div>
+              
+              <div class="ts-shop-stat-item">
+                <span class="ts-stat-label">Total Terjual:</span>
+                <span class="ts-stat-value">${ShopeeUtils.formatNumber(product.historicalSold || 0)}</span>
+              </div>
+              
+              ${product.rating ? `
+              <div class="ts-shop-stat-item">
+                <span class="ts-stat-label">Rating:</span>
+                <span class="ts-stat-value">⭐ ${product.rating}/5</span>
+              </div>
+              ` : ''}
+            </div>
+            
+            <div class="ts-shop-product-actions">
+              <button class="ts-btn-view-product" data-item-id="${product.itemId || i}">
+                Lihat Detail
+              </button>
+              <button class="ts-btn-analyze-product" data-item-id="${product.itemId || i}">
+                Analisa
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    return {
+      html: cards,
+      count: products.length
+    };
   }
 }
 

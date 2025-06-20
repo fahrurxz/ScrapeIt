@@ -2,12 +2,18 @@
 class ShopeeEventHandlers {
   
   static attachEventListeners(observer) {
-    const refreshBtn = document.getElementById('ts-refresh-btn');
-    const detailBtn = document.getElementById('ts-detail-btn');
+    const refreshBtn = document.getElementById('ts-refresh-btn');    const detailBtn = document.getElementById('ts-detail-btn');
     const marketDetailBtn = document.getElementById('ts-market-detail-btn');
     const volumeDetailBtn = document.getElementById('ts-volume-detail-btn');
     const moreBtn = document.getElementById('ts-more-btn');
     const exportBtn = document.getElementById('ts-export-btn');
+    
+    // Shop-specific buttons
+    const shopAnalyzeBtn = document.getElementById('ts-shop-analyze-btn');
+    const shopRevenueDetailBtn = document.getElementById('ts-shop-revenue-detail-btn');
+    const shopVolumeDetailBtn = document.getElementById('ts-shop-volume-detail-btn');
+    const shopInfoDetailBtn = document.getElementById('ts-shop-info-detail-btn');
+    
     const tabs = document.querySelectorAll('[data-tab]');
 
     if (refreshBtn) {
@@ -43,21 +49,49 @@ class ShopeeEventHandlers {
         e.preventDefault();
         this.showMoreData(observer);
       });
-    }
-
-    if (exportBtn) {
+    }    if (exportBtn) {
       exportBtn.addEventListener('click', (e) => {
         e.preventDefault();
         this.exportData(observer);
       });
     }
 
-    tabs.forEach(tab => {
+    // Shop button event listeners
+    if (shopAnalyzeBtn) {
+      shopAnalyzeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showShopAnalysis(observer);
+      });
+    }
+
+    if (shopRevenueDetailBtn) {
+      shopRevenueDetailBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showShopRevenueDetail(observer);
+      });
+    }
+
+    if (shopVolumeDetailBtn) {
+      shopVolumeDetailBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showShopVolumeDetail(observer);
+      });
+    }
+
+    if (shopInfoDetailBtn) {
+      shopInfoDetailBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showShopInfoDetail(observer);
+      });
+    }    tabs.forEach(tab => {
       tab.addEventListener('click', (e) => {
         e.preventDefault();
         this.switchTab(tab.dataset.tab, observer);
       });
     });
+
+    // Add event listeners for shop product cards (delegated events)
+    this.attachShopProductEventListeners(observer);
 
     // Add tooltip event listeners for HTML tooltips (in case they contain HTML)
     this.initializeTooltips();
@@ -207,8 +241,189 @@ class ShopeeEventHandlers {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+      console.log('Product data exported successfully');
+  }
+  static showShopAnalysis(observer) {
+    console.log('🏪 Showing shop analysis for:', observer.currentShopUsername);
     
-    console.log('Product data exported successfully');
+    const stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
+    if (!stats || !stats.shopStats) {
+      ShopeeModalManager.showModal('Analisis Detail Toko', '<p>Data toko tidak tersedia. Pastikan halaman toko sudah dimuat dengan lengkap.</p>');
+      return;
+    }
+
+    // Untuk halaman toko, gunakan modal yang sama seperti halaman search/category dengan card produk yang sama
+    ShopeeModalManager.createDetailModal(stats, observer);
+  }
+
+  static showShopRevenueDetail(observer) {
+    console.log('💰 Showing shop revenue detail');
+    this.showShopAnalysis(observer); // For now, reuse the main analysis
+  }
+
+  static showShopVolumeDetail(observer) {
+    console.log('📊 Showing shop volume detail');
+    this.showShopAnalysis(observer); // For now, reuse the main analysis
+  }
+  static showShopInfoDetail(observer) {
+    console.log('ℹ️ Showing shop info detail');
+    this.showShopAnalysis(observer); // For now, reuse the main analysis
+  }
+
+  static attachShopProductEventListeners(observer) {
+    // Use event delegation for dynamically created product cards
+    document.addEventListener('click', (e) => {
+      // Handle view product button
+      if (e.target.classList.contains('ts-btn-view-product')) {
+        e.preventDefault();
+        const itemId = e.target.dataset.itemId;
+        this.viewProductDetail(itemId, observer);
+      }
+      
+      // Handle analyze product button
+      if (e.target.classList.contains('ts-btn-analyze-product')) {
+        e.preventDefault();
+        const itemId = e.target.dataset.itemId;
+        this.analyzeProduct(itemId, observer);
+      }
+      
+      // Handle product card click (for general interaction)
+      if (e.target.closest('.ts-shop-product-card')) {
+        const card = e.target.closest('.ts-shop-product-card');
+        const itemId = card.dataset.productId;
+        console.log('🛍️ Product card clicked:', itemId);
+        // Optional: add visual feedback or highlight
+        card.style.borderColor = '#f97316';
+        setTimeout(() => {
+          card.style.borderColor = '#e5e7eb';
+        }, 2000);
+      }
+    });
+    
+    // Handle product sorting
+    const sortSelect = document.getElementById('ts-shop-products-sort');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        this.sortShopProducts(e.target.value, observer);
+      });
+    }
+    
+    // Handle product export
+    const exportBtn = document.getElementById('ts-shop-products-export');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.exportShopProducts(observer);
+      });
+    }
+  }
+
+  static viewProductDetail(itemId, observer) {
+    console.log('👀 Viewing product detail for item:', itemId);
+    
+    // Get product data
+    const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
+    const product = products && products[itemId] ? products[itemId] : null;
+    
+    if (!product) {
+      alert('Product data tidak ditemukan');
+      return;
+    }
+    
+    // Show product detail modal or navigate to product page
+    ShopeeModalManager.showProductDetailModal(product, observer);
+  }
+
+  static analyzeProduct(itemId, observer) {
+    console.log('📊 Analyzing product:', itemId);
+    
+    // Get product data
+    const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
+    const product = products && products[itemId] ? products[itemId] : null;
+    
+    if (!product) {
+      alert('Product data tidak ditemukan');
+      return;
+    }
+    
+    // Show product analysis
+    ShopeeModalManager.showProductAnalysisModal(product, observer);
+  }
+
+  static sortShopProducts(sortBy, observer) {
+    console.log('📋 Sorting shop products by:', sortBy);
+    
+    // Get current products
+    const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
+    if (!products || products.length === 0) return;
+    
+    // Sort products based on selected criteria
+    let sortedProducts = [...products];
+    
+    switch (sortBy) {
+      case 'revenue-desc':
+        sortedProducts.sort((a, b) => (b.price * b.sold30d) - (a.price * a.sold30d));
+        break;
+      case 'sold-desc':
+        sortedProducts.sort((a, b) => b.sold30d - a.sold30d);
+        break;
+      case 'price-desc':
+        sortedProducts.sort((a, b) => b.price - a.price);
+        break;
+      case 'price-asc':
+        sortedProducts.sort((a, b) => a.price - b.price);
+        break;
+      case 'rating-desc':
+        sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      default:
+        break;
+    }
+    
+    // Re-render the product grid with sorted data
+    // Note: This requires updating the ShopeeUIGenerator to accept pre-sorted data
+    ShopeeUIUpdater.updateShopProductsTab({}, observer);
+  }
+
+  static exportShopProducts(observer) {
+    console.log('📄 Exporting shop products data');
+    
+    const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
+    if (!products || products.length === 0) {
+      alert('Tidak ada data produk untuk diekspor');
+      return;
+    }
+    
+    // Create CSV data
+    const headers = ['No', 'Nama Produk', 'Harga', 'Terjual 30 Hari', 'Omset 30 Hari', 'Total Terjual', 'Rating'];
+    const csvData = [headers];
+    
+    products.forEach((product, index) => {
+      const revenue30d = product.price * product.sold30d;
+      csvData.push([
+        index + 1,
+        product.name,
+        product.price,
+        product.sold30d,
+        revenue30d,
+        product.historicalSold || 0,
+        product.rating || 'N/A'
+      ]);
+    });
+    
+    // Convert to CSV string
+    const csvString = csvData.map(row => 
+      row.map(cell => `"${cell}"`).join(',')
+    ).join('\n');
+    
+    // Download CSV
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `shopee-products-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    console.log('✅ Product data exported successfully');
   }
 }
 

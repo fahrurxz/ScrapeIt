@@ -53,11 +53,13 @@ class ShopeeDataExtractor {
           }
         }
       }else {
-        console.log('⚠️ No SEARCH_DATA or CATEGORY_DATA available for category page');
-      }
+        console.log('⚠️ No SEARCH_DATA or CATEGORY_DATA available for category page');      }
     } else if (observer.currentPageType === 'product' && observer.apiData.PRODUCT_DATA) {
       console.log('🛍️ Processing product data');
       stats = this.extractProductStats(observer.apiData.PRODUCT_DATA.data);
+    } else if (observer.currentPageType === 'shop' && observer.apiData.SHOP_DATA) {
+      console.log('🏪 Processing shop data');
+      stats = this.extractShopStats(observer);
     }
 
     // LOGIC BARU: Hanya provide default stats untuk search page
@@ -913,9 +915,7 @@ class ShopeeDataExtractor {
       soldPerMonth: soldPerMonth,
       revenuePerMonth: revenuePerMonth,
       avgMonthsElapsed: avgMonthsElapsed
-    };
-
-    console.log('📈 Category trend calculation result:', result);
+    };    console.log('📈 Category trend calculation result:', result);
     return result;
   }
 
@@ -928,5 +928,38 @@ class ShopeeDataExtractor {
       revenuePerMonth: 0,
       avgMonthsElapsed: 1
     };
+  }
+
+  static extractShopStats(observer) {
+    console.log('🏪 Extracting shop statistics');
+    
+    const shopStats = ShopeeProductProcessor.calculateShopStats(observer);
+    if (!shopStats) {
+      console.log('❌ Failed to calculate shop stats');
+      return null;
+    }
+
+    // Create stats object compatible with the UI
+    const stats = {
+      name: shopStats.shopName || 'Toko',
+      minPrice: shopStats.minPrice || 0,
+      maxPrice: shopStats.maxPrice || 0,
+      totalSold: shopStats.totalHistoricalSold || 0,
+      sold30Days: shopStats.totalSold30Days || 0,
+      totalRevenue: shopStats.totalHistoricalRevenue || 0,
+      revenue30Days: shopStats.totalRevenue30Days || 0,
+      soldPerMonth: shopStats.avgMonthlySold || 0,
+      revenuePerMonth: shopStats.avgMonthlyRevenue || 0,
+      productCount: shopStats.productCount || 0,
+      images: shopStats.shopImages || [],
+      avgPrice: shopStats.maxPrice > 0 ? (shopStats.minPrice + shopStats.maxPrice) / 2 : 0,
+      avgMonthsElapsed: 1,
+      
+      // Add shop-specific stats
+      shopStats: shopStats
+    };
+
+    console.log('✅ Shop stats extracted:', stats);
+    return stats;
   }
 }
