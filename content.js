@@ -178,43 +178,42 @@ class ShopeeAnalyticsObserver {  constructor() {
     console.log('🔔 Received API data:', type, 'at', new Date(timestamp).toLocaleTimeString());
     console.log('📊 Current page type:', this.currentPageType);
     console.log('📦 Data preview:', data ? 'Data available' : 'No data');
-      // Debug: Log API data structure for debugging
+    
+    // PERBAIKAN CRITICAL: Store API data IMMEDIATELY untuk SEMUA jenis data
+    // Ini memastikan data tidak hilang saat UI injection
+    this.apiData[type] = {
+      data: data,
+      timestamp: timestamp
+    };
+    
+    console.log('💾 Data stored in apiData for type:', type);
+    console.log('📊 Current apiData keys after storage:', Object.keys(this.apiData));
+    
+    // Debug: Log API data structure for debugging
     if (type === 'PRODUCT_DATA') {
-      console.log('🔍 Product API Data Structure:', data);    } else if (type === 'CATEGORY_DATA') {
-      console.log('🔍 Category API Data Structure:', data);    } else if (type === 'SEARCH_DATA') {      console.log('🔍 Search API Data Structure:', data);
+      console.log('🔍 Product API Data Structure:', data);
+    } else if (type === 'CATEGORY_DATA') {
+      console.log('🔍 Category API Data Structure:', data);
+    } else if (type === 'SEARCH_DATA') {
+      console.log('🔍 Search API Data Structure:', data);
       
-      // Store API data first
-      this.apiData[type] = {
-        data: data,
-        timestamp: timestamp
-      };
-        // Handle pagination data accumulation for search pages
+      // Handle pagination data accumulation untuk SEARCH_DATA setelah menyimpan
       if (this.currentPageType === 'search') {
         this.handleSearchPagination(data);
         
         // Stop loading state if pagination was in progress
         this.stopLoadingState();
+        
+        // Update accumulated data in API after pagination handling
+        if (this.accumulatedData.searchData) {
+          this.apiData[type].data = this.accumulatedData.searchData;
+          console.log('🔄 Updated SEARCH_DATA with accumulated data');
+        }
       }
-      
-      // Update accumulated data in API after pagination handling
-      if (this.currentPageType === 'search' && this.accumulatedData.searchData) {
-        this.apiData[type].data = this.accumulatedData.searchData;
-      }} else if (type === 'SHOP_DATA') {
+    } else if (type === 'SHOP_DATA') {
       console.log('🔍 Shop API Data Structure:', data);
       console.log('🔍 Shop Data Keys:', Object.keys(data || {}));
       console.log('🔍 Shop Data Full:', data);
-      
-      // Store API data
-      this.apiData[type] = {
-        data: data,
-        timestamp: timestamp
-      };
-    } else {
-      // Store API data for other types
-      this.apiData[type] = {
-        data: data,
-        timestamp: timestamp
-      };
     }
     
     // Reset retry count when we receive data
@@ -228,15 +227,17 @@ class ShopeeAnalyticsObserver {  constructor() {
         console.log('🔍 Search data received, UI should already be injected');
         shouldInjectUI = false; // Search UI sudah di-inject di init()
       } else if (this.currentPageType === 'category' && (type === 'SEARCH_DATA' || type === 'CATEGORY_DATA')) {
-        console.log('� Category relevant data received, injecting UI with data');
-        shouldInjectUI = true;        } else if (this.currentPageType === 'product' && type === 'PRODUCT_DATA') {
+        console.log('📂 Category relevant data received, injecting UI with data');
+        shouldInjectUI = true;
+      } else if (this.currentPageType === 'product' && type === 'PRODUCT_DATA') {
         console.log('🛍️ Product data received, injecting UI with data');
         shouldInjectUI = true;
       } else if (this.currentPageType === 'shop' && type === 'SHOP_DATA') {
         console.log('🏪 Shop data received, injecting UI with data');
         shouldInjectUI = true;
       }
-        if (shouldInjectUI) {
+      
+      if (shouldInjectUI) {
         console.log('🎯 Injecting UI with fresh data for', this.currentPageType);
         setTimeout(() => this.waitForTargetAndInject(), 500);
       }
@@ -252,10 +253,24 @@ class ShopeeAnalyticsObserver {  constructor() {
       console.log('Received API data from background:', request.data);
       // Handle data from background script if needed
     }  }  injectUI() {
-    if (this.uiInjected) return;
+    if (this.uiInjected) {
+      console.log('⚠️ UI already injected, skipping');
+      return;
+    }
     
     console.log(`🎨 Starting UI injection for page type: ${this.currentPageType}`);
     console.log('📊 Available API data:', Object.keys(this.apiData));
+    
+    // PERBAIKAN CRITICAL: Debugging data yang tersedia saat UI injection
+    if (Object.keys(this.apiData).length > 0) {
+      console.log('💾 API Data tersedia saat UI injection:');
+      Object.keys(this.apiData).forEach(key => {
+        console.log(`   - ${key}: ${this.apiData[key]?.data ? 'Has data' : 'No data'} (${this.apiData[key]?.timestamp})`);
+      });
+    } else {
+      console.log('⚠️ CRITICAL: No API data available during UI injection!');
+      console.log('🔍 This may indicate a race condition or data storage issue');
+    }
     
     // Don't wait for data - inject UI immediately like search page
     // UI will update automatically when API data arrives

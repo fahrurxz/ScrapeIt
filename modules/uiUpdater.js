@@ -5,7 +5,14 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     // Extract data based on page type and available API data
     let stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
-    console.log('📈 Extracted stats:', stats);    // Untuk category dan product pages: UI hanya di-inject jika ada data real
+    console.log('📈 Extracted stats:', stats);
+    
+    // PERBAIKAN: Untuk category pages, jika extractStatsFromAPIData gagal, 
+    // coba extract manual dari data yang tersedia
+    if (!stats && observer.currentPageType === 'category' && Object.keys(observer.apiData).length > 0) {
+      console.log('🔄 Category stats extraction failed, trying manual extraction...');
+      stats = this.extractCategoryStatsManual(observer);
+    }// Untuk category dan product pages: UI hanya di-inject jika ada data real
     // Untuk search page: tetap menggunakan approach lama (bisa default atau real data)
     const productCountEl = document.getElementById('ts-product-count');
     const shopStatusEl = document.getElementById('ts-shop-status');
@@ -53,8 +60,21 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       }
       
       this.showDefaultValues(observer.currentPageType);    } else {
-      // Category/Product/Shop pages: ini tidak seharusnya terjadi karena UI hanya di-inject setelah ada data
-      console.log(`⚠️ ${observer.currentPageType} page with no real data - this should not happen`);
+      // Category/Product/Shop pages: show fallback atau debugging info
+      console.log(`⚠️ ${observer.currentPageType} page with no real data - showing fallback`);
+      
+      if (observer.currentPageType === 'category') {
+        // Untuk kategori, coba tampilkan informasi debugging
+        if (productCountEl) {
+          productCountEl.textContent = 'Memuat...';
+        }
+        
+        // Coba lagi setelah delay
+        setTimeout(() => {
+          console.log('🔄 Retrying category data extraction after delay...');
+          this.updateUIWithData(observer);
+        }, 2000);
+      }
     }
   }static showLoadingState() {
     // DEPRECATED: No longer show loading states - always show defaults immediately
@@ -552,6 +572,45 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     if (moreBtnEl && moreBtnEl.dataset.shouldShow === 'true') {
       moreBtnEl.style.display = 'inline';
     }
+  }
+  
+  // Helper method untuk manual category stats extraction
+  static extractCategoryStatsManual(observer) {
+    console.log('🔧 Manual category stats extraction...');
+    
+    // Coba extract dari CATEGORY_DATA
+    if (observer.apiData.CATEGORY_DATA) {
+      const data = observer.apiData.CATEGORY_DATA.data;
+      console.log('📦 Manual extraction from CATEGORY_DATA:', data);
+      
+      if (data && data.data && data.data.units) {
+        const units = data.data.units;
+        const itemUnits = units.filter(unit => unit.data_type === 'item' && unit.item);
+        
+        console.log(`✅ Manual extraction found ${itemUnits.length} items from ${units.length} units`);
+        
+        if (itemUnits.length > 0) {
+          return {
+            productCount: itemUnits.length,
+            totalCount: data.data.total || itemUnits.length,
+            pageType: 'category'
+          };
+        }
+      }
+    }
+    
+    // Coba extract dari SEARCH_DATA
+    if (observer.apiData.SEARCH_DATA) {
+      console.log('📦 Manual extraction from SEARCH_DATA for category');
+      const searchStats = ShopeeDataExtractor.extractSearchStats(observer.apiData.SEARCH_DATA.data);
+      if (searchStats) {
+        console.log('✅ Manual extraction succeeded from SEARCH_DATA');
+        return searchStats;
+      }
+    }
+    
+    console.log('❌ Manual extraction failed');
+    return null;
   }
 }
 
