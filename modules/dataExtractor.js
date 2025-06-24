@@ -1,6 +1,5 @@
 // Data extraction and processing functions for Shopee Analytics Observer
-class ShopeeDataExtractor {
-  static extractStatsFromAPIData(observer) {
+class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
     console.log('🔍 Extracting stats for page type:', observer.currentPageType);
     console.log('📊 Available API data:', Object.keys(observer.apiData));
     
@@ -9,18 +8,39 @@ class ShopeeDataExtractor {
 
     if (observer.currentPageType === 'search' && observer.apiData.SEARCH_DATA) {
       console.log('🔍 Processing search data');
-      stats = this.extractSearchStats(observer.apiData.SEARCH_DATA.data);
-    } else if (observer.currentPageType === 'category') {
+      
+      // PERBAIKAN: Gunakan accumulated data jika tersedia untuk analisis detail yang lengkap
+      let dataToAnalyze = observer.apiData.SEARCH_DATA.data;
+      
+      if (observer.accumulatedData && observer.accumulatedData.searchData && 
+          observer.accumulatedData.totalProducts > 0) {
+        console.log(`📊 Using accumulated data for detailed analysis (${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages)`);
+        dataToAnalyze = observer.accumulatedData.searchData;
+      } else {
+        console.log('📊 Using current page data for analysis');
+      }
+      
+      stats = this.extractSearchStats(dataToAnalyze);    } else if (observer.currentPageType === 'category') {
       // Untuk kategori, coba search data terlebih dahulu (lebih stabil)
       if (observer.apiData.SEARCH_DATA) {
         console.log('📂 Processing category with search data (preferred)');
         console.log('🔍 Search data for category:', observer.apiData.SEARCH_DATA.data);
-        stats = this.extractSearchStats(observer.apiData.SEARCH_DATA.data);
+        
+        // PERBAIKAN: Gunakan accumulated data jika tersedia untuk kategori juga
+        let dataToAnalyze = observer.apiData.SEARCH_DATA.data;
+        
+        if (observer.accumulatedData && observer.accumulatedData.searchData && 
+            observer.accumulatedData.totalProducts > 0) {
+          console.log(`📂 Using accumulated data for category analysis (${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages)`);
+          dataToAnalyze = observer.accumulatedData.searchData;
+        }
+        
+        stats = this.extractSearchStats(dataToAnalyze);
         if (stats) {
           console.log('✅ Successfully extracted stats from search data for category page:', stats);
         } else {
           console.log('❌ Failed to extract stats from search data for category');
-        }      } else if (observer.apiData.CATEGORY_DATA) {
+        }} else if (observer.apiData.CATEGORY_DATA) {
         console.log('📂 Processing category data as fallback');
         console.log('📦 Category data preview:', observer.apiData.CATEGORY_DATA.data);
         console.log('📦 Category data full structure check:', {

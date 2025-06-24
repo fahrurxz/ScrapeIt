@@ -1,6 +1,5 @@
 // Product data processing functions for Shopee Analytics Observer
-class ShopeeProductProcessor {
-    static extractProductsFromAPI(count = 5, observer) {
+class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, observer) {
     // Extract real products from API data instead of using mock data
     console.log('🔍 extractProductsFromAPI called for', observer.currentPageType, 'with count:', count);
     console.log('📊 Available API data:', Object.keys(observer.apiData));
@@ -11,31 +10,51 @@ class ShopeeProductProcessor {
     // Get real items from API data based on current page type
     if (observer.currentPageType === 'search' && observer.apiData.SEARCH_DATA) {
       console.log('🔍 Processing SEARCH_DATA for search page');
-      const data = observer.apiData.SEARCH_DATA.data;
-      if (data.items) {
-        items = data.items;
-      } else if (data.data && data.data.items) {
-        items = data.data.items;
-      } else if (data.sections) {
-        items = data.sections.flatMap(section => section.data?.items || []);
-      } else if (Array.isArray(data)) {
-        items = data;
+      
+      // PERBAIKAN: Gunakan accumulated data jika tersedia untuk product list yang lengkap
+      let dataToProcess = observer.apiData.SEARCH_DATA.data;
+      
+      if (observer.accumulatedData && observer.accumulatedData.searchData && 
+          observer.accumulatedData.totalProducts > 0) {
+        console.log(`📊 Using accumulated data for product extraction (${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages)`);
+        dataToProcess = observer.accumulatedData.searchData;
+      } else {
+        console.log('📊 Using current page data for product extraction');
+      }
+      
+      if (dataToProcess.items) {
+        items = dataToProcess.items;
+      } else if (dataToProcess.data && dataToProcess.data.items) {
+        items = dataToProcess.data.items;
+      } else if (dataToProcess.sections) {
+        items = dataToProcess.sections.flatMap(section => section.data?.items || []);
+      } else if (Array.isArray(dataToProcess)) {
+        items = dataToProcess;
       }    } else if (observer.currentPageType === 'category') {
       // PERBAIKAN: Prioritaskan SEARCH_DATA untuk kategori (lebih stabil)
       if (observer.apiData.SEARCH_DATA) {
         console.log('📂 Using SEARCH_DATA for category products (preferred)');
-        const data = observer.apiData.SEARCH_DATA.data;
-        if (data.items) {
-          items = data.items;
+        
+        // PERBAIKAN: Gunakan accumulated data jika tersedia untuk kategori juga
+        let dataToProcess = observer.apiData.SEARCH_DATA.data;
+        
+        if (observer.accumulatedData && observer.accumulatedData.searchData && 
+            observer.accumulatedData.totalProducts > 0) {
+          console.log(`📂 Using accumulated data for category product extraction (${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages)`);
+          dataToProcess = observer.accumulatedData.searchData;
+        }
+        
+        if (dataToProcess.items) {
+          items = dataToProcess.items;
           console.log('✅ Found items in SEARCH_DATA.data.items:', items.length);
-        } else if (data.data && data.data.items) {
-          items = data.data.items;
+        } else if (dataToProcess.data && dataToProcess.data.items) {
+          items = dataToProcess.data.items;
           console.log('✅ Found items in SEARCH_DATA.data.data.items:', items.length);
-        } else if (data.sections) {
-          items = data.sections.flatMap(section => section.data?.items || []);
+        } else if (dataToProcess.sections) {
+          items = dataToProcess.sections.flatMap(section => section.data?.items || []);
           console.log('✅ Found items in SEARCH_DATA.data.sections:', items.length);
-        } else if (Array.isArray(data)) {
-          items = data;
+        } else if (Array.isArray(dataToProcess)) {
+          items = dataToProcess;
           console.log('✅ Found items in SEARCH_DATA.data (array):', items.length);
         }
       } else if (observer.apiData.CATEGORY_DATA) {

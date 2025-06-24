@@ -1,13 +1,21 @@
 // Main Content script untuk Shopee Analytics Observer - Modular Version
-class ShopeeAnalyticsObserver {
-  constructor() {
+class ShopeeAnalyticsObserver {  constructor() {
     this.currentPageType = null;
     this.apiData = {};
     this.uiInjected = false;
     this.retryCount = 0;
     this.maxRetries = 6; // Maximum 6 retries (12 seconds)
+    
+    // Pagination data storage
+    this.accumulatedData = {
+      searchData: null,
+      totalProducts: 0,
+      currentPage: 0,
+      hasMorePages: true
+    };
+    
     this.init();
-  }  init() {
+  }init() {
     // Inject the script to intercept API calls
     this.injectScript();
     
@@ -111,12 +119,42 @@ class ShopeeAnalyticsObserver {
       if (url !== lastUrl) {
         lastUrl = url;
         console.log('🔄 URL changed to:', url);
+          // Check if this is a pagination navigation (same search, different page)
+        const oldUrlParams = new URLSearchParams(new URL(lastUrl).search);
+        const newUrlParams = new URLSearchParams(window.location.search);
+        const oldKeyword = oldUrlParams.get('keyword');
+        const newKeyword = newUrlParams.get('keyword');
+        const oldPage = parseInt(oldUrlParams.get('page') || '0');
+        const newPage = parseInt(newUrlParams.get('page') || '0');
+        
+        // Detect page type first to know current page type
+        const oldPageType = this.currentPageType;
         this.detectPageType();
+        
+        const isPagination = (oldKeyword === newKeyword && oldKeyword && newKeyword && 
+                             oldPageType === 'search' && this.currentPageType === 'search' && 
+                             newPage >= oldPage); // Allow same page or next page
+        
+        console.log(`🔍 Navigation check: isPagination=${isPagination}, oldPage=${oldPage}, newPage=${newPage}, keyword="${newKeyword}", oldPageType=${oldPageType}, newPageType=${this.currentPageType}`);
         this.uiInjected = false;
         this.retryCount = 0; // Reset retry count on navigation
-        
-        // Reset API data ketika navigasi
-        this.apiData = {};
+          // Reset data unless this is pagination
+        if (!isPagination) {
+          console.log('🔄 Resetting API data and accumulated data for new navigation');
+          this.apiData = {};
+          this.accumulatedData = {
+            searchData: null,
+            totalProducts: 0,
+            currentPage: 0,
+            hasMorePages: true
+          };
+        } else {
+          console.log('📄 Pagination detected - keeping accumulated data:', {
+            currentProducts: this.accumulatedData.totalProducts,
+            currentPage: this.accumulatedData.currentPage,
+            hasSearchData: !!this.accumulatedData.searchData
+          });
+        }
           // LOGIC BARU: Inject UI strategy berdasarkan page type
         if (this.currentPageType === 'search') {
           // Search: inject immediately
@@ -143,18 +181,41 @@ class ShopeeAnalyticsObserver {
       // Debug: Log API data structure for debugging
     if (type === 'PRODUCT_DATA') {
       console.log('🔍 Product API Data Structure:', data);    } else if (type === 'CATEGORY_DATA') {
-      console.log('🔍 Category API Data Structure:', data);
-    } else if (type === 'SEARCH_DATA') {      console.log('🔍 Search API Data Structure:', data);
-    } else if (type === 'SHOP_DATA') {
+      console.log('🔍 Category API Data Structure:', data);    } else if (type === 'SEARCH_DATA') {      console.log('🔍 Search API Data Structure:', data);
+      
+      // Store API data first
+      this.apiData[type] = {
+        data: data,
+        timestamp: timestamp
+      };
+        // Handle pagination data accumulation for search pages
+      if (this.currentPageType === 'search') {
+        this.handleSearchPagination(data);
+        
+        // Stop loading state if pagination was in progress
+        this.stopLoadingState();
+      }
+      
+      // Update accumulated data in API after pagination handling
+      if (this.currentPageType === 'search' && this.accumulatedData.searchData) {
+        this.apiData[type].data = this.accumulatedData.searchData;
+      }} else if (type === 'SHOP_DATA') {
       console.log('🔍 Shop API Data Structure:', data);
       console.log('🔍 Shop Data Keys:', Object.keys(data || {}));
       console.log('🔍 Shop Data Full:', data);
+      
+      // Store API data
+      this.apiData[type] = {
+        data: data,
+        timestamp: timestamp
+      };
+    } else {
+      // Store API data for other types
+      this.apiData[type] = {
+        data: data,
+        timestamp: timestamp
+      };
     }
-    
-    this.apiData[type] = {
-      data: data,
-      timestamp: timestamp
-    };
     
     // Reset retry count when we receive data
     this.retryCount = 0;
@@ -413,12 +474,156 @@ class ShopeeAnalyticsObserver {
       childList: true,
       subtree: true
     });
+      console.log('👁️ DOM observer setup for', this.currentPageType, 'page');
+  }  handleSearchPagination(newData) {
+    console.log('📊 Handling search pagination data');
     
-    console.log('👁️ DOM observer setup for', this.currentPageType, 'page');
+    if (!newData) {
+      console.log('⚠️ No new data provided to handleSearchPagination');
+      return;
+    }
+    
+    // Get current page from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page') || '0');
+    
+    console.log(`📄 Current page: ${currentPage}`);
+    console.log('🔍 Current accumulatedData state:', {
+      hasSearchData: !!this.accumulatedData.searchData,
+      totalProducts: this.accumulatedData.totalProducts,
+      storedPage: this.accumulatedData.currentPage
+    });
+    
+    // Check if new data has items
+    const newItems = this.getItemsFromData(newData);
+    const hasNewItems = newItems && newItems.length > 0;
+    
+    console.log(`📦 New data has ${newItems ? newItems.length : 0} items`);
+    
+    // If this is the first page (page 0), initialize accumulated data
+    if (currentPage === 0) {
+      console.log('🆕 Initializing accumulated data for first page');
+      this.accumulatedData = {
+        searchData: this.deepClone(newData),
+        totalProducts: 0,
+        currentPage: currentPage,
+        hasMorePages: hasNewItems
+      };
+    } else {      console.log(`📈 Accumulating data from page ${currentPage}`);
+      
+      // Check if accumulated data was lost (navigation issue) - reinitialize if needed
+      if (!this.accumulatedData.searchData) {
+        console.log('⚠️ Accumulated data was lost - treating page as first page');
+        this.accumulatedData = {
+          searchData: this.deepClone(newData),
+          totalProducts: 0,
+          currentPage: currentPage,
+          hasMorePages: hasNewItems
+        };
+      } else {
+        // Check if this page has no new items (end of results)
+        if (!hasNewItems) {
+          console.log('🚫 No new items found - reached end of results');
+          this.accumulatedData.hasMorePages = false;
+        } else {
+          // Merge new items with existing accumulated data
+          if (this.accumulatedData.searchData && newData) {
+            this.mergeSearchData(this.accumulatedData.searchData, newData);
+          }
+          
+          // Check if this page has fewer items than expected (might be last page)
+          this.accumulatedData.hasMorePages = newItems.length >= 50; // Shopee typically shows 60 items per page, but let's be conservative
+        }
+        
+        this.accumulatedData.currentPage = currentPage;
+      }
+    }
+    
+    // Count total products
+    this.countTotalProducts();
+      console.log(`✅ Accumulated data updated. Total products: ${this.accumulatedData.totalProducts}, Current page: ${currentPage}, Has more: ${this.accumulatedData.hasMorePages}`);
+  }
+  stopLoadingState() {
+    if (this._isLoadingMore && this._loadingButton) {
+      console.log('🔄 Stopping loading state - data received');
+      
+      // Clear timeout
+      if (this._loadingTimeout) {
+        clearTimeout(this._loadingTimeout);
+        delete this._loadingTimeout;
+      }
+      
+      // Stop loading state on button
+      ShopeeEventHandlers.setLoadingState(this._loadingButton, false);
+      
+      // Hide pagination loading indicator
+      ShopeeUIUpdater.hidePaginationLoading();
+      
+      // Clean up references
+      delete this._loadingButton;
+      this._isLoadingMore = false;
+    }
+  }
+  mergeSearchData(accumulatedData, newData) {
+    console.log('🔄 Merging new search data with accumulated data');
+    
+    if (!accumulatedData || !newData) {
+      console.log('⚠️ Cannot merge data - missing accumulated or new data');
+      return;
+    }
+    
+    // Find items array in both data structures
+    let accumulatedItems = this.getItemsFromData(accumulatedData);
+    let newItems = this.getItemsFromData(newData);
+    
+    if (accumulatedItems && newItems && newItems.length > 0) {
+      // Merge new items into accumulated items
+      accumulatedItems.push(...newItems);
+      console.log(`📦 Merged ${newItems.length} new items. Total items: ${accumulatedItems.length}`);
+    } else {
+      console.log('⚠️ Cannot merge items - one or both arrays are empty/null');
+    }
+  }
+
+  getItemsFromData(data) {
+    if (!data) return null;
+    
+    if (data.items) return data.items;
+    if (data.data && data.data.items) return data.data.items;
+    if (data.sections) {
+      return data.sections.flatMap(section => section.data?.items || []);
+    }
+    if (Array.isArray(data)) return data;
+    
+    return null;
+  }
+  countTotalProducts() {
+    if (this.accumulatedData && this.accumulatedData.searchData) {
+      const items = this.getItemsFromData(this.accumulatedData.searchData);
+      this.accumulatedData.totalProducts = items ? items.length : 0;
+    } else {
+      console.log('⚠️ Cannot count products - no accumulated search data');
+      if (this.accumulatedData) {
+        this.accumulatedData.totalProducts = 0;
+      }
+    }
+  }
+
+  deepClone(obj) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (obj instanceof Date) return new Date(obj.getTime());
+    if (obj instanceof Array) return obj.map(item => this.deepClone(item));
+    if (typeof obj === 'object') {
+      const copy = {};
+      Object.keys(obj).forEach(key => {
+        copy[key] = this.deepClone(obj[key]);
+      });
+      return copy;
+    }
   }
 }
 
 // Initialize the observer when the script loads
 if (window.location.hostname === 'shopee.co.id') {
-  new ShopeeAnalyticsObserver();
+  window.shopeeObserver = new ShopeeAnalyticsObserver();
 }

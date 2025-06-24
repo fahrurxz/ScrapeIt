@@ -2368,3 +2368,143 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Loading Spinner Styles */
+.ts-loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 8px;
+}
+
+.ts-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: ts-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ts-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ts-loading-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.ts-loading-dots span {
+  width: 4px;
+  height: 4px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  animation: ts-bounce 1.4s ease-in-out infinite both;
+}
+
+.ts-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.ts-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.ts-loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes ts-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  } 40% {
+    transform: scale(1);
+  }
+}
+
+/* Button loading state */
+.ts-btn-loading {
+  position: relative;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.ts-btn-loading .ts-loading-spinner {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.ts-btn-loading .ts-spinner {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ffffff;
+}
+
+/* Sortable List Headers */
+.ts-sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.ts-sortable:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.ts-sort-icon {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-left: 4px;
+  transition: color 0.2s ease;
+  opacity: 0.6;
+}
+
+.ts-sortable:hover .ts-sort-icon {
+  color: #374151;
+  opacity: 1;
+}
+
+/* Active sort states */
+.ts-sortable.ts-sort-asc .ts-sort-icon {
+  color: #3b82f6;
+  opacity: 1;
+}
+
+.ts-sortable.ts-sort-desc .ts-sort-icon {
+  color: #3b82f6;
+  opacity: 1;
+}
+
+/* Sort direction indicators */
+.ts-sortable.ts-sort-asc .ts-sort-icon::before {
+  content: '▲';
+  font-size: 10px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.ts-sortable.ts-sort-desc .ts-sort-icon::before {
+  content: '▼';
+  font-size: 10px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Hide default sort icon when active */
+.ts-sortable.ts-sort-asc .ts-sort-icon,
+.ts-sortable.ts-sort-desc .ts-sort-icon {
+  position: relative;
+  font-size: 0;
+}
+
+.ts-sortable.ts-sort-asc .ts-sort-icon::before,
+.ts-sortable.ts-sort-desc .ts-sort-icon::before {
+  font-size: 10px;
+  color: #3b82f6;
+}

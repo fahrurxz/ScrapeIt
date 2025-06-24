@@ -267,15 +267,16 @@ class ShopeeModalManager {
       sortSelect.addEventListener('change', (e) => {
         this.handleSortChange(e.target.value, observer);
       });
-    }
-
-    // View toggle functionality
+    }    // View toggle functionality
     viewToggleBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         this.handleViewToggle(btn.dataset.view, observer);
       });
-    });
+    });    // Sortable list headers functionality
+    setTimeout(() => {
+      this.attachSortableListeners(observer);
+    }, 200);
 
     // ESC key to close
     document.addEventListener('keydown', this.handleDetailModalKeydown.bind(this));
@@ -353,16 +354,28 @@ class ShopeeModalManager {
       }
     }
   }
-
   static handleSortChange(sortValue, observer) {
     console.log('Sorting products by:', sortValue);
     
     const container = document.getElementById('ts-products-container');
     if (!container) return;
 
+    // PERBAIKAN: Gunakan logic yang sama untuk mendapatkan semua produk
+    let productCount = 60; // Default count
+    
+    // Jika ada accumulated data, gunakan semua produk yang tersedia
+    if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
+      productCount = observer.accumulatedData.totalProducts;
+      console.log(`📊 Using all ${productCount} accumulated products for sorting`);
+    } else {
+      console.log('📊 Using default 60 products for sorting');
+    }
+
     // Get current products
-    const products = ShopeeProductProcessor.extractProductsFromAPI(60, observer);
+    const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
     if (!products || products.length === 0) return;
+
+    console.log(`✅ Sorting ${products.length} products by: ${sortValue}`);
 
     // Sort products based on selected option
     let sortedProducts = [...products];
@@ -391,7 +404,6 @@ class ShopeeModalManager {
     // Re-generate the grid with sorted products
     container.innerHTML = ShopeeUIGenerator.generateSortedProductGrid(sortedProducts);
   }
-
   static handleViewToggle(viewType, observer) {
     console.log('Switching view to:', viewType);
     
@@ -407,10 +419,28 @@ class ShopeeModalManager {
 
     container.className = viewType === 'list' ? 'ts-products-list-full' : 'ts-products-grid-full';
     
+    // PERBAIKAN: Gunakan logic yang sama dengan grid view untuk mendapatkan semua produk
+    let productCount = 60; // Default count
+    
+    // Jika ada accumulated data, gunakan semua produk yang tersedia
+    if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
+      productCount = observer.accumulatedData.totalProducts;
+      console.log(`📊 Using all ${productCount} accumulated products for ${viewType} view`);
+    } else {
+      console.log(`📊 Using default 60 products for ${viewType} view`);
+    }
+    
     // Re-generate content with appropriate view
-    const products = ShopeeProductProcessor.extractProductsFromAPI(60, observer);
-    if (!products || products.length === 0) return;    if (viewType === 'list') {
+    const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
+    if (!products || products.length === 0) return;    console.log(`✅ Generated ${viewType} view with ${products.length} products`);
+
+    if (viewType === 'list') {
       container.innerHTML = ShopeeUIGenerator.generateProductListView(products);
+      
+      // Re-attach sortable listeners after list view is generated
+      setTimeout(() => {
+        this.attachSortableListeners(observer);
+      }, 100);
     } else {
       container.innerHTML = ShopeeUIGenerator.generateFullProductGrid({ productCount: products.length }, observer);
     }
@@ -693,7 +723,6 @@ class ShopeeModalManager {
     
     return insights.map(insight => `<div class="ts-insight-item">${insight}</div>`).join('');
   }
-
   static attachSimpleModalListeners(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -721,6 +750,133 @@ class ShopeeModalManager {
         document.removeEventListener('keydown', escHandler);
       }
     });
+  }
+  static attachSortableListeners(observer) {
+    // Add event listeners for sortable list headers
+    const sortableHeaders = document.querySelectorAll('.ts-sortable');
+    console.log('🔧 Attaching sortable listeners to', sortableHeaders.length, 'headers');
+    
+    if (sortableHeaders.length === 0) {
+      console.warn('⚠️ No sortable headers found! Checking in 1 second...');
+      setTimeout(() => {
+        const retryHeaders = document.querySelectorAll('.ts-sortable');
+        console.log('🔄 Retry: Found', retryHeaders.length, 'sortable headers');
+        if (retryHeaders.length > 0) {
+          this.attachSortableListenersToElements(retryHeaders, observer);
+        }
+      }, 1000);
+      return;
+    }
+    
+    this.attachSortableListenersToElements(sortableHeaders, observer);
+  }
+
+  static attachSortableListenersToElements(sortableHeaders, observer) {
+    sortableHeaders.forEach((header, index) => {
+      console.log(`🔗 Attaching listener to header ${index}:`, header.dataset.sort, header);
+      header.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('🎯 Header clicked:', header.dataset.sort);
+        this.handleListSort(header, observer);
+      });
+    });
+    console.log('✅ All sortable listeners attached successfully');
+  }
+  static handleListSort(header, observer) {
+    const sortField = header.dataset.sort;
+    console.log('🔄 Sorting list by:', sortField);
+    console.log('📊 Observer data:', {
+      accumulatedData: observer.accumulatedData,
+      totalProducts: observer.accumulatedData?.totalProducts || 0,
+      hasSearchData: !!observer.accumulatedData?.searchData
+    });
+    
+    // Remove active sort class from all headers
+    document.querySelectorAll('.ts-sortable').forEach(h => {
+      h.classList.remove('ts-sort-asc', 'ts-sort-desc');
+    });
+    
+    // Determine sort direction
+    let sortDirection = 'desc'; // Default to descending for most fields
+    const currentSort = header.getAttribute('data-current-sort');
+    
+    if (currentSort === 'desc') {
+      sortDirection = 'asc';
+    } else if (currentSort === 'asc') {
+      sortDirection = 'desc';
+    }
+    
+    // Update sort indicator
+    header.classList.add(sortDirection === 'asc' ? 'ts-sort-asc' : 'ts-sort-desc');
+    header.setAttribute('data-current-sort', sortDirection);
+    
+    // Get products and sort them
+    let productCount = 60; // Default count
+    
+    if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
+      productCount = observer.accumulatedData.totalProducts;
+    }
+    
+    const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
+    if (!products || products.length === 0) return;
+    
+    // Sort products based on field and direction
+    const sortedProducts = this.sortProductsByField(products, sortField, sortDirection);
+    
+    console.log(`✅ Sorted ${sortedProducts.length} products by ${sortField} (${sortDirection})`);
+    
+    // Update the list view
+    const container = document.getElementById('ts-products-container');
+    if (container) {
+      container.innerHTML = ShopeeUIGenerator.generateProductListView(sortedProducts);
+      
+      // Re-attach sortable listeners after regenerating content
+      setTimeout(() => {
+        this.attachSortableListeners(observer);
+        
+        // Restore sort indicator
+        const newHeader = document.querySelector(`[data-sort="${sortField}"]`);
+        if (newHeader) {
+          newHeader.classList.add(sortDirection === 'asc' ? 'ts-sort-asc' : 'ts-sort-desc');
+          newHeader.setAttribute('data-current-sort', sortDirection);
+        }
+      }, 100);
+    }
+  }
+
+  static sortProductsByField(products, field, direction) {
+    const sortedProducts = [...products];
+    
+    sortedProducts.sort((a, b) => {
+      let valueA = a[field];
+      let valueB = b[field];
+      
+      // Handle different data types
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        // String comparison (case insensitive)
+        valueA = valueA.toLowerCase();
+        valueB = valueB.toLowerCase();
+      } else if (typeof valueA === 'number' && typeof valueB === 'number') {
+        // Numeric comparison - already handled below
+      } else {
+        // Convert to numbers if possible
+        const numA = parseFloat(valueA) || 0;
+        const numB = parseFloat(valueB) || 0;
+        valueA = numA;
+        valueB = numB;
+      }
+      
+      // Compare values
+      if (valueA < valueB) {
+        return direction === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    
+    return sortedProducts;
   }
 }
 

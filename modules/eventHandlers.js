@@ -42,14 +42,12 @@ class ShopeeEventHandlers {
         e.preventDefault();
         this.showVolumeDetail(observer);
       });
-    }
-
-    if (moreBtn) {
+    }    if (moreBtn) {
       moreBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        this.showMoreData(observer);
+        this.showMoreDataWithLoading(observer, moreBtn);
       });
-    }    if (exportBtn) {
+    }if (exportBtn) {
       exportBtn.addEventListener('click', (e) => {
         e.preventDefault();
         this.exportData(observer);
@@ -168,12 +166,125 @@ class ShopeeEventHandlers {
     console.log('Opening volume detail analysis...');
     // You can implement specific volume detail functionality here
     this.showDetailAnalysis(observer);
+  }  static showMoreDataWithLoading(observer, buttonElement) {
+    console.log('Loading more data with loading indicator...');
+    
+    // Cek apakah ini halaman search
+    if (observer.currentPageType !== 'search') {
+      alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian');
+      return;
+    }
+
+    // Show loading state immediately on button
+    this.setLoadingState(buttonElement, true);
+    
+    // Show pagination loading indicator as well
+    ShopeeUIUpdater.showPaginationLoading();
+    
+    // Store reference for cleanup
+    observer._loadingButton = buttonElement;
+    observer._isLoadingMore = true;
+    
+    // Get current page and calculate next page
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page') || '0');
+    const nextPage = currentPage + 1;
+    
+    // Update URL dengan parameter page baru
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('page', nextPage.toString());
+    
+    console.log(`🔄 Loading page ${nextPage} for more data...`);
+    
+    // Navigate to next page
+    window.history.pushState({}, '', newUrl.toString());
+    
+    // Trigger navigation detection
+    window.dispatchEvent(new PopStateEvent('popstate'));
+      // Set timeout untuk fallback jika loading terlalu lama
+    observer._loadingTimeout = setTimeout(() => {
+      if (observer._isLoadingMore) {
+        console.log('⏰ Loading timeout reached, stopping loading state');
+        this.setLoadingState(buttonElement, false);
+        ShopeeUIUpdater.hidePaginationLoading();
+        observer._isLoadingMore = false;
+      }
+    }, 10000); // 10 second timeout
+  }
+
+  static setLoadingState(buttonElement, isLoading) {
+    if (!buttonElement) return;
+    
+    if (isLoading) {
+      // Store original state
+      if (!buttonElement._originalState) {
+        buttonElement._originalState = {
+          text: buttonElement.innerHTML,
+          disabled: buttonElement.disabled,
+          className: buttonElement.className
+        };
+      }
+      
+      // Set loading state
+      buttonElement.innerHTML = `
+        <span class="ts-loading-spinner">
+          <div class="ts-spinner"></div>
+          Memuat halaman...
+        </span>
+      `;
+      buttonElement.disabled = true;
+      buttonElement.classList.add('ts-btn-loading');
+    } else {
+      // Restore original state
+      if (buttonElement._originalState) {
+        buttonElement.innerHTML = buttonElement._originalState.text;
+        buttonElement.disabled = buttonElement._originalState.disabled;
+        buttonElement.className = buttonElement._originalState.className;
+        delete buttonElement._originalState;
+      }
+    }
   }
 
   static showMoreData(observer) {
     console.log('Loading more data...');
-    // You can implement more data loading functionality here
-    alert('Fitur "Lebih banyak" akan segera tersedia');
+    
+    // Cek apakah ini halaman search
+    if (observer.currentPageType !== 'search') {
+      alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian');
+      return;
+    }
+
+    // Dapatkan current page dari URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page') || '0');
+    const nextPage = currentPage + 1;
+    
+    // Update URL dengan parameter page baru
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('page', nextPage.toString());
+    
+    // Show loading state
+    const moreBtn = document.getElementById('ts-more-btn');
+    if (moreBtn) {
+      const originalText = moreBtn.textContent;
+      moreBtn.textContent = 'Memuat...';
+      moreBtn.disabled = true;
+      
+      // Navigate to next page
+      console.log(`🔄 Loading page ${nextPage} for more data...`);
+      window.history.pushState({}, '', newUrl.toString());
+      
+      // Trigger navigation detection
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      
+      // Reset button after navigation
+      setTimeout(() => {
+        if (moreBtn) {
+          moreBtn.textContent = originalText;
+          moreBtn.disabled = false;
+        }
+      }, 3000);
+    }
   }
   static exportData(observer) {
     console.log('Exporting data...');

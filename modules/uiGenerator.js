@@ -148,10 +148,12 @@ class ShopeeUIGenerator {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="ts-footer-text">
-            <span>Data berdasarkan <b class="ts-text-black/[0.5]" id="ts-product-count">0</b> produk dari ${pageTypeText.toLowerCase()}.</span> 
+          </div>          <div class="ts-footer-text">
+            <span id="ts-pagination-info">Data berdasarkan <b class="ts-text-black/[0.5]" id="ts-product-count">0</b> produk dari ${pageTypeText.toLowerCase()}.</span> 
+            <span id="ts-loading-indicator" class="ts-loading-spinner" style="display: none;">
+              <div class="ts-spinner"></div>
+              Memuat data...
+            </span>
             <a href="#" class="ts-text-blue-500" id="ts-more-btn">+Lebih banyak</a>
           </div>
         </div>
@@ -510,18 +512,28 @@ class ShopeeUIGenerator {
     }
     
     return grid;
-  }
-  static generateFullProductGrid(stats, observer) {
-    // Generate full product grid using real products from API
-    const products = ShopeeProductProcessor.extractProductsFromAPI(60, observer);
+  }  static generateFullProductGrid(stats, observer) {
+    // PERBAIKAN: Generate full product grid using ALL available products when accumulated data exists
+    let productCount = 60; // Default count
+    
+    // Jika ada accumulated data, gunakan semua produk yang tersedia
+    if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
+      productCount = observer.accumulatedData.totalProducts;
+      console.log(`📊 Using all ${productCount} accumulated products for detailed analysis`);
+    } else {
+      console.log('📊 Using default 60 products for detailed analysis');
+    }
+    
+    const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
     
     if (!products || products.length === 0) {
       return '<div class="ts-no-products">Tidak ada produk dengan data lengkap ditemukan</div>';
     }
 
+    console.log(`✅ Generated product grid with ${products.length} products`);
     let grid = '';
     
-    for (let i = 0; i < products.length; i++) {      const product = products[i];
+    for (let i = 0; i < products.length; i++) {const product = products[i];
       console.log(`Generating real product ${i + 1}:`, product);
       const isActive = true; // Assume products from API are active
       
@@ -766,19 +778,32 @@ class ShopeeUIGenerator {
     
     return grid;
   }
-
   static generateProductListView(products) {
     let listView = `
       <div class="ts-products-list-header">
         <div class="ts-list-column ts-col-image">Produk</div>
         <div class="ts-list-column ts-col-name">Nama</div>
-        <div class="ts-list-column ts-col-price">Harga</div>
-        <div class="ts-list-column ts-col-sold">Total Terjual</div>
-        <div class="ts-list-column ts-col-sold-30">Terjual 30 Hari</div>
-        <div class="ts-list-column ts-col-revenue">Total Omset</div>
-        <div class="ts-list-column ts-col-revenue-30">Omset 30 Hari</div>
-        <div class="ts-list-column ts-col-rating">Rating</div>
-        <div class="ts-list-column ts-col-trend">Trend</div>
+        <div class="ts-list-column ts-col-price ts-sortable" data-sort="price">
+          Harga <span class="ts-sort-icon">⇅</span>
+        </div>
+        <div class="ts-list-column ts-col-sold ts-sortable" data-sort="totalTerjual">
+          Total Terjual <span class="ts-sort-icon">⇅</span>
+        </div>
+        <div class="ts-list-column ts-col-sold-30 ts-sortable" data-sort="terjual30Hari">
+          Terjual 30 Hari <span class="ts-sort-icon">⇅</span>
+        </div>
+        <div class="ts-list-column ts-col-revenue ts-sortable" data-sort="totalOmset">
+          Total Omset <span class="ts-sort-icon">⇅</span>
+        </div>
+        <div class="ts-list-column ts-col-revenue-30 ts-sortable" data-sort="omset30Hari">
+          Omset 30 Hari <span class="ts-sort-icon">⇅</span>
+        </div>
+        <div class="ts-list-column ts-col-rating ts-sortable" data-sort="rating">
+          Rating <span class="ts-sort-icon">⇅</span>
+        </div>
+        <div class="ts-list-column ts-col-trend ts-sortable" data-sort="trend30Hari">
+          Trend <span class="ts-sort-icon">⇅</span>
+        </div>
       </div>
     `;
     
