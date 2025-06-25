@@ -2206,6 +2206,10 @@
   color: #1f2937;
 }
 
+.ts-sortable {
+    cursor: pointer;
+}
+
 /* Variants Info Styles */
 .ts-variants-info {
   margin-top: 20px;

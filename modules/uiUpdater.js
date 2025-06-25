@@ -422,7 +422,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
             <h4>Model Terlaris (${topModels.length} dari ${models.length})</h4>
             <div class="ts-top-models-sort">
               <span class="ts-sort-label">Urutkan:</span>
-              <select class="ts-top-models-sort-select" onchange="TopModelsSorter.sortModels(this.value)">
+              <select class="ts-top-models-sort-select">
                 <option value="sold">Total Sold</option>
                 <option value="name">Name</option>
                 <option value="price">Price</option>
@@ -435,11 +435,11 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
               <thead>
                 <tr>
                   <th data-sort="rank">#</th>
-                  <th class="sortable" data-sort="name" onclick="TopModelsSorter.sortByHeader('name')">Name</th>
-                  <th class="sortable" data-sort="price" onclick="TopModelsSorter.sortByHeader('price')">Price</th>
-                  <th class="sortable" data-sort="price_before_discount" onclick="TopModelsSorter.sortByHeader('price_before_discount')">Price Before Discount</th>
-                  <th class="sortable" data-sort="inventory" onclick="TopModelsSorter.sortByHeader('inventory')">Inventory</th>
-                  <th class="sortable" data-sort="sold" onclick="TopModelsSorter.sortByHeader('sold')">Total Sold</th>
+                  <th class="sortable" data-sort="name">Name</th>
+                  <th class="sortable" data-sort="price">Price</th>
+                  <th class="sortable" data-sort="price_before_discount">Price Before Discount</th>
+                  <th class="sortable" data-sort="inventory">Inventory</th>
+                  <th class="sortable" data-sort="sold">Total Sold</th>
                 </tr>
               </thead>
               <tbody class="ts-top-models-tbody" data-models='${JSON.stringify(topModels).replace(/'/g, "&apos;")}'>
@@ -464,10 +464,12 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     // Initialize sorting functionality
     setTimeout(() => {
-      if (typeof TopModelsSorter !== 'undefined') {
+      if (typeof window.TopModelsSorter !== 'undefined') {
         console.log('✅ TopModelsSorter is available and ready');
+        this.setupSortingEventListeners();
       } else {
-        console.warn('⚠️ TopModelsSorter not found, sorting may not work');
+        console.warn('⚠️ TopModelsSorter not found, trying to load...');
+        this.ensureTopModelsSorterLoaded();
       }
     }, 100);
   }
@@ -502,6 +504,60 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
             <div class="ts-no-image" style="display:none; align-items:center; justify-content:center; width:32px; height:32px; background:#f3f4f6; border-radius:4px; font-size:10px; color:#6b7280;">
               <span>#${index + 1}</span>
             </div>`;
+  }
+
+  // Helper method to ensure TopModelsSorter is loaded
+  static ensureTopModelsSorterLoaded() {
+    // Try to wait a bit more and check again
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    const checkAndRetry = () => {
+      attempts++;
+      console.log(`🔄 Attempting to load TopModelsSorter (${attempts}/${maxAttempts})`);
+      
+      if (typeof window.TopModelsSorter !== 'undefined') {
+        console.log('✅ TopModelsSorter found on retry');
+        this.setupSortingEventListeners();
+        return;
+      }
+      
+      if (attempts < maxAttempts) {
+        setTimeout(checkAndRetry, 500);
+      } else {
+        console.error('❌ Failed to load TopModelsSorter after all attempts');
+      }
+    };
+    
+    setTimeout(checkAndRetry, 200);
+  }
+  
+  // Setup sorting event listeners
+  static setupSortingEventListeners() {
+    // Add event listeners for table headers
+    const sortableHeaders = document.querySelectorAll('.ts-top-models-table .sortable');
+    sortableHeaders.forEach(header => {
+      header.addEventListener('click', function() {
+        const sortType = this.getAttribute('data-sort');
+        if (window.TopModelsSorter && typeof window.TopModelsSorter.sortByHeader === 'function') {
+          window.TopModelsSorter.sortByHeader(sortType);
+        } else {
+          console.error('❌ TopModelsSorter.sortByHeader is not available');
+        }
+      });
+    });
+    
+    // Add event listener for dropdown
+    const sortSelect = document.querySelector('.ts-top-models-sort-select');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', function() {
+        if (window.TopModelsSorter && typeof window.TopModelsSorter.sortModels === 'function') {
+          window.TopModelsSorter.sortModels(this.value);
+        } else {
+          console.error('❌ TopModelsSorter.sortModels is not available');
+        }
+      });
+    }
   }
 
   static updateCompetitorAnalysis(detail) {

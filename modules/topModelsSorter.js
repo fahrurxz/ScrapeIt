@@ -212,7 +212,22 @@ class TopModelsSorter {
   }
 }
 
-// Make it globally available
+// Make it globally available with multiple fallbacks
 if (typeof window !== 'undefined') {
   window.TopModelsSorter = TopModelsSorter;
+  console.log('✅ TopModelsSorter exposed to global scope');
+} else if (typeof global !== 'undefined') {
+  global.TopModelsSorter = TopModelsSorter;
+  console.log('✅ TopModelsSorter exposed to global scope (Node.js)');
+} else if (typeof self !== 'undefined') {
+  self.TopModelsSorter = TopModelsSorter;
+  console.log('✅ TopModelsSorter exposed to global scope (Web Worker)');
+} else {
+  console.warn('⚠️ No global object available for TopModelsSorter');
+}
+
+// Additional fallback: try to expose to globalThis
+if (typeof globalThis !== 'undefined') {
+  globalThis.TopModelsSorter = TopModelsSorter;
+  console.log('✅ TopModelsSorter exposed to globalThis');
 }

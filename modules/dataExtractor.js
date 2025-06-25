@@ -1,5 +1,6 @@
 // Data extraction and processing functions for Shopee Analytics Observer
-class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
+class ShopeeDataExtractor {
+  static extractStatsFromAPIData(observer) {
     console.log('🔍 Extracting stats for page type:', observer.currentPageType);
     console.log('📊 Available API data:', Object.keys(observer.apiData));
     
@@ -589,7 +590,7 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
     const description = item.description || '';
     
     // Extract variants/models
-    const models = item.models || [];
+    const models = this.processModels(item.models || []);
     const tierVariations = item.tier_variations || [];
     
     // Calculate metrics
@@ -660,6 +661,27 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
     const now = Date.now() / 1000;
     return Math.max(1, Math.floor((now - ctime) / (30 * 24 * 3600)));  }
 
+  static processModels(models) {
+    if (!models || !Array.isArray(models)) return [];
+    
+    return models.map(model => {
+      // Create a copy to avoid modifying original data
+      const processedModel = { ...model };
+      
+      // Convert price from API format to rupiah (divide by 100000)
+      if (processedModel.price && typeof processedModel.price === 'number') {
+        processedModel.price = processedModel.price / 100000;
+      }
+      
+      // Convert price_before_discount if exists
+      if (processedModel.price_before_discount && typeof processedModel.price_before_discount === 'number') {
+        processedModel.price_before_discount = processedModel.price_before_discount / 100000;
+      }
+      
+      return processedModel;
+    });
+  }
+
   // Trend calculation methods - Calculate trend based on comparison between 30-day sales and monthly average
   static calculateGrowth(previousStats, metric, observer) {
     // Hitung trend 30 hari berdasarkan spesifikasi yang benar
@@ -717,8 +739,13 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
     });
     
     // Jika umur produk kurang dari 60 hari atau penjualan sedikit
-    if (stats.avgMonthsElapsed < 2 || monthlyAverage < 1) {
-      console.log('⚠️ Insufficient data for trend calculation (age or sales too low)');
+    // PERBAIKAN: Untuk kategori, gunakan kriteria yang lebih longgar karena data agregat
+    const isCategory = observer.currentPageType === 'category';
+    const minMonths = isCategory ? 1 : 2; // Kategori hanya butuh 1 bulan data
+    const minSales = isCategory ? 0.1 : 1; // Kategori boleh sales rendah karena agregat
+    
+    if (stats.avgMonthsElapsed < minMonths || monthlyAverage < minSales) {
+      console.log(`⚠️ Insufficient data for trend calculation (age: ${stats.avgMonthsElapsed}, sales: ${monthlyAverage}, pageType: ${observer.currentPageType})`);
       return 'No data';
     }
     
@@ -876,11 +903,22 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
       // Extract price - handle recommend_v2 price structure
       let price = 0;
       if (itemData.item_card_display_price && itemData.item_card_display_price.price) {
+        // Struktur recommend_v2: price sudah dalam format yang benar (misal: 815000000 = Rp 8,150)
         price = itemData.item_card_display_price.price / 100000;
       } else if (itemData.price) {
         price = itemData.price / 100000;
       } else if (itemData.price_min) {
         price = itemData.price_min / 100000;
+      } else if (itemData.price_before_discount) {
+        price = itemData.price_before_discount / 100000;
+      } else if (itemData.raw_discount && itemData.raw_discount.price) {
+        price = itemData.raw_discount.price / 100000;
+      }
+      
+      // Untuk recommend_v2, price sudah dalam format yang tepat setelah dibagi 100000
+      // Tidak perlu konversi lagi jika sudah benar
+      if (price > 100000) {
+        price = price / 100000; // If still in wrong format
       }
 
       // Extract sales data - handle recommend_v2 sold structures
@@ -895,9 +933,24 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
       } else if (itemData.historical_sold) {
         itemTotalTerjual = itemData.historical_sold;
         itemTerjual30Hari = itemData.sold || Math.floor(itemTotalTerjual * 0.1);
+      } else if (itemData.sold) {
+        itemTotalTerjual = itemData.sold;
+        itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
+      } else if (itemData.item_sold) {
+        itemTotalTerjual = itemData.item_sold;
+        itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
+      } else if (itemData.global_sold) {
+        itemTotalTerjual = itemData.global_sold;
+        itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
       } else if (itemData.global_sold_count) {
         itemTotalTerjual = itemData.global_sold_count;
-        itemTerjual30Hari = itemData.sold || Math.floor(itemTotalTerjual * 0.1);
+        itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
+      }
+
+      // Fallback untuk 30 hari jika tidak ada data monthly
+      if (itemTerjual30Hari === 0 && itemTotalTerjual > 0) {
+        // Estimasi 10% dari total sold sebagai monthly
+        itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
       }
 
       // Calculate revenue
@@ -935,7 +988,20 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
       soldPerMonth: soldPerMonth,
       revenuePerMonth: revenuePerMonth,
       avgMonthsElapsed: avgMonthsElapsed
-    };    console.log('📈 Category trend calculation result:', result);
+    };
+    
+    console.log('📈 Category trend calculation result:', result);
+    console.log('📊 Category trend detailed breakdown:', {
+      totalItems: items.length,
+      totalSold: totalTerjual,
+      total30Days: total30Hari,
+      totalRevenue: totalOmset,
+      revenue30Days: omset30Hari,
+      avgMonths: avgMonthsElapsed,
+      soldPerMonth: soldPerMonth,
+      revenuePerMonth: revenuePerMonth
+    });
+    
     return result;
   }
 
@@ -981,5 +1047,26 @@ class ShopeeDataExtractor {  static extractStatsFromAPIData(observer) {
 
     console.log('✅ Shop stats extracted:', stats);
     return stats;
+  }
+
+  static processModels(models) {
+    if (!models || !Array.isArray(models)) return [];
+    
+    return models.map(model => {
+      // Create a copy to avoid modifying original data
+      const processedModel = { ...model };
+      
+      // Convert price from API format to rupiah (divide by 100000)
+      if (processedModel.price && typeof processedModel.price === 'number') {
+        processedModel.price = processedModel.price / 100000;
+      }
+      
+      // Convert price_before_discount if exists
+      if (processedModel.price_before_discount && typeof processedModel.price_before_discount === 'number') {
+        processedModel.price_before_discount = processedModel.price_before_discount / 100000;
+      }
+      
+      return processedModel;
+    });
   }
 }
