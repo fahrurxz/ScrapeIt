@@ -87,7 +87,8 @@ class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, obser
             const productName = displayedAsset.name || 'Product Name';
             
             // Extract harga dari item_data.item_card_display_price.price
-            const price = displayPrice.price || 0;
+            const rawPrice = displayPrice.price || 0;
+            const price = rawPrice / 100000; // Convert from API format to rupiah
             
             // Extract data penjualan dari item_data.item_card_display_sold_count
             const historicalSold = soldCount.historical_sold_count || 0;
@@ -122,7 +123,7 @@ class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, obser
               name: productName,
               title: productName,
               
-              // Price fields (sudah dalam format API, perlu dibagi 100000)
+              // Price fields (sudah dikonversi dari format API ke rupiah)
               price: price,
               price_min: price,
               price_max: price,
@@ -150,7 +151,7 @@ class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, obser
               image: image,
               ctime: ctime,
               liked_count: likedCount,
-                // Add item_basic for compatibility dengan extractRealProductData
+              // Add item_basic for compatibility dengan extractRealProductData
               item_basic: {
                 name: productName,
                 title: productName,
@@ -321,20 +322,36 @@ class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, obser
     
     // Extract price from item_basic or item_card_display_price
     let price = 0;
+    let needsConversion = true;
+    
     if (itemBasic.price) {
       price = itemBasic.price;
+      // Check if price is already converted (from recommend_v2 structure)
+      // Converted prices are typically < 100000, raw API prices are > 100000
+      needsConversion = price > 100000;
     } else if (itemBasic.price_min) {
       price = itemBasic.price_min;
+      needsConversion = price > 100000;
     } else if (itemBasic.item_card_display_price && itemBasic.item_card_display_price.price) {
       price = itemBasic.item_card_display_price.price;
+      needsConversion = price > 100000;
     } else if (item.price) {
       price = item.price;
+      needsConversion = price > 100000;
     } else if (item.item_card_display_price && item.item_card_display_price.price) {
       // Shop items have price in item_card_display_price
       price = item.item_card_display_price.price;
+      needsConversion = price > 100000;
       console.log(`✅ Item ${index} - Found price in display_price: ${price}`);
     }
-    price = price / 100000; // Convert from cents to rupiah
+    
+    // Only convert if the price is in raw API format
+    if (needsConversion) {
+      price = price / 100000; // Convert from API format to rupiah
+      console.log(`🔄 Item ${index} - Converted price from API format: ${price}`);
+    } else {
+      console.log(`✅ Item ${index} - Price already in correct format: ${price}`);
+    }
 
     // REVISI: Extract total sold (global_sold_count) dan sold 30 hari
     let totalTerjual = 0; // Total terjual dari global_sold_count

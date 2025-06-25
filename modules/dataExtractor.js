@@ -181,7 +181,19 @@ class ShopeeDataExtractor {
       } else if (item.price) {
         price = item.price;
       }
-      price = price / 100000; // Convert to rupiah
+      
+      // PERBAIKAN: Shopee API price format is always price * 100000
+      // Examples: 56800000000 = Rp 568.000, 129000000 = Rp 1.290
+      if (price > 0) {
+        price = price / 100000;
+      }
+      
+      console.log('💰 Price extraction debug:', {
+        rawPrice: itemBasic.item_card_display_price?.price || itemBasic.price || itemBasic.price_min,
+        convertedPrice: price,
+        itemId: itemBasic.itemid,
+        expectedRp: price.toLocaleString('id-ID')
+      });
 
       if (price > 0) {
         prices.push(price);
@@ -384,9 +396,9 @@ class ShopeeDataExtractor {
       // Extract price - handle recommend_v2 price structure
       let price = 0;
       if (itemData.item_card_display_price && itemData.item_card_display_price.price) {
-        // Struktur recommend_v2: price sudah dalam format yang benar (misal: 815000000 = Rp 8,150)
-        price = itemData.item_card_display_price.price / 100000;
-        console.log(`💰 Found recommend_v2 price: ${itemData.item_card_display_price.price} -> ${price}`);
+        // Struktur recommend_v2: price dalam format 988000000 = Rp 9,880
+        price = itemData.item_card_display_price.price;
+        console.log(`💰 Found recommend_v2 raw price: ${price}`);
       } else if (itemData.price) {
         price = itemData.price;
       } else if (itemData.price_min) {
@@ -397,13 +409,13 @@ class ShopeeDataExtractor {
         price = itemData.raw_discount.price;
       }
       
-      // Untuk recommend_v2, price sudah dalam format yang tepat setelah dibagi 100000
-      // Tidak perlu konversi lagi jika sudah benar
-      if (price > 100000) {
-        price = price / 100000; // If still in wrong format
+      // PERBAIKAN: Shopee API price format is consistent - always divide by 100000
+      // Examples: 56800000000 = Rp 568.000, 129000000 = Rp 1.290, 988000000 = Rp 9.880
+      if (price > 0) {
+        price = price / 100000;
       }
       
-      console.log(`💰 Final item price: ${price}`);
+      console.log(`💰 Final converted price: ${price}`);
 
       if (price > 0) {
         prices.push(price);
@@ -900,10 +912,10 @@ class ShopeeDataExtractor {
     items.forEach((item, index) => {
       const itemData = item.item_basic || item;
       
-      // Extract price - handle recommend_v2 price structure
+      // Extract price - Shopee API price format is always price * 100000
       let price = 0;
       if (itemData.item_card_display_price && itemData.item_card_display_price.price) {
-        // Struktur recommend_v2: price sudah dalam format yang benar (misal: 815000000 = Rp 8,150)
+        // Struktur recommend_v2: price dalam format 56800000000 = Rp 568.000 (dibagi 100000)
         price = itemData.item_card_display_price.price / 100000;
       } else if (itemData.price) {
         price = itemData.price / 100000;
@@ -915,11 +927,12 @@ class ShopeeDataExtractor {
         price = itemData.raw_discount.price / 100000;
       }
       
-      // Untuk recommend_v2, price sudah dalam format yang tepat setelah dibagi 100000
-      // Tidak perlu konversi lagi jika sudah benar
-      if (price > 100000) {
-        price = price / 100000; // If still in wrong format
-      }
+      console.log(`💰 Category price debug [${index + 1}]:`, {
+        rawPrice: itemData.item_card_display_price?.price || itemData.price || itemData.price_min,
+        convertedPrice: price,
+        itemId: itemData.itemid,
+        expectedRp: price.toLocaleString('id-ID')
+      });
 
       // Extract sales data - handle recommend_v2 sold structures
       let itemTotalTerjual = 0;

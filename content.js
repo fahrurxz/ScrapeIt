@@ -119,7 +119,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       if (url !== lastUrl) {
         lastUrl = url;
         console.log('🔄 URL changed to:', url);
-          // Check if this is a pagination navigation (same search, different page)
+          // Check if this is a pagination navigation (same search/category, different page)
         const oldUrlParams = new URLSearchParams(new URL(lastUrl).search);
         const newUrlParams = new URLSearchParams(window.location.search);
         const oldKeyword = oldUrlParams.get('keyword');
@@ -129,13 +129,21 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         // Detect page type first to know current page type
         const oldPageType = this.currentPageType;
+        const oldCategoryId = this.currentCategoryId; // Store old category ID
         this.detectPageType();
         
-        const isPagination = (oldKeyword === newKeyword && oldKeyword && newKeyword && 
-                             oldPageType === 'search' && this.currentPageType === 'search' && 
-                             newPage >= oldPage); // Allow same page or next page
+        // Pagination detection for both search and category pages
+        const isSearchPagination = (oldKeyword === newKeyword && oldKeyword && newKeyword && 
+                                   oldPageType === 'search' && this.currentPageType === 'search' && 
+                                   newPage >= oldPage);
         
-        console.log(`🔍 Navigation check: isPagination=${isPagination}, oldPage=${oldPage}, newPage=${newPage}, keyword="${newKeyword}", oldPageType=${oldPageType}, newPageType=${this.currentPageType}`);
+        const isCategoryPagination = (oldPageType === 'category' && this.currentPageType === 'category' && 
+                                     oldCategoryId === this.currentCategoryId && // Same category
+                                     newPage >= oldPage);
+        
+        const isPagination = isSearchPagination || isCategoryPagination;
+        
+        console.log(`🔍 Navigation check: isPagination=${isPagination} (search=${isSearchPagination}, category=${isCategoryPagination}), oldPage=${oldPage}, newPage=${newPage}, keyword="${newKeyword}", oldCategoryId=${oldCategoryId}, newCategoryId=${this.currentCategoryId}, oldPageType=${oldPageType}, newPageType=${this.currentPageType}`);
         this.uiInjected = false;
         this.retryCount = 0; // Reset retry count on navigation
           // Reset data unless this is pagination
@@ -194,6 +202,21 @@ class ShopeeAnalyticsObserver {  constructor() {
       console.log('🔍 Product API Data Structure:', data);
     } else if (type === 'CATEGORY_DATA') {
       console.log('🔍 Category API Data Structure:', data);
+      
+      // Handle pagination for category data
+      if (this.currentPageType === 'category') {
+        console.log('📂 Category page detected - handling pagination with CATEGORY_DATA');
+        this.handleCategoryPagination(data);
+        
+        // Stop loading state if pagination was in progress
+        this.stopLoadingState();
+        
+        // Update accumulated data in API after pagination handling
+        if (this.accumulatedData.searchData) {
+          this.apiData[type].data = this.accumulatedData.searchData;
+          console.log('🔄 Updated CATEGORY_DATA with accumulated data');
+        }
+      }
     } else if (type === 'SEARCH_DATA') {
       console.log('🔍 Search API Data Structure:', data);
       
@@ -208,6 +231,19 @@ class ShopeeAnalyticsObserver {  constructor() {
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
           console.log('🔄 Updated SEARCH_DATA with accumulated data');
+        }
+      } else if (this.currentPageType === 'category') {
+        // Category pages also use SEARCH_DATA for product listings
+        console.log('📂 Category page detected - handling pagination with SEARCH_DATA');
+        this.handleCategoryPagination(data);
+        
+        // Stop loading state if pagination was in progress
+        this.stopLoadingState();
+        
+        // Update accumulated data in API after pagination handling
+        if (this.accumulatedData.searchData) {
+          this.apiData[type].data = this.accumulatedData.searchData;
+          console.log('🔄 Updated SEARCH_DATA with accumulated category data');
         }
       }
     } else if (type === 'SHOP_DATA') {
@@ -558,6 +594,96 @@ class ShopeeAnalyticsObserver {  constructor() {
     this.countTotalProducts();
       console.log(`✅ Accumulated data updated. Total products: ${this.accumulatedData.totalProducts}, Current page: ${currentPage}, Has more: ${this.accumulatedData.hasMorePages}`);
   }
+
+  // Function to determine if category has more pages - more lenient than search
+  determineCategoryHasMorePages(currentPage, newItems, newData) {
+    console.log(`🔍 Determining category hasMorePages: page=${currentPage}, items=${newItems ? newItems.length : 0}`);
+    
+    // If we're on early pages (0-14), assume more pages exist even with 0 items
+    if (currentPage <= 14) {
+      console.log(`📂 Early category page (${currentPage}) - assuming more pages exist`);
+      return true;
+    }
+    
+    // If we have items, use lower threshold than search
+    if (newItems && newItems.length > 0) {
+      const hasMore = newItems.length >= 20; // Even lower threshold for categories
+      console.log(`📂 Category with ${newItems.length} items - hasMore: ${hasMore}`);
+      return hasMore;
+    }
+    
+    // For later pages with no items, still allow up to page 19
+    const hasMore = currentPage < 19;
+    console.log(`📂 Category page ${currentPage} with no items - hasMore: ${hasMore}`);
+    return hasMore;
+  }
+
+  // Function specifically for handling category pagination - mirrors search pagination logic
+  handleCategoryPagination(newData) {
+    console.log('📊 Handling category pagination data');
+    
+    if (!newData) {
+      console.log('⚠️ No new data provided to handleCategoryPagination');
+      return;
+    }
+    
+    // Get current page from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page') || '0');
+    
+    console.log(`📄 Category current page: ${currentPage}`);
+    console.log('🔍 Current category accumulatedData state:', {
+      hasSearchData: !!this.accumulatedData.searchData,
+      totalProducts: this.accumulatedData.totalProducts,
+      storedPage: this.accumulatedData.currentPage
+    });
+    
+    // Check if new data has items
+    const newItems = this.getItemsFromData(newData);
+    const hasNewItems = newItems && newItems.length > 0;
+    
+    console.log(`📦 Category new data has ${newItems ? newItems.length : 0} items`);
+    
+    // If this is the first page (page 0), initialize accumulated data
+    if (currentPage === 0) {
+      console.log('🆕 Initializing category accumulated data for first page');
+      this.accumulatedData = {
+        searchData: this.deepClone(newData),
+        totalProducts: 0,
+        currentPage: currentPage,
+        hasMorePages: hasNewItems
+      };
+    } else {
+      console.log(`📈 Accumulating category data from page ${currentPage}`);
+      
+      // Check if accumulated data was lost (navigation issue) - reinitialize if needed
+      if (!this.accumulatedData.searchData) {
+        console.log('⚠️ Category accumulated data was lost - treating page as first page');
+        this.accumulatedData = {
+          searchData: this.deepClone(newData),
+          totalProducts: 0,
+          currentPage: currentPage,
+          hasMorePages: hasNewItems
+        };
+      } else {
+        // Use smart detection for category pagination instead of simple rules
+        console.log('� Category: Using smart hasMorePages detection');
+        this.accumulatedData.hasMorePages = this.determineCategoryHasMorePages(currentPage, newItems, newData);
+        
+        // Merge new items if they exist
+        if (hasNewItems && this.accumulatedData.searchData && newData) {
+          this.mergeSearchData(this.accumulatedData.searchData, newData);
+        }
+        
+        this.accumulatedData.currentPage = currentPage;
+      }
+    }
+    
+    // Count total products
+    this.countTotalProducts();
+    
+    console.log(`✅ Category accumulated data updated. Total products: ${this.accumulatedData.totalProducts}, Current page: ${currentPage}, Has more: ${this.accumulatedData.hasMorePages}`);
+  }
   stopLoadingState() {
     if (this._isLoadingMore && this._loadingButton) {
       console.log('🔄 Stopping loading state - data received');
@@ -592,32 +718,116 @@ class ShopeeAnalyticsObserver {  constructor() {
     let newItems = this.getItemsFromData(newData);
     
     if (accumulatedItems && newItems && newItems.length > 0) {
+      console.log(`📦 Before merge: accumulated=${accumulatedItems.length}, new=${newItems.length}`);
+      
       // Merge new items into accumulated items
       accumulatedItems.push(...newItems);
-      console.log(`📦 Merged ${newItems.length} new items. Total items: ${accumulatedItems.length}`);
+      console.log(`📦 After merge: total items=${accumulatedItems.length}`);
+      
+      // PERBAIKAN: Update structure based on data type
+      if (accumulatedData.data && accumulatedData.data.units) {
+        // For recommend_v2 API structure, append units
+        console.log('🔄 Merging recommend_v2 units structure');
+        if (newData.data && newData.data.units) {
+          const newItemUnits = newData.data.units.filter(unit => unit.data_type === 'item' && unit.item);
+          accumulatedData.data.units.push(...newItemUnits);
+          console.log(`📦 Added ${newItemUnits.length} new units to accumulated data`);
+        }
+      } else if (accumulatedData.items) {
+        // For regular items structure, update items directly
+        console.log('🔄 Updating regular items structure');
+        accumulatedData.items = accumulatedItems;
+      } else if (accumulatedData.data && accumulatedData.data.items) {
+        // For data.items structure, update data.items
+        console.log('🔄 Updating data.items structure');
+        accumulatedData.data.items = accumulatedItems;
+      }
+      
     } else {
       console.log('⚠️ Cannot merge items - one or both arrays are empty/null');
+      console.log('🔍 Accumulated items:', accumulatedItems ? accumulatedItems.length : 'null');
+      console.log('🔍 New items:', newItems ? newItems.length : 'null');
     }
   }
 
   getItemsFromData(data) {
-    if (!data) return null;
+    console.log('🔍 getItemsFromData called with:', data ? 'Data exists' : 'No data');
     
-    if (data.items) return data.items;
-    if (data.data && data.data.items) return data.data.items;
-    if (data.sections) {
-      return data.sections.flatMap(section => section.data?.items || []);
+    if (!data) {
+      console.log('❌ getItemsFromData: No data provided');
+      return null;
     }
-    if (Array.isArray(data)) return data;
+    
+    if (data.items) {
+      console.log(`✅ getItemsFromData: Found items array with ${data.items.length} items`);
+      return data.items;
+    }
+    
+    if (data.data && data.data.items) {
+      console.log(`✅ getItemsFromData: Found data.items array with ${data.data.items.length} items`);
+      return data.data.items;
+    }
+    
+    // PERBAIKAN: Handle API recommend_v2 structure (data.data.units)
+    if (data.data && data.data.units) {
+      console.log(`✅ getItemsFromData: Found recommend_v2 units structure with ${data.data.units.length} units`);
+      
+      // Filter only item units
+      const itemUnits = data.data.units.filter(unit => unit.data_type === 'item' && unit.item);
+      console.log(`📦 getItemsFromData: Filtered to ${itemUnits.length} item units`);
+      
+      // Extract items from units
+      const items = itemUnits.map(unit => {
+        const item = unit.item;
+        // Merge item_data and item_card_displayed_asset for compatibility
+        if (item.item_data) {
+          return {
+            ...item.item_data,
+            display_price: item.item_card_displayed_asset?.display_price,
+            display_sold_count: item.item_card_displayed_asset?.sold_count,
+            name: item.item_card_displayed_asset?.name || item.item_data.shop_data?.shop_name
+          };
+        }
+        return item;
+      });
+      
+      console.log(`✅ getItemsFromData: Extracted ${items.length} items from recommend_v2 units`);
+      return items;
+    }
+    
+    if (data.sections) {
+      const items = data.sections.flatMap(section => section.data?.items || []);
+      console.log(`✅ getItemsFromData: Found sections with ${items.length} total items`);
+      return items;
+    }
+    
+    if (Array.isArray(data)) {
+      console.log(`✅ getItemsFromData: Data is array with ${data.length} items`);
+      return data;
+    }
+    
+    console.log('❌ getItemsFromData: No recognizable data structure found');
+    console.log('🔍 Data keys:', Object.keys(data));
+    console.log('🔍 Data.data keys:', data.data ? Object.keys(data.data) : 'No data.data');
     
     return null;
   }
   countTotalProducts() {
+    console.log('🔢 Counting total products...');
+    console.log('🔍 AccumulatedData state:', this.accumulatedData);
+    
     if (this.accumulatedData && this.accumulatedData.searchData) {
       const items = this.getItemsFromData(this.accumulatedData.searchData);
+      console.log('🔍 Items extracted from accumulated data:', items ? items.length : 'null/undefined');
+      console.log('🔍 First few items:', items ? items.slice(0, 3) : 'No items');
+      
       this.accumulatedData.totalProducts = items ? items.length : 0;
+      console.log(`✅ Total products counted: ${this.accumulatedData.totalProducts}`);
     } else {
       console.log('⚠️ Cannot count products - no accumulated search data');
+      console.log('🔍 AccumulatedData exists:', !!this.accumulatedData);
+      console.log('🔍 SearchData exists:', !!(this.accumulatedData && this.accumulatedData.searchData));
+      
       if (this.accumulatedData) {
         this.accumulatedData.totalProducts = 0;
       }

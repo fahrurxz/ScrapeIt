@@ -169,9 +169,9 @@ class ShopeeEventHandlers {
   }  static showMoreDataWithLoading(observer, buttonElement) {
     console.log('Loading more data with loading indicator...');
     
-    // Cek apakah ini halaman search
-    if (observer.currentPageType !== 'search') {
-      alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian');
+    // Cek apakah ini halaman search atau category
+    if (observer.currentPageType !== 'search' && observer.currentPageType !== 'category') {
+      alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian dan kategori');
       return;
     }
 
@@ -248,9 +248,9 @@ class ShopeeEventHandlers {
   static showMoreData(observer) {
     console.log('Loading more data...');
     
-    // Cek apakah ini halaman search
-    if (observer.currentPageType !== 'search') {
-      alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian');
+    // Cek apakah ini halaman search atau category
+    if (observer.currentPageType !== 'search' && observer.currentPageType !== 'category') {
+      alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian dan kategori');
       return;
     }
 

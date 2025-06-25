@@ -30,8 +30,8 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
         shopStatusEl.textContent = `${stats.productCount || 0} produk ditemukan`;
       }
 
-      // Update pagination info for search pages
-      if (observer.currentPageType === 'search') {
+      // Update pagination info for search and category pages
+      if (observer.currentPageType === 'search' || observer.currentPageType === 'category') {
         this.updatePaginationInfo(observer);
       }
         // Handle product detail page with special UI elements
@@ -66,17 +66,24 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       if (observer.currentPageType === 'category') {
         // Untuk kategori, coba tampilkan informasi debugging
         if (productCountEl) {
-          productCountEl.textContent = 'Memuat...';
+          productCountEl.textContent = '0';
         }
         
-        // Coba lagi setelah delay
+        // IMPORTANT: Still update pagination info even with no data to show "Lebih banyak" button
+        this.updatePaginationInfo(observer);
+        
+        console.log('📂 Category page: Updated pagination info with fallback data');
+      } else {
+        // Coba lagi setelah delay untuk page type lain
         setTimeout(() => {
-          console.log('🔄 Retrying category data extraction after delay...');
+          console.log('🔄 Retrying data extraction after delay...');
           this.updateUIWithData(observer);
         }, 2000);
       }
     }
-  }static showLoadingState() {
+  }
+
+  static showLoadingState() {
     // DEPRECATED: No longer show loading states - always show defaults immediately
     console.log('⚠️ showLoadingState() called but showing defaults instead');
     this.showDefaultValues('search'); // Default to search-like behavior
@@ -627,12 +634,21 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     const moreBtnEl = document.getElementById('ts-more-btn');
     const loadingIndicatorEl = document.getElementById('ts-loading-indicator');
     
-    if (!paginationInfoEl || !observer.accumulatedData) return;
+    if (!paginationInfoEl) return;
     
-    const currentPage = observer.accumulatedData.currentPage;
-    const totalProducts = observer.accumulatedData.totalProducts;
-    const hasMorePages = observer.accumulatedData.hasMorePages;
-    const keyword = observer.currentKeyword || 'pencarian';
+    // Handle case where accumulatedData doesn't exist yet (especially for category pages)
+    const currentPage = observer.accumulatedData ? observer.accumulatedData.currentPage : 0;
+    const totalProducts = observer.accumulatedData ? observer.accumulatedData.totalProducts : 0;
+    const hasMorePages = observer.accumulatedData ? observer.accumulatedData.hasMorePages : true; // Default to true for new pages
+    
+    // Determine context text based on page type
+    let contextText = '';
+    if (observer.currentPageType === 'search') {
+      const keyword = observer.currentKeyword || 'pencarian';
+      contextText = `pencarian "${keyword}"`;
+    } else if (observer.currentPageType === 'category') {
+      contextText = 'kategori';
+    }
     
     // Hide loading indicator when updating with new data
     if (loadingIndicatorEl) {
@@ -640,7 +656,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     }
     
     // Update pagination info text
-    let paginationText = `Data berdasarkan <b class="ts-text-black/[0.5]" id="ts-product-count">${ShopeeUtils.formatNumber(totalProducts)}</b> produk dari pencarian "${keyword}"`;
+    let paginationText = `Data berdasarkan <b class="ts-text-black/[0.5]" id="ts-product-count">${ShopeeUtils.formatNumber(totalProducts)}</b> produk dari ${contextText}`;
     
     if (currentPage > 0) {
       paginationText += ` <span class="ts-text-blue-600">(${currentPage + 1} halaman)</span>`;
@@ -656,15 +672,38 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     // Show/hide more button based on availability of more pages
     if (moreBtnEl) {
-      if (observer.currentPageType === 'search' && hasMorePages) {
-        moreBtnEl.style.display = 'inline';
-        moreBtnEl.textContent = currentPage > 0 ? `+Halaman ${currentPage + 2}` : '+Lebih banyak';
+      if (observer.currentPageType === 'search' || observer.currentPageType === 'category') {
+        let shouldShowButton = hasMorePages;
+        
+        // For category pages: be much more lenient
+        if (observer.currentPageType === 'category') {
+          // Show button if:
+          // 1. hasMorePages is true, OR
+          // 2. totalProducts is low (< 500), OR  
+          // 3. we're on early pages (< 15), OR
+          // 4. totalProducts is 0 and we're not on very late pages (< 20)
+          shouldShowButton = hasMorePages || 
+                            totalProducts < 500 || 
+                            currentPage < 15 ||
+                            (totalProducts === 0 && currentPage < 20);
+          
+          console.log(`📂 Category button logic: hasMorePages=${hasMorePages}, totalProducts=${totalProducts}, currentPage=${currentPage}, shouldShow=${shouldShowButton}`);
+        }
+        
+        if (shouldShowButton) {
+          moreBtnEl.style.display = 'inline';
+          moreBtnEl.textContent = currentPage > 0 ? `+Halaman ${currentPage + 2}` : '+Lebih banyak';
+          moreBtnEl.dataset.shouldShow = 'true'; // Store visibility state for recovery after loading
+        } else {
+          moreBtnEl.style.display = 'none';
+          moreBtnEl.dataset.shouldShow = 'false';
+        }
       } else {
         moreBtnEl.style.display = 'none';
       }
     }
     
-    console.log(`📄 Pagination info updated: Page ${currentPage + 1}, Total products: ${totalProducts}, Has more: ${hasMorePages}`);
+    console.log(`📄 Pagination info updated: Page ${currentPage + 1}, Total products: ${totalProducts}, Has more: ${hasMorePages}, Page type: ${observer.currentPageType}`);
   }
 
   static showPaginationLoading() {
