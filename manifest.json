@@ -26,6 +26,7 @@
         "modules/modalManager.js",
         "modules/eventHandlers.js",
         "modules/uiUpdater.js",
+        "modules/topModelsSorter.js",
         "content.js"
       ],
       "css": ["styles.css"],

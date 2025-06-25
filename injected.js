@@ -104,22 +104,21 @@
     // Ignore other category-related APIs that might conflict
     else if (url.includes('/category') && !url.includes('/get_category')) {
       console.log('📋 Ignoring non-essential category API:', url);
-    }// Process product detail API - HANYA yang benar-benar product detail
-    else if ((url.includes('/get_item_detail') || url.includes('/pdp/get_pc') || 
-              (url.includes('/pdp/get') && url.includes('itemid=') && url.includes('shopid='))) &&
-             !url.includes('hot_sales') && !url.includes('rating') && !url.includes('review') && 
-             !url.includes('comment') && !url.includes('recommend')) {
-      console.log('🛍️ Detected PRODUCT API (main detail):', url);
+    }    // Process product detail API - HANYA intercepting /pdp/get_pc API
+    else if (url.includes('/pdp/get_pc') && 
+             url.includes('item_id=') && url.includes('shop_id=') && 
+             !url.includes('hot_s')) {
+      console.log('🛍️ Detected PRODUCT API (get_pc):', url);
       window.shopeeAPIData.productData = {
         url: url,
         data: data,
         timestamp: Date.now()
       };
       notifyContentScript('PRODUCT_DATA', data);
-    }    // Ignore other product-related APIs that are not main detail
-    else if (url.includes('/pdp/') && (url.includes('hot_sales') || url.includes('rating') || url.includes('review'))) {
-      console.log('📋 Ignoring non-detail product API:', url);
-    }    // Process shop API
+    }    // Ignore other product-related APIs that might conflict with get_pc
+    else if (url.includes('/pdp/') && !url.includes('/pdp/get_pc')) {
+      console.log('📋 Ignoring non-get_pc product API:', url);
+    }// Process shop API
     else if (url.includes('/shop/rcmd_items') || url.includes('/shop/get_shop_base') || url.includes('/shop/get_shop_seo')) {
       console.log('🏪 Detected SHOP API:', url);
       console.log('🔍 Shop API data preview:', data);

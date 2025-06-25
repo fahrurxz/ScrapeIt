@@ -186,69 +186,13 @@ class ShopeeUIGenerator {
             <div class="ts-logo-small"></div>
             <span class="ts-text-black/[0.5] ts-ml-1 ts-leading-none">Shopee Analytics</span>
             <div class="ts-tabs">
-              <a href="#" class="ts-tab-active" data-tab="product-info">Info Produk</a>
-              <a href="#" class="" data-tab="sales-analysis">Analisis Penjualan</a>
-              <a href="#" class="" data-tab="competitor">Kompetitor</a>
+              <a href="#" class="ts-tab-active" data-tab="sales-analysis">Analisis Penjualan</a>
             </div>
           </div>
           
-          <!-- Product Info Tab Content -->
-          <div id="ts-tab-product-info" class="ts-tab-content">
-            <div class="ts-product-detail-grid">
-              <div class="ts-product-basic-info">
-                <h3>📊 Informasi Dasar</h3>
-                <div class="ts-info-grid">                  <div class="ts-info-item">
-                    <label>Harga Saat Ini</label>
-                    <h4 id="ts-product-current-price">Tidak tersedia</h4>
-                  </div>
-                  <div class="ts-info-item">
-                    <label>Harga Asli</label>
-                    <h4 id="ts-product-original-price">Tidak tersedia</h4>
-                  </div>
-                  <div class="ts-info-item">
-                    <label>Diskon</label>
-                    <h4 id="ts-product-discount">0%</h4>
-                  </div>
-                  <div class="ts-info-item">
-                    <label>Total Terjual</label>
-                    <h4 id="ts-product-total-sold">0</h4>
-                  </div>
-                  <div class="ts-info-item">
-                    <label>Rating</label>
-                    <h4 id="ts-product-rating">0 ⭐</h4>
-                  </div>
-                  <div class="ts-info-item">
-                    <label>Ulasan</label>
-                    <h4 id="ts-product-reviews">0</h4>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="ts-shop-info">
-                <h3>🏪 Informasi Toko</h3>
-                <div class="ts-shop-details">
-                  <div class="ts-shop-item">
-                    <label>Nama Toko</label>                    <h4 id="ts-shop-name">Tidak tersedia</h4>
-                  </div>
-                  <div class="ts-shop-item">
-                    <label>Rating Toko</label>
-                    <h4 id="ts-shop-rating">0 ⭐</h4>
-                  </div>
-                  <div class="ts-shop-item">
-                    <label>Followers</label>
-                    <h4 id="ts-shop-followers">0</h4>
-                  </div>
-                  <div class="ts-shop-item">
-                    <label>Lokasi</label>
-                    <h4 id="ts-shop-location">Tidak tersedia</h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
           
           <!-- Sales Analysis Tab Content -->
-          <div id="ts-tab-sales-analysis" class="ts-tab-content" style="display: none;">
+          <div id="ts-tab-sales-analysis" class="ts-tab-content" style="display: block;">
             <div class="ts-sales-analysis-grid">
               <div class="ts-sales-metrics">
                 <h3>💰 Metrik Penjualan</h3>

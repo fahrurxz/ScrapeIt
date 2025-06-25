@@ -396,48 +396,112 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
 
   static updateProductVariants(tierVariations, models) {
     const variantsContainer = document.getElementById('ts-product-variants');
-    if (!variantsContainer) return;
-    
-    if (!tierVariations || tierVariations.length === 0) {
-      variantsContainer.innerHTML = '<p>Produk ini tidak memiliki varian</p>';
+    if (!variantsContainer) {
+      console.warn('⚠️ ts-product-variants container not found');
       return;
     }
     
-    let variantsHTML = '<div class="ts-variants-list">';
+    console.log('🔄 Updating product variants with:', { tierVariations, models });
     
-    tierVariations.forEach((tier, index) => {
-      variantsHTML += `
-        <div class="ts-variant-tier">
-          <h4>${tier.name}</h4>
-          <div class="ts-variant-options">
-            ${tier.options.map(option => `<span class="ts-variant-option">${option}</span>`).join('')}
-          </div>
-        </div>
-      `;
-    });
-    
-    // Show top selling models
-    if (models && models.length > 0) {
-      const topModels = models
-        .sort((a, b) => (b.sold || 0) - (a.sold || 0))
-        .slice(0, 5);
-      
-      variantsHTML += `
-        <div class="ts-top-models">
-          <h4>Model Terlaris</h4>
-          ${topModels.map((model, index) => `
-            <div class="ts-model-item">
-              <span class="ts-model-rank">#${index + 1}</span>
-              <span class="ts-model-name">${model.name}</span>
-              <span class="ts-model-sales">${ShopeeUtils.formatNumber(model.sold || 0)} terjual</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
+    if (!models || models.length === 0) {
+      variantsContainer.innerHTML = '<div class="ts-no-variants"><p>Produk ini tidak memiliki varian atau data model tidak tersedia</p></div>';
+      return;
     }
     
-    variantsHTML += '</div>';
+    // Show top selling models
+    const topModels = models
+      .sort((a, b) => (b.sold || 0) - (a.sold || 0))
+      .slice(0, 50); // Show top 10 instead of 5 for better visibility
+    
+    console.log('📊 Top models to display:', topModels);
+    
+    const variantsHTML = `
+      <div class="ts-variants-list">
+        <div class="ts-top-models">
+          <div class="ts-top-models-header">
+            <h4>Model Terlaris (${topModels.length} dari ${models.length})</h4>
+            <div class="ts-top-models-sort">
+              <span class="ts-sort-label">Urutkan:</span>
+              <select class="ts-top-models-sort-select" onchange="TopModelsSorter.sortModels(this.value)">
+                <option value="sold">Total Sold</option>
+                <option value="name">Name</option>
+                <option value="price">Price</option>
+                <option value="inventory">Inventory</option>
+              </select>
+            </div>
+          </div>
+          <div class="ts-top-models-table-container">
+            <table class="ts-top-models-table">
+              <thead>
+                <tr>
+                  <th data-sort="rank">#</th>
+                  <th class="sortable" data-sort="name" onclick="TopModelsSorter.sortByHeader('name')">Name</th>
+                  <th class="sortable" data-sort="price" onclick="TopModelsSorter.sortByHeader('price')">Price</th>
+                  <th class="sortable" data-sort="price_before_discount" onclick="TopModelsSorter.sortByHeader('price_before_discount')">Price Before Discount</th>
+                  <th class="sortable" data-sort="inventory" onclick="TopModelsSorter.sortByHeader('inventory')">Inventory</th>
+                  <th class="sortable" data-sort="sold" onclick="TopModelsSorter.sortByHeader('sold')">Total Sold</th>
+                </tr>
+              </thead>
+              <tbody class="ts-top-models-tbody" data-models='${JSON.stringify(topModels).replace(/'/g, "&apos;")}'>
+                ${topModels.map((model, index) => `
+                  <tr class="ts-model-row">
+                    <td class="ts-model-rank">#${index + 1}</td>
+                    <td class="ts-model-name" title="${this.escapeHtml(model.name || 'No Name')}">${this.escapeHtml(model.name || 'No Name')}</td>
+                    <td class="ts-model-price">${ShopeeUtils.formatCurrency(model.price || 0)}</td>
+                    <td class="ts-model-price-before">${model.price_before_discount && model.price_before_discount > 0 ? ShopeeUtils.formatCurrency(model.price_before_discount) : '-'}</td>
+                    <td class="ts-model-inventory">${ShopeeUtils.formatNumber(model.stock || model.normal_stock || 0)}</td>
+                    <td class="ts-model-sales">${ShopeeUtils.formatNumber(model.sold || 0)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+    
     variantsContainer.innerHTML = variantsHTML;
+    
+    // Initialize sorting functionality
+    setTimeout(() => {
+      if (typeof TopModelsSorter !== 'undefined') {
+        console.log('✅ TopModelsSorter is available and ready');
+      } else {
+        console.warn('⚠️ TopModelsSorter not found, sorting may not work');
+      }
+    }, 100);
+  }
+
+  // Helper method to escape HTML to prevent XSS
+  static escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Helper method to generate model image
+  static generateModelImage(model, index) {
+    // If there's an actual image from API data, use it
+    if (model.image) {
+      const imageUrl = model.image.startsWith('http') ? model.image : `https://cf.shopee.co.id/file/${model.image}`;
+      return `<img src="${imageUrl}" alt="${this.escapeHtml(model.name || 'Product')}" class="ts-model-img" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+              <div class="ts-no-image" style="display:none; align-items:center; justify-content:center; width:32px; height:32px; background:#f3f4f6; border-radius:4px; font-size:10px; color:#6b7280;">
+                <span>No Img</span>
+              </div>`;
+    }
+    
+    // Generate placeholder image with better styling
+    const colors = ['e3f2fd', 'f3e5f5', 'e8f5e8', 'fff3e0', 'fce4ec'];
+    const bgColor = colors[index % colors.length];
+    const textColor = ['1976d2', '7b1fa2', '388e3c', 'f57c00', 'c2185b'][index % colors.length];
+    const placeholder = `https://via.placeholder.com/32x32/${bgColor}/${textColor}?text=${index + 1}`;
+    
+    return `<img src="${placeholder}" alt="${this.escapeHtml(model.name || 'Product')}" class="ts-model-img" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+            <div class="ts-no-image" style="display:none; align-items:center; justify-content:center; width:32px; height:32px; background:#f3f4f6; border-radius:4px; font-size:10px; color:#6b7280;">
+              <span>#${index + 1}</span>
+            </div>`;
   }
 
   static updateCompetitorAnalysis(detail) {

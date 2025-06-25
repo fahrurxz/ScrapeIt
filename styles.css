@@ -2158,8 +2158,9 @@
 
 /* Sales Analysis Tab Styles */
 .ts-sales-analysis-grid {
-  display: grid;
+  display: block;
   gap: 20px;
+  width: 100%;
 }
 
 .ts-sales-metrics {
@@ -2207,6 +2208,7 @@
 
 /* Variants Info Styles */
 .ts-variants-info {
+  margin-top: 20px;
   background: #f8f9fa;
   padding: 16px;
   border-radius: 8px;
@@ -2269,6 +2271,189 @@
   color: #1f2937;
 }
 
+/* Top Models Header */
+.ts-top-models-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-top-models-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-sort-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ts-top-models-sort-select {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ts-top-models-sort-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Top Models Table Container */
+.ts-top-models-table-container {
+  width: auto;
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Top Models Table */
+.ts-top-models-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 12px;
+  min-width: 700px;
+}
+
+.ts-top-models-table thead {
+  background: #f9fafb;
+}
+
+.ts-top-models-table th {
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #f3f4f6;
+  position: relative;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ts-top-models-table th:last-child {
+  border-right: none;
+}
+
+.ts-top-models-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  position: relative;
+  padding-right: 20px;
+}
+
+.ts-top-models-table th.sortable:hover {
+  background: #f3f4f6;
+}
+
+.ts-top-models-table td {
+  padding: 8px;
+  border-bottom: 1px solid #f3f4f6;
+  border-right: 1px solid #f9fafb;
+  vertical-align: middle;
+  font-size: 11px;
+}
+
+.ts-top-models-table td:last-child {
+  border-right: none;
+}
+
+.ts-top-models-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.ts-top-models-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Model Table Cell Styles */
+.ts-model-rank {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ts-model-image {
+  text-align: center;
+  width: 50px;
+}
+
+.ts-model-image img {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-model-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #374151;
+  font-weight: 500;
+}
+
+.ts-model-price,
+.ts-model-price-before {
+  color: #059669;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ts-model-price-before {
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.ts-model-inventory {
+  color: #7c3aed;
+  font-weight: 500;
+  text-align: right;
+}
+
+.ts-model-sales {
+  color: #dc2626;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Mobile responsive for variants table */
+@media (max-width: 768px) {
+  .ts-top-models-table-container {
+    overflow-x: scroll;
+  }
+  
+  .ts-top-models-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .ts-top-models-sort {
+    align-self: flex-end;
+  }
+}
+
+/* Existing model item styles (keeping for compatibility) */
 .ts-model-item {
   display: flex;
   align-items: center;
@@ -2281,230 +2466,114 @@
   border-bottom: none;
 }
 
-.ts-model-rank {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  min-width: 24px;
-  text-align: center;
-}
-
-.ts-model-name {
-  flex: 1;
-  font-size: 12px;
-  color: #374151;
-}
-
-.ts-model-sales {
+/* Original model sales style (backup) */
+.ts-model-item .ts-model-sales {
   font-size: 12px;
   color: #6b7280;
   font-weight: 500;
 }
 
-/* Competitor Analysis Styles */
-.ts-competitor-analysis {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 8px;
+/* Model Image Styles */
+.ts-model-img {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  display: inline-block;
+}
+
+.ts-no-image {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #6b7280;
   border: 1px solid #e5e7eb;
 }
 
-.ts-competitor-analysis h3 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
+/* Variants Container */
+.ts-variants-list {
+  width: 100%;
 }
 
-.ts-competitor-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.ts-competitor-card {
-  background: white;
-  padding: 12px;
+.ts-no-variants {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+  font-style: italic;
+  background: #f9fafb;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
 }
 
-.ts-competitor-card h4 {
-  margin: 0 0 6px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.ts-competitor-card p {
-  margin: 0;
-  font-size: 12px;
-  color: #6b7280;
-  line-height: 1.4;
-}
-
-/* Mobile Responsive for Product Detail */
+/* Improve table scrolling on mobile */
 @media (max-width: 768px) {
-  .ts-product-detail-grid {
-    grid-template-columns: 1fr;
+  .ts-top-models-table {
+    min-width: 600px;
   }
   
-  .ts-info-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .ts-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .ts-competitor-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .ts-shop-details {
-    grid-template-columns: 1fr;
+  .ts-model-name {
+    max-width: 120px;
   }
 }
 
-/* Loading Spinner Styles */
-.ts-loading-spinner {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 8px;
-}
-
-.ts-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e5e7eb;
-  border-top: 2px solid #3b82f6;
-  border-radius: 50%;
-  animation: ts-spin 1s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes ts-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.ts-loading-dots {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.ts-loading-dots span {
-  width: 4px;
-  height: 4px;
-  background-color: #3b82f6;
-  border-radius: 50%;
-  animation: ts-bounce 1.4s ease-in-out infinite both;
-}
-
-.ts-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.ts-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-.ts-loading-dots span:nth-child(3) { animation-delay: 0s; }
-
-@keyframes ts-bounce {
-  0%, 80%, 100% {
-    transform: scale(0);
-  } 40% {
-    transform: scale(1);
-  }
-}
-
-/* Button loading state */
-.ts-btn-loading {
-  position: relative;
-  opacity: 0.7;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.ts-btn-loading .ts-loading-spinner {
-  color: #ffffff;
-  font-size: 14px;
-}
-
-.ts-btn-loading .ts-spinner {
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #ffffff;
-}
-
-/* Sortable List Headers */
-.ts-sortable {
-  cursor: pointer;
-  user-select: none;
-  position: relative;
+/* Sort Indicators for Top Models Table */
+.ts-top-models-table th.sortable::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid #d1d5db;
+  opacity: 0.5;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
-.ts-sortable:hover {
-  background-color: #e5e7eb;
-  color: #111827;
+.ts-top-models-table th.sortable:hover::after {
+  opacity: 0.8;
+  border-bottom-color: #6b7280;
 }
 
-.ts-sort-icon {
-  font-size: 10px;
-  color: #9ca3af;
-  margin-left: 4px;
-  transition: color 0.2s ease;
-  opacity: 0.6;
-}
-
-.ts-sortable:hover .ts-sort-icon {
-  color: #374151;
+.ts-top-models-table th.sortable.sort-asc::after {
+  border-bottom: 4px solid #3b82f6;
+  border-top: none;
   opacity: 1;
 }
 
-/* Active sort states */
-.ts-sortable.ts-sort-asc .ts-sort-icon {
-  color: #3b82f6;
+.ts-top-models-table th.sortable.sort-desc::after {
+  border-top: 4px solid #3b82f6;
+  border-bottom: none;
   opacity: 1;
 }
 
-.ts-sortable.ts-sort-desc .ts-sort-icon {
-  color: #3b82f6;
-  opacity: 1;
-}
-
-/* Sort direction indicators */
-.ts-sortable.ts-sort-asc .ts-sort-icon::before {
-  content: '▲';
-  font-size: 10px;
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.ts-sortable.ts-sort-desc .ts-sort-icon::before {
-  content: '▼';
-  font-size: 10px;
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-/* Hide default sort icon when active */
-.ts-sortable.ts-sort-asc .ts-sort-icon,
-.ts-sortable.ts-sort-desc .ts-sort-icon {
-  position: relative;
-  font-size: 0;
-}
-
-.ts-sortable.ts-sort-asc .ts-sort-icon::before,
-.ts-sortable.ts-sort-desc .ts-sort-icon::before {
-  font-size: 10px;
-  color: #3b82f6;
+/* Responsive improvements */
+@media (max-width: 1024px) {
+  .ts-top-models-table th,
+  .ts-top-models-table td {
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+  
+  .ts-model-name {
+    max-width: 100px;
+  }
+  
+  .ts-top-models-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .ts-top-models-sort {
+    justify-content: flex-end;
+  }
 }
