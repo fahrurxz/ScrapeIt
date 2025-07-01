@@ -147,6 +147,9 @@ class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, obser
               shopid: shopId,
               itemid: itemId,
               
+              // Add product URL
+              url: ShopeeDataExtractor.generateProductURL(shopId, itemId, productName),
+              
               // Other fields
               image: image,
               ctime: ctime,
@@ -472,6 +475,12 @@ class ShopeeProductProcessor {    static extractProductsFromAPI(count = 5, obser
       shopName: shopName,
       location: location,
       image: imageUrl,
+      // Add product URL using shopId and itemId
+      url: ShopeeDataExtractor.generateProductURL(
+        itemBasic.shopid || item.shopid, 
+        itemBasic.itemid || item.itemid,
+        productName
+      ),
       trend: {
         class: isPositive ? 'positive' : 'negative',
         symbol: trendDirection,

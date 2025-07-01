@@ -430,7 +430,12 @@ class ShopeeUIGenerator {
             <div class="ts-product-rank">#${i + 1}</div>
           </div>
           <div class="ts-product-info-compact">
-            <h4 class="ts-product-title-compact">${product.name}</h4>
+            <h4 class="ts-product-title-compact">
+              ${product.url ? 
+                `<a href="${product.url}" target="_blank" class="ts-product-link" title="Buka produk di tab baru">${product.name}</a>` : 
+                product.name
+              }
+            </h4>
             <div class="ts-product-shop">${product.shopName}</div>
             <div class="ts-product-location">${product.location}</div>
             <div class="ts-product-price">${ShopeeUtils.formatCurrency(product.price)}</div>
@@ -488,7 +493,12 @@ class ShopeeUIGenerator {
               <img src="${product.image}"/>
             </div>
             <div class="ts-product-info">
-              <h4 class="ts-product-name">${product.name}</h4>
+              <h4 class="ts-product-name">
+                ${product.url ? 
+                  `<a href="${product.url}" target="_blank" class="ts-product-link" title="Buka produk di tab baru">${product.name}</a>` : 
+                  product.name
+                }
+              </h4>
             </div>
           </div>
           
@@ -611,7 +621,12 @@ class ShopeeUIGenerator {
               <img src="${product.image}" alt="${product.name}" />
             </div>
             <div class="ts-product-info">
-              <h4 class="ts-product-name">${product.name}</h4>
+              <h4 class="ts-product-name">
+                ${product.url ? 
+                  `<a href="${product.url}" target="_blank" class="ts-product-link" title="Buka produk di tab baru">${product.name}</a>` : 
+                  product.name
+                }
+              </h4>
             </div>
           </div>
           
@@ -760,7 +775,12 @@ class ShopeeUIGenerator {
             <img src="${product.image}" alt="${product.name}" class="ts-list-product-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iNCIgZmlsbD0iI0Y1RjVGNSIvPgo8cGF0aCBkPSJNMTIgMTZWMjRIMjhWMTZIMTJaIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K'" />
           </div>
           <div class="ts-list-cell ts-col-name">
-            <div class="ts-list-product-name">${product.name}</div>
+            <div class="ts-list-product-name">
+              ${product.url ? 
+                `<a href="${product.url}" target="_blank" class="ts-product-link" title="Buka produk di tab baru">${product.name}</a>` : 
+                product.name
+              }
+            </div>
             <div class="ts-list-product-shop">${product.shopName}</div>
           </div>
           <div class="ts-list-cell ts-col-price">${ShopeeUtils.formatCurrency(product.price)}</div>
@@ -918,7 +938,12 @@ class ShopeeUIGenerator {
           </div>
           
           <div class="ts-shop-product-info">
-            <h4 class="ts-shop-product-title" title="${product.name}">${product.name}</h4>
+            <h4 class="ts-shop-product-title" title="${product.name}">
+              ${product.url ? 
+                `<a href="${product.url}" target="_blank" class="ts-product-link" title="Buka produk di tab baru">${product.name}</a>` : 
+                product.name
+              }
+            </h4>
             
             <div class="ts-shop-product-price">
               <span class="ts-price-main">${ShopeeUtils.formatCurrency(product.price)}</span>

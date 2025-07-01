@@ -1,5 +1,33 @@
 // Data extraction and processing functions for Shopee Analytics Observer
 class ShopeeDataExtractor {
+  // Helper function to generate Shopee product URL
+  static generateProductURL(shopId, itemId, productName = '') {
+    if (!shopId || !itemId) {
+      console.log('⚠️ Missing shopId or itemId for URL generation:', { shopId, itemId });
+      return null;
+    }
+    
+    // Clean product name for URL
+    let urlSlug = '';
+    if (productName && typeof productName === 'string') {
+      urlSlug = productName
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+    }
+    
+    // Use default slug if name cleaning fails
+    if (!urlSlug) {
+      urlSlug = 'product';
+    }
+    
+    const url = `https://shopee.co.id/${urlSlug}-i.${shopId}.${itemId}`;
+    console.log('🔗 Generated product URL:', url);
+    return url;
+  }
+
   static extractStatsFromAPIData(observer) {
     console.log('🔍 Extracting stats for page type:', observer.currentPageType);
     console.log('📊 Available API data:', Object.keys(observer.apiData));
@@ -650,6 +678,8 @@ class ShopeeDataExtractor {
         tierVariations: tierVariations,
         monthlyEstimate: monthlyEstimate,
         revenue: revenue,
+        // Add product URL
+        url: this.generateProductURL(shopId, itemId, title),
         createdTime: item.ctime || Date.now() / 1000,
         images: item.images || [],
         stock: item.stock || 0,
@@ -688,6 +718,15 @@ class ShopeeDataExtractor {
       // Convert price_before_discount if exists
       if (processedModel.price_before_discount && typeof processedModel.price_before_discount === 'number') {
         processedModel.price_before_discount = processedModel.price_before_discount / 100000;
+      }
+      
+      // Add URL if we have the necessary IDs
+      if (processedModel.shopid && processedModel.itemid) {
+        processedModel.url = this.generateProductURL(
+          processedModel.shopid,
+          processedModel.itemid,
+          processedModel.name || 'Product'
+        );
       }
       
       return processedModel;
@@ -1077,6 +1116,15 @@ class ShopeeDataExtractor {
       // Convert price_before_discount if exists
       if (processedModel.price_before_discount && typeof processedModel.price_before_discount === 'number') {
         processedModel.price_before_discount = processedModel.price_before_discount / 100000;
+      }
+      
+      // Add URL if we have the necessary IDs
+      if (processedModel.shopid && processedModel.itemid) {
+        processedModel.url = this.generateProductURL(
+          processedModel.shopid,
+          processedModel.itemid,
+          processedModel.name || 'Product'
+        );
       }
       
       return processedModel;

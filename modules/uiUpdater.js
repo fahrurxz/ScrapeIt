@@ -453,7 +453,12 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
                 ${topModels.map((model, index) => `
                   <tr class="ts-model-row">
                     <td class="ts-model-rank">#${index + 1}</td>
-                    <td class="ts-model-name" title="${this.escapeHtml(model.name || 'No Name')}">${this.escapeHtml(model.name || 'No Name')}</td>
+                    <td class="ts-model-name" title="${this.escapeHtml(model.name || 'No Name')}">
+                      ${model.url ? 
+                        `<a href="${model.url}" target="_blank" class="ts-product-link" title="Buka produk di tab baru">${this.escapeHtml(model.name || 'No Name')}</a>` : 
+                        this.escapeHtml(model.name || 'No Name')
+                      }
+                    </td>
                     <td class="ts-model-price">${ShopeeUtils.formatCurrency(model.price || 0)}</td>
                     <td class="ts-model-price-before">${model.price_before_discount && model.price_before_discount > 0 ? ShopeeUtils.formatCurrency(model.price_before_discount) : '-'}</td>
                     <td class="ts-model-inventory">${ShopeeUtils.formatNumber(model.stock || model.normal_stock || 0)}</td>
