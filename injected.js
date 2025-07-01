@@ -68,7 +68,26 @@
     return originalXHRSend.apply(this, arguments);
   };
   function processAPIData(url, data) {
-    console.log('🔍 Processing API data from:', url);    // Process search API
+    console.log('🔍 Processing API data from:', url);
+    
+    // ENHANCED DEBUGGING: Log semua API calls di product pages
+    if (window.location.pathname.match(/\/[\w-]+-i\.\d+\.\d+/)) {
+      console.log('🛍️ PRODUCT PAGE API CALL:');
+      console.log('   - URL:', url);
+      console.log('   - Has data:', !!data);
+      console.log('   - Current page URL:', window.location.href);
+      
+      if (url.includes('/pdp/')) {
+        console.log('   - This is a PDP API call');
+        if (url.includes('get_pc')) {
+          console.log('   - This is the get_pc API we want to intercept');
+        } else {
+          console.log('   - This is another PDP API:', url.split('/pdp/')[1]?.split('?')[0]);
+        }
+      }
+    }
+    
+    // Process search API
     if (url.includes('/search_items') || (url.includes('/search') && !url.includes('/search/'))) {
       console.log('🔍 Detected SEARCH API:', url);
       window.shopeeAPIData.searchData = {
@@ -109,6 +128,23 @@
              url.includes('item_id=') && url.includes('shop_id=') && 
              !url.includes('hot_s')) {
       console.log('🛍️ Detected PRODUCT API (get_pc):', url);
+      
+      // ENHANCED DEBUG untuk product API
+      const urlObj = new URL(url);
+      const itemId = urlObj.searchParams.get('item_id');
+      const shopId = urlObj.searchParams.get('shop_id');
+      console.log('🔍 Product API Details:');
+      console.log('   - Item ID:', itemId);
+      console.log('   - Shop ID:', shopId);
+      console.log('   - Current URL:', window.location.href);
+      console.log('   - Data keys:', data ? Object.keys(data) : 'No data');
+      
+      if (data && data.data && data.data.item) {
+        console.log('   - Product item available:', !!data.data.item);
+        console.log('   - Product name:', data.data.item.name || 'No name');
+        console.log('   - Product price:', data.data.item.price || 'No price');
+      }
+      
       window.shopeeAPIData.productData = {
         url: url,
         data: data,

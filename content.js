@@ -15,7 +15,7 @@ class ShopeeAnalyticsObserver {  constructor() {
     };
     
     this.init();
-  }init() {
+  }  init() {
     // Inject the script to intercept API calls
     this.injectScript();
     
@@ -44,7 +44,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       // Category, Product & Shop pages: TUNGGU API data dulu, JANGAN inject UI
       console.log(`⏳ ${this.currentPageType} page: waiting for API data before injecting UI`);
       
-      // Setup DOM observer untuk memantau perubahan
+      // Setup DOM observer untuk memantau perubahan (SEMUA non-search pages)
       this.setupDOMObserver();
       
       // Fallback timeout: jika tidak ada API data dalam 8 detik, inject UI anyway
@@ -78,8 +78,17 @@ class ShopeeAnalyticsObserver {  constructor() {
     const url = window.location.href;
     const pathname = window.location.pathname;
     
-    console.log('Detecting page type for URL:', url);
-    console.log('Pathname:', pathname);
+    console.log('🔍 Detecting page type for URL:', url);
+    console.log('🔍 Pathname:', pathname);
+    
+    // ENHANCED DEBUGGING untuk troubleshooting URL detection
+    console.log('🔍 URL Analysis:');
+    console.log('   - Contains /search?keyword=:', url.includes('/search?keyword='));
+    console.log('   - Contains -cat.:', pathname.includes('-cat.'));
+    console.log('   - Contains /category/:', pathname.includes('/category/'));
+    console.log('   - Contains /cat.:', pathname.includes('/cat.'));
+    console.log('   - Contains -i.:', pathname.includes('-i.'));
+    console.log('   - Regex /-i\\.\\d+\\.\\d+/ test:', /-i\.\d+\.\d+/.test(pathname));
     
     if (url.includes('/search?keyword=')) {
       this.currentPageType = 'search';
@@ -92,7 +101,8 @@ class ShopeeAnalyticsObserver {  constructor() {
       const match = pathname.match(/-cat\.(\d+)/) || pathname.match(/cat\.(\d+)/) || pathname.match(/category\/(\d+)/);
       this.currentCategoryId = match ? match[1] : null;
       console.log('✅ Detected category page, ID:', this.currentCategoryId);
-    }    else if (pathname.match(/\/[\w-]+-i\.\d+\.\d+/)) {
+    }    // PERBAIKAN: Enhanced regex untuk product pages yang menangani karakter khusus
+    else if (pathname.match(/-i\.\d+\.\d+/)) {
       this.currentPageType = 'product';
       const match = pathname.match(/i\.(\d+)\.(\d+)/);
       if (match) {
@@ -100,6 +110,7 @@ class ShopeeAnalyticsObserver {  constructor() {
         this.currentItemId = match[2];
       }
       console.log('✅ Detected product page, Shop ID:', this.currentShopId, 'Item ID:', this.currentItemId);
+      console.log('🔍 Full pathname for debugging:', pathname);
     }
     else if (pathname.match(/\/[^\/]+$/) && !pathname.includes('-cat.') && !pathname.includes('-i.') && pathname !== '/') {
       // Shop page: https://shopee.co.id/summerscent.indo
@@ -110,10 +121,23 @@ class ShopeeAnalyticsObserver {  constructor() {
     else {
       this.currentPageType = 'other';
       console.log('❌ Other page type detected');
+      console.log('🔍 Debug info for unrecognized page:');
+      console.log('   - URL:', url);
+      console.log('   - Pathname:', pathname);
+      console.log('   - Pathname length:', pathname.length);
+      console.log('   - Contains special chars:', /[()%]/.test(pathname));
     }
   }  watchForNavigation() {
     // Watch for URL changes in SPA
     let lastUrl = location.href;
+    
+    // PERBAIKAN: Pastikan document.documentElement tersedia sebelum observe
+    const observeTarget = document.documentElement || document.body;
+    if (!observeTarget) {
+      console.log('❌ Cannot setup navigation observer: no valid target element');
+      return;
+    }
+    
     new MutationObserver(() => {
       const url = location.href;
       if (url !== lastUrl) {
@@ -171,6 +195,11 @@ class ShopeeAnalyticsObserver {  constructor() {
           // Category, Product & Shop: tunggu API data
           console.log(`⏳ Navigation to ${this.currentPageType}: waiting for API data`);
           
+          // Setup DOM observer untuk product pages juga
+          if (this.currentPageType === 'product') {
+            this.setupDOMObserver();
+          }
+          
           // Fallback timeout untuk navigation
           setTimeout(() => {
             if (!this.uiInjected && Object.keys(this.apiData).length === 0) {
@@ -180,12 +209,23 @@ class ShopeeAnalyticsObserver {  constructor() {
           }, 8000);
         }
       }
-    }).observe(document, { subtree: true, childList: true });
+    }).observe(observeTarget, { subtree: true, childList: true });
   }  handleAPIData(event) {
     const { type, data, timestamp } = event.detail;
     console.log('🔔 Received API data:', type, 'at', new Date(timestamp).toLocaleTimeString());
     console.log('📊 Current page type:', this.currentPageType);
-    console.log('📦 Data preview:', data ? 'Data available' : 'No data');
+    console.log('� Current URL:', window.location.href);
+    console.log('�📦 Data preview:', data ? 'Data available' : 'No data');
+    
+    // ENHANCED DEBUGGING untuk product pages
+    if (this.currentPageType === 'product') {
+      console.log('🛍️ PRODUCT PAGE DEBUG:');
+      console.log('   - Shop ID:', this.currentShopId);
+      console.log('   - Item ID:', this.currentItemId);
+      console.log('   - API Type received:', type);
+      console.log('   - UI already injected:', this.uiInjected);
+      console.log('   - Data keys:', data ? Object.keys(data) : 'No data');
+    }
     
     // PERBAIKAN CRITICAL: Store API data IMMEDIATELY untuk SEMUA jenis data
     // Ini memastikan data tidak hilang saat UI injection
@@ -200,6 +240,16 @@ class ShopeeAnalyticsObserver {  constructor() {
     // Debug: Log API data structure for debugging
     if (type === 'PRODUCT_DATA') {
       console.log('🔍 Product API Data Structure:', data);
+      console.log('🔍 Product Data Keys:', data ? Object.keys(data) : 'No data');
+      
+      // Additional debugging untuk product data
+      if (data && data.data) {
+        console.log('🔍 Product data.data keys:', Object.keys(data.data));
+        if (data.data.item) {
+          console.log('🔍 Product item data available:', !!data.data.item);
+          console.log('🔍 Product item keys:', Object.keys(data.data.item));
+        }
+      }
     } else if (type === 'CATEGORY_DATA') {
       console.log('🔍 Category API Data Structure:', data);
       
@@ -276,6 +326,8 @@ class ShopeeAnalyticsObserver {  constructor() {
       if (shouldInjectUI) {
         console.log('🎯 Injecting UI with fresh data for', this.currentPageType);
         setTimeout(() => this.waitForTargetAndInject(), 500);
+      } else {
+        console.log('⏳ Waiting for relevant API data for', this.currentPageType, '- received:', type);
       }
     } else {
       // UI sudah ada, update dengan data baru
@@ -419,6 +471,7 @@ class ShopeeAnalyticsObserver {  constructor() {
   // Fungsi untuk mencari target element berdasarkan page type
   findTargetElement() {
     let targetElement = null;
+    console.log(`🎯 Finding target element for ${this.currentPageType} page...`);
     
     if (this.currentPageType === 'category') {
       targetElement = document.querySelector('.shopee-search-item-result') ||
@@ -445,13 +498,42 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('[role="main"]');
     }
     else if (this.currentPageType === 'product') {
+      // ENHANCED: Lebih banyak selector untuk product pages
+      console.log('🔍 Searching for product page elements...');
+      
+      // Log semua potential elements untuk debugging
+      const potentialElements = [
+        { selector: '.y_zeJr', element: document.querySelector('.y_zeJr') },
+        { selector: '[class*="pdp"]', element: document.querySelector('[class*="pdp"]') },
+        { selector: '[class*="product-detail"]', element: document.querySelector('[class*="product-detail"]') },
+        { selector: '[class*="item-detail"]', element: document.querySelector('[class*="item-detail"]') },
+        { selector: '.page-product', element: document.querySelector('.page-product') },
+        { selector: '[data-testid*="pdp"]', element: document.querySelector('[data-testid*="pdp"]') },
+        { selector: 'main', element: document.querySelector('main') },
+        { selector: '[role="main"]', element: document.querySelector('[role="main"]') },
+        { selector: 'h1', element: document.querySelector('h1') },
+        { selector: '.container', element: document.querySelector('.container') }
+      ];
+      
+      console.log('🔍 Product page elements found:');
+      potentialElements.forEach(({ selector, element }) => {
+        if (element) {
+          console.log(`   ✅ ${selector}: Found - ${element.className || element.tagName}`);
+        } else {
+          console.log(`   ❌ ${selector}: Not found`);
+        }
+      });
+      
       targetElement = document.querySelector('.y_zeJr') ||
                      document.querySelector('[class*="pdp"]') ||
                      document.querySelector('[class*="product-detail"]') ||
                      document.querySelector('[class*="item-detail"]') ||
                      document.querySelector('.page-product') ||
                      document.querySelector('[data-testid*="pdp"]') ||
-                     document.querySelector('main');
+                     document.querySelector('main') ||
+                     document.querySelector('[role="main"]') ||
+                     document.querySelector('h1') ||
+                     document.querySelector('.container');
     }
     else if (this.currentPageType === 'shop') {
       // Untuk shop, cari target elements yang lebih spesifik dengan fallbacks yang lebih baik
@@ -470,6 +552,29 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('main');
     }
     
+    if (targetElement) {
+      console.log(`✅ Target element found for ${this.currentPageType}: ${targetElement.className || targetElement.tagName}`);
+    } else {
+      console.log(`❌ No target element found for ${this.currentPageType} page`);
+      
+      // Debug: Log semua elements di halaman untuk troubleshooting
+      console.log('🔍 Available elements on page:');
+      const allElements = document.querySelectorAll('*');
+      const elementStats = {};
+      for (let el of allElements) {
+        const tag = el.tagName.toLowerCase();
+        elementStats[tag] = (elementStats[tag] || 0) + 1;
+      }
+      console.log('📊 Element statistics:', elementStats);
+      
+      // Log beberapa elements dengan class untuk debugging
+      const elementsWithClass = Array.from(document.querySelectorAll('[class]')).slice(0, 10);
+      console.log('🏷️ First 10 elements with classes:');
+      elementsWithClass.forEach(el => {
+        console.log(`   ${el.tagName}: ${el.className}`);
+      });
+    }
+    
     return targetElement;
   }
 
@@ -477,6 +582,18 @@ class ShopeeAnalyticsObserver {  constructor() {
   setupDOMObserver() {
     if (this.domObserver) {
       this.domObserver.disconnect();
+    }
+    
+    // PERBAIKAN: Pastikan ada target element yang valid sebelum observe
+    const observeTarget = document.body || document.documentElement;
+    if (!observeTarget) {
+      console.log('❌ Cannot setup DOM observer: no valid target element (body/documentElement)');
+      // Retry setelah DOM ready
+      setTimeout(() => {
+        console.log('🔄 Retrying DOM observer setup...');
+        this.setupDOMObserver();
+      }, 1000);
+      return;
     }
     
     this.domObserver = new MutationObserver((mutations) => {
@@ -489,21 +606,52 @@ class ShopeeAnalyticsObserver {  constructor() {
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
+              // Enhanced detection untuk product pages
+              if (this.currentPageType === 'product' && 
+                  (node.querySelector && (
+                    node.querySelector('.y_zeJr') ||
+                    node.querySelector('[class*="pdp"]') ||
+                    node.querySelector('[class*="product-detail"]') ||
+                    node.querySelector('[class*="item-detail"]') ||
+                    node.querySelector('.page-product')
+                  ) || node.matches && (
+                    node.matches('.y_zeJr') ||
+                    node.matches('[class*="pdp"]') ||
+                    node.matches('[class*="product-detail"]') ||
+                    node.matches('[class*="item-detail"]') ||
+                    node.matches('.page-product')
+                  ))) {
+                console.log('🛍️ Product page elements detected in DOM changes');
+                shouldCheckTarget = true;
+              }
               // Check if any shop-related elements were added
-              if (this.currentPageType === 'shop' && 
+              else if (this.currentPageType === 'shop' && 
                   (node.querySelector && (
                     node.querySelector('[class*="shop-decoration"]') ||
                     node.querySelector('.shop-header') ||
-                    node.querySelector('[class*="shop-info"]') ||
-                    node.matches && (
-                      node.matches('[class*="shop-decoration"]') ||
-                      node.matches('.shop-header') ||
-                      node.matches('[class*="shop-info"]')
-                    )
+                    node.querySelector('[class*="shop-info"]')
+                  ) || node.matches && (
+                    node.matches('[class*="shop-decoration"]') ||
+                    node.matches('.shop-header') ||
+                    node.matches('[class*="shop-info"]')
                   ))) {
+                console.log('🏪 Shop page elements detected in DOM changes');
                 shouldCheckTarget = true;
               }
-              // Similar checks for other page types can be added here
+              // Check for category elements
+              else if (this.currentPageType === 'category' && 
+                  (node.querySelector && (
+                    node.querySelector('.shopee-search-item-result') ||
+                    node.querySelector('[class*="search-item-result"]') ||
+                    node.querySelector('[class*="item-result"]')
+                  ) || node.matches && (
+                    node.matches('.shopee-search-item-result') ||
+                    node.matches('[class*="search-item-result"]') ||
+                    node.matches('[class*="item-result"]')
+                  ))) {
+                console.log('📂 Category page elements detected in DOM changes');
+                shouldCheckTarget = true;
+              }
             }
           });
         }
@@ -521,11 +669,11 @@ class ShopeeAnalyticsObserver {  constructor() {
     });
     
     // Start observing
-    this.domObserver.observe(document.body, {
+    this.domObserver.observe(observeTarget, {
       childList: true,
       subtree: true
     });
-      console.log('👁️ DOM observer setup for', this.currentPageType, 'page');
+      console.log('👁️ DOM observer setup for', this.currentPageType, 'page on target:', observeTarget.tagName);
   }  handleSearchPagination(newData) {
     console.log('📊 Handling search pagination data');
     
