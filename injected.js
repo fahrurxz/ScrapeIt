@@ -90,10 +90,29 @@
     // Process search API
     if (url.includes('/search_items') || (url.includes('/search') && !url.includes('/search/'))) {
       console.log('🔍 Detected SEARCH API:', url);
+      
+      // Deteksi facet search berdasarkan URL parameters
+      const urlObj = new URL(url);
+      const hasFilterParams = urlObj.searchParams.has('brandids') || 
+                             urlObj.searchParams.has('catid') || 
+                             urlObj.searchParams.has('facet') ||
+                             url.includes('facet=') ||
+                             url.includes('brandids=');
+      
+      if (hasFilterParams) {
+        console.log('🎯 Detected FACET SEARCH API with filters:', {
+          brandids: urlObj.searchParams.get('brandids'),
+          catid: urlObj.searchParams.get('catid'),
+          facet: urlObj.searchParams.get('facet'),
+          keyword: urlObj.searchParams.get('keyword')
+        });
+      }
+      
       window.shopeeAPIData.searchData = {
         url: url,
         data: data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        isFacetSearch: hasFilterParams
       };
       notifyContentScript('SEARCH_DATA', data);
       

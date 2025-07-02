@@ -6,6 +6,10 @@ class ShopeeAnalyticsObserver {  constructor() {
     this.retryCount = 0;
     this.maxRetries = 6; // Maximum 6 retries (12 seconds)
     
+    // Facet search properties
+    this.currentFacet = null;
+    this.isFacetSearch = false;
+    
     // Pagination data storage
     this.accumulatedData = {
       searchData: null,
@@ -62,10 +66,19 @@ class ShopeeAnalyticsObserver {  constructor() {
     const url = window.location.href;
     const pathname = window.location.pathname;
     
-    if (url.includes('/search?keyword=')) {
+    if (url.includes('/search?') && (url.includes('keyword=') || url.includes('facet='))) {
       this.currentPageType = 'search';
       const urlParams = new URLSearchParams(window.location.search);
       this.currentKeyword = urlParams.get('keyword');
+      this.currentFacet = urlParams.get('facet');
+      
+      // Deteksi jika ini adalah search dengan filter facet
+      if (this.currentFacet) {
+        console.log('🔍 Detected search with facet filter:', this.currentFacet, 'keyword:', this.currentKeyword);
+        this.isFacetSearch = true;
+      } else {
+        this.isFacetSearch = false;
+      }
     } 
     else if (pathname.includes('-cat.') || pathname.includes('/category/') || pathname.includes('/cat.')) {
       this.currentPageType = 'category';
@@ -112,18 +125,52 @@ class ShopeeAnalyticsObserver {  constructor() {
         const newUrlParams = new URLSearchParams(window.location.search);
         const oldKeyword = oldUrlParams.get('keyword');
         const newKeyword = newUrlParams.get('keyword');
+        const oldFacet = oldUrlParams.get('facet');
+        const newFacet = newUrlParams.get('facet');
         const oldPage = parseInt(oldUrlParams.get('page') || '0');
         const newPage = parseInt(newUrlParams.get('page') || '0');
         
         // Detect page type first to know current page type
         const oldPageType = this.currentPageType;
         const oldCategoryId = this.currentCategoryId; // Store old category ID
+        const oldIsFacetSearch = this.isFacetSearch;
         this.detectPageType();
+        
+        // Detect facet filter change (URL with facet parameter changed)
+        const isFacetFilterChange = (oldPageType === 'search' && this.currentPageType === 'search' &&
+                                    (oldFacet !== newFacet || oldKeyword !== newKeyword) &&
+                                    (newFacet || oldFacet));
+        
+        if (isFacetFilterChange) {
+          console.log('🔄 Facet filter change detected:', {
+            oldFacet: oldFacet,
+            newFacet: newFacet,
+            oldKeyword: oldKeyword,
+            newKeyword: newKeyword
+          });
+          
+          // Reset accumulated data on facet change since it's new search criteria
+          this.apiData = {};
+          this.accumulatedData = {
+            searchData: null,
+            totalProducts: 0,
+            currentPage: 0,
+            hasMorePages: true
+          };
+          
+          // Force UI refresh for facet changes
+          this.uiInjected = false;
+          this.retryCount = 0;
+          
+          console.log('🔄 Facet filter applied - waiting for new API data to refresh UI');
+          this.setupDOMObserver();
+          return; // Exit early since we handled facet change
+        }
         
         // Pagination detection for both search and category pages
         const isSearchPagination = (oldKeyword === newKeyword && oldKeyword && newKeyword && 
                                    oldPageType === 'search' && this.currentPageType === 'search' && 
-                                   newPage >= oldPage);
+                                   newPage >= oldPage && oldFacet === newFacet);
         
         const isCategoryPagination = (oldPageType === 'category' && this.currentPageType === 'category' && 
                                      oldCategoryId === this.currentCategoryId && // Same category
@@ -193,7 +240,28 @@ class ShopeeAnalyticsObserver {  constructor() {
     } else if (type === 'SEARCH_DATA') {
       // Handle pagination data accumulation
       if (this.currentPageType === 'search') {
-        this.handleSearchPagination(data);
+        // Check if this is a facet search - if so, always refresh with new data
+        if (this.isFacetSearch) {
+          console.log('🔍 Facet search detected - refreshing with new search data');
+          console.log('🎯 Facet details:', {
+            facet: this.currentFacet,
+            keyword: this.currentKeyword,
+            itemsCount: data.items ? data.items.length : 0,
+            totalCount: data.total_count || 'unknown'
+          });
+          
+          // For facet searches, always use fresh data (don't accumulate)
+          this.accumulatedData = {
+            searchData: data,
+            totalProducts: data.items ? data.items.length : 0,
+            currentPage: 0,
+            hasMorePages: true
+          };
+        } else {
+          // Regular search pagination handling
+          this.handleSearchPagination(data);
+        }
+        
         this.stopLoadingState();
         
         if (this.accumulatedData.searchData) {
@@ -287,7 +355,30 @@ class ShopeeAnalyticsObserver {  constructor() {
     } else {
       // UI sudah ada, update dengan data baru
       console.log('🔄 Updating existing UI with new data');
-      ShopeeUIUpdater.updateUIWithData(this);
+      
+      // Untuk facet search, force refresh UI completely
+      if (this.isFacetSearch && type === 'SEARCH_DATA') {
+        console.log('🎯 Facet search detected - forcing complete UI refresh');
+        
+        // Remove existing UI and inject fresh one
+        const existingUI = document.querySelector('#shopee-analytics-panel');
+        if (existingUI) {
+          existingUI.remove();
+          console.log('🗑️ Removed existing UI for facet search refresh');
+        }
+        
+        // Reset UI injection flag and reinject
+        this.uiInjected = false;
+        this.retryCount = 0;
+        
+        // Wait a bit for DOM to settle then inject new UI
+        setTimeout(() => {
+          this.waitForTargetAndInject();
+        }, 100);
+      } else {
+        // Regular update for non-facet searches
+        ShopeeUIUpdater.updateUIWithData(this);
+      }
     }
   }
 
@@ -890,6 +981,28 @@ class ShopeeAnalyticsObserver {  constructor() {
   validateSearchData(data) {
     if (!data) return false;
     
+    // Untuk facet search, validasi lebih permisif karena hasil mungkin kosong
+    if (this.isFacetSearch) {
+      console.log('🔍 Validating facet search data with permissive rules');
+      
+      // Cek apakah data punya struktur yang valid (bahkan jika items kosong)
+      const hasValidStructure = data && (
+        data.items !== undefined ||  // Ada property items (bisa array kosong)
+        data.error !== undefined ||  // Ada handling error
+        data.total_count !== undefined || // Ada total count
+        typeof data === 'object'     // Minimal berupa object
+      );
+      
+      if (hasValidStructure) {
+        const items = this.getItemsFromData(data);
+        console.log('🔍 Facet search - items found:', items ? items.length : 0);
+        return true; // Return true for facet search even with empty results
+      }
+      
+      return false;
+    }
+    
+    // Validasi normal untuk search biasa
     const items = this.getItemsFromData(data);
     if (!items || items.length === 0) return false;
     
