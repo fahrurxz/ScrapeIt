@@ -162,7 +162,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     console.log('🏪 Updating shop elements with:', shopStats);
     
     // Update status indicator
-    this.updateElement('ts-shop-status', `${shopStats.productCount || 0} produk ditemukan`);
+    this.updateElement('ts-shop-status', `Berdasarkan ${shopStats.productCount || 0} produk`);
     
     // Update Summary Tab
     const priceRange = shopStats.minPrice && shopStats.maxPrice 
