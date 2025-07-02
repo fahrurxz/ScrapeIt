@@ -111,7 +111,7 @@ class ShopeeProductProcessor {
           const itemUnits = data.data.units.filter(unit => 
             unit.data_type === 'item' && unit.item
           );
-          console.log('📦 Found item units:', itemUnits.length);          items = itemUnits.map(unit => {
+          console.log('📦 Found item units:', itemUnits.length);          items = itemUnits.map((unit, index) => {
             const item = unit.item;
             console.log('📦 Processing recommend_v2 unit:', {
               hasDisplayedAsset: !!item.item_card_displayed_asset,
@@ -136,14 +136,14 @@ class ShopeeProductProcessor {
             const price = rawPrice / 100000; // Convert from API format to rupiah
             
             // Extract data penjualan dari item_data.item_card_display_sold_count
-            const historicalSold = soldCount.historical_sold_count || 0;
+            let historicalSold = soldCount.historical_sold_count || 0;
             let monthlySold = soldCount.monthly_sold_count || 0;
             
             // PERBAIKAN: Jika tidak ada monthly_sold_count, estimasi dari historical_sold
             if (monthlySold === 0 && historicalSold > 0) {
               // Estimasi 10% dari total terjual sebagai terjual 30 hari
               monthlySold = Math.floor(historicalSold * 0.1);
-              console.log(`📊 Shop item ${index + 1} - Estimating monthly sold: ${monthlySold} (10% of ${historicalSold})`);
+              console.log(`📊 Category item ${index + 1} - Estimating monthly sold: ${monthlySold} (10% of ${historicalSold})`);
             } else if (monthlySold === 0 && historicalSold === 0) {
               // PERBAIKAN: Jika tidak ada data sales sama sekali, buat estimasi berdasarkan harga
               if (price > 0) {
@@ -157,13 +157,13 @@ class ShopeeProductProcessor {
                   monthlySold = Math.floor(1 + Math.random() * 5); // 1-6 per bulan untuk produk mahal
                   historicalSold = monthlySold * Math.floor(3 + Math.random() * 9);
                 }
-                console.log(`📊 Shop item ${index + 1} - Using price-based estimation: ${monthlySold} monthly, ${historicalSold} total (price: ${price})`);
+                console.log(`📊 Category item ${index + 1} - Using price-based estimation: ${monthlySold} monthly, ${historicalSold} total (price: ${price})`);
               }
             }
             
             // PERBAIKAN: Debug penjualan untuk melihat apakah data terjual tersedia
             if (index < 3) { // Debug first 3 items
-              console.log(`🏪 Shop item ${index + 1} sales debug:`, {
+              console.log(`📂 Category item ${index + 1} sales debug:`, {
                 productName: productName,
                 soldCountStructure: soldCount,
                 historicalSold: historicalSold,

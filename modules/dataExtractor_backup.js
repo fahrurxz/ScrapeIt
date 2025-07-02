@@ -388,20 +388,12 @@ class ShopeeDataExtractor {
     let totalMonthsElapsed = 0;    items.forEach((item, index) => {
       console.log(`🔍 Processing item ${index + 1}:`, {
         itemid: item.itemid,
-        hasItemData: !!item.item_data,
-        hasDisplayPrice: !!item.item_data?.item_card_display_price,
-        hasSoldCount: !!item.item_data?.item_card_display_sold_count
+        hasDisplayPrice: !!item.item_card_display_price,
+        hasSoldCount: !!item.item_card_display_sold_count
       });
       
-      // PERBAIKAN: Untuk kategori recommend_v2, data ada di item.item_data, bukan item.item_basic
-      let itemData;
-      if (item.item_data) {
-        // Struktur recommend_v2: data ada di item.item_data
-        itemData = item.item_data;
-      } else {
-        // Struktur lain: gunakan item_basic atau item langsung
-        itemData = item.item_basic || item;
-      }
+      // Handle different item structures from recommend_v2
+      const itemData = item.item_basic || item;
       
       // Extract price - handle recommend_v2 price structure
       let price = 0;
@@ -431,7 +423,7 @@ class ShopeeDataExtractor {
         prices.push(price);
       }
 
-      // PERBAIKAN: Extract sales data - handle recommend_v2 sold structures dengan benar
+      // Extract sales data - handle recommend_v2 sold structures
       let itemTotalTerjual = 0;
       let itemTerjual30Hari = 0;
       
@@ -452,38 +444,7 @@ class ShopeeDataExtractor {
         itemTotalTerjual = itemData.global_sold;
       }
 
-      // PERBAIKAN: Jika tidak ada data sales sama sekali, generate estimasi yang realistis
-      if (itemTotalTerjual === 0 && itemTerjual30Hari === 0) {
-        // Generate realistic sales estimation based on price range
-        if (price > 0) {
-          if (price < 10000) {
-            // Produk murah: 10-50 terjual per bulan
-            itemTerjual30Hari = Math.floor(10 + Math.random() * 40);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(6 + Math.random() * 18); // 6-24 bulan history
-          } else if (price < 50000) {
-            // Produk menengah: 5-25 terjual per bulan  
-            itemTerjual30Hari = Math.floor(5 + Math.random() * 20);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(4 + Math.random() * 16); // 4-20 bulan history
-          } else if (price < 200000) {
-            // Produk mahal: 2-15 terjual per bulan
-            itemTerjual30Hari = Math.floor(2 + Math.random() * 13);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(3 + Math.random() * 12); // 3-15 bulan history
-          } else {
-            // Produk sangat mahal: 1-8 terjual per bulan
-            itemTerjual30Hari = Math.floor(1 + Math.random() * 7);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(2 + Math.random() * 10); // 2-12 bulan history
-          }
-          
-          console.log(`📊 Category Item ${index + 1} - Generated sales estimate:`, {
-            price: price,
-            monthly: itemTerjual30Hari,
-            total: itemTotalTerjual,
-            reason: 'price-based-estimation'
-          });
-        }
-      }
-
-      // Fallback untuk 30 hari jika tidak ada data monthly tapi ada total
+      // Fallback untuk 30 hari jika tidak ada data monthly
       if (itemTerjual30Hari === 0 && itemTotalTerjual > 0) {
         // Estimasi 10% dari total sold sebagai monthly
         itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
@@ -962,15 +923,7 @@ class ShopeeDataExtractor {
     let totalMonthsElapsed = 0;
 
     items.forEach((item, index) => {
-      // PERBAIKAN: Untuk kategori recommend_v2, data ada di item.item_data, bukan item.item_basic
-      let itemData;
-      if (item.item_data) {
-        // Struktur recommend_v2: data ada di item.item_data
-        itemData = item.item_data;
-      } else {
-        // Struktur lain: gunakan item_basic atau item langsung
-        itemData = item.item_basic || item;
-      }
+      const itemData = item.item_basic || item;
       
       // Extract price - Shopee API price format is always price * 100000
       let price = 0;
@@ -994,7 +947,7 @@ class ShopeeDataExtractor {
         expectedRp: price.toLocaleString('id-ID')
       });
 
-      // PERBAIKAN: Extract sales data - handle recommend_v2 sold structures dengan benar
+      // Extract sales data - handle recommend_v2 sold structures
       let itemTotalTerjual = 0;
       let itemTerjual30Hari = 0;
       
@@ -1003,12 +956,6 @@ class ShopeeDataExtractor {
         const soldData = itemData.item_card_display_sold_count;
         itemTotalTerjual = soldData.historical_sold_count || 0;
         itemTerjual30Hari = soldData.monthly_sold_count || 0;
-        
-        console.log(`📊 Category Item ${index + 1} - Found sold data:`, {
-          historical: itemTotalTerjual,
-          monthly: itemTerjual30Hari,
-          soldStructure: soldData
-        });
       } else if (itemData.historical_sold) {
         itemTotalTerjual = itemData.historical_sold;
         itemTerjual30Hari = itemData.sold || Math.floor(itemTotalTerjual * 0.1);
@@ -1026,38 +973,7 @@ class ShopeeDataExtractor {
         itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);
       }
 
-      // PERBAIKAN: Jika tidak ada data sales sama sekali, generate estimasi yang realistis
-      if (itemTotalTerjual === 0 && itemTerjual30Hari === 0) {
-        // Generate realistic sales estimation based on price range
-        if (price > 0) {
-          if (price < 10000) {
-            // Produk murah: 10-50 terjual per bulan
-            itemTerjual30Hari = Math.floor(10 + Math.random() * 40);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(6 + Math.random() * 18); // 6-24 bulan history
-          } else if (price < 50000) {
-            // Produk menengah: 5-25 terjual per bulan  
-            itemTerjual30Hari = Math.floor(5 + Math.random() * 20);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(4 + Math.random() * 16); // 4-20 bulan history
-          } else if (price < 200000) {
-            // Produk mahal: 2-15 terjual per bulan
-            itemTerjual30Hari = Math.floor(2 + Math.random() * 13);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(3 + Math.random() * 12); // 3-15 bulan history
-          } else {
-            // Produk sangat mahal: 1-8 terjual per bulan
-            itemTerjual30Hari = Math.floor(1 + Math.random() * 7);
-            itemTotalTerjual = itemTerjual30Hari * Math.floor(2 + Math.random() * 10); // 2-12 bulan history
-          }
-          
-          console.log(`📊 Category Item ${index + 1} - Generated sales estimate:`, {
-            price: price,
-            monthly: itemTerjual30Hari,
-            total: itemTotalTerjual,
-            reason: 'price-based-estimation'
-          });
-        }
-      }
-
-      // Fallback untuk 30 hari jika tidak ada data monthly tapi ada total
+      // Fallback untuk 30 hari jika tidak ada data monthly
       if (itemTerjual30Hari === 0 && itemTotalTerjual > 0) {
         // Estimasi 10% dari total sold sebagai monthly
         itemTerjual30Hari = Math.floor(itemTotalTerjual * 0.1);

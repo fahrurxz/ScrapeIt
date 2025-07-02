@@ -87,6 +87,23 @@
       }
     }
     
+    // ENHANCED DEBUGGING: Log semua API calls di category pages
+    if (window.location.pathname.includes('-cat.') || window.location.pathname.includes('/cat.')) {
+      console.log('📂 CATEGORY PAGE API CALL:');
+      console.log('   - URL:', url);
+      console.log('   - Has data:', !!data);
+      console.log('   - Current page URL:', window.location.href);
+      console.log('   - Data keys:', data ? Object.keys(data) : 'No data');
+      
+      if (url.includes('/recommend/recommend_v2')) {
+        console.log('   - This is a recommend_v2 API (category products)');
+        if (data && data.data && data.data.units) {
+          const itemUnits = data.data.units.filter(unit => unit.data_type === 'item');
+          console.log(`   - Found ${itemUnits.length} product items in recommend_v2`);
+        }
+      }
+    }
+    
     // Process search API
     if (url.includes('/search_items') || (url.includes('/search') && !url.includes('/search/'))) {
       console.log('🔍 Detected SEARCH API:', url);
@@ -127,17 +144,145 @@
         notifyContentScript('CATEGORY_DATA', data);
       }
     }
-    // Process category API - HANYA yang benar-benar category specific
-    else if ((url.includes('/get_category') || url.includes('/recommend/recommend_v2') || 
-              url.includes('/search/search_filter_config')) &&
-             !url.includes('/search_items') && !url.includes('/pdp/')) {
+    // Process category API dengan improved detection - HANYA yang memiliki product data
+    else if (url.includes('/recommend_v2') || 
+             url.includes('/get_category') ||
+             (url.includes('/get_category_tree') && url.includes('tab=category')) ||
+             (url.includes('/category/search') && !url.includes('/search_filter_config'))) {
       console.log('📂 Detected CATEGORY API (specific):', url);
-      window.shopeeAPIData.categoryData = {
-        url: url,
-        data: data,
-        timestamp: Date.now()
-      };
-      notifyContentScript('CATEGORY_DATA', data);
+      
+      // Enhanced debug untuk category API
+      const urlObj = new URL(url);
+      console.log('📂 Category API Details:');
+      console.log('   - URL:', url);
+      console.log('   - Current page path:', window.location.pathname);
+      console.log('   - Is category page:', window.location.pathname.includes('-cat.') || window.location.pathname.includes('/cat.'));
+      console.log('   - Data available:', !!data);
+      console.log('   - Data structure keys:', data ? Object.keys(data) : 'No data');
+      
+      if (data && data.data) {
+        console.log('   - data.data keys:', Object.keys(data.data));
+        if (data.data.units) {
+          console.log('   - units count:', data.data.units.length);
+          const itemUnits = data.data.units.filter(unit => unit.data_type === 'item');
+          console.log('   - item units count:', itemUnits.length);
+        }
+      }
+      
+      // PERBAIKAN: Hanya store data jika benar-benar ada product data
+      let hasProductData = false;
+      let productCount = 0;
+      
+      // Check untuk struktur recommend_v2
+      if (data && data.data && data.data.units) {
+        // PERBAIKAN: Untuk recommend_v2, cek unit.item bukan unit.item_data
+        const itemUnits = data.data.units.filter(unit => 
+          unit.data_type === 'item' && (unit.item || unit.item_data)
+        );
+        productCount = itemUnits.length;
+        hasProductData = productCount > 0;
+        
+        // Debug untuk melihat struktur unit yang ada
+        if (data.data.units.length > 0 && productCount === 0) {
+          console.log('🔍 Debug: Checking unit structure for recommend_v2');
+          const firstUnit = data.data.units[0];
+          console.log('   - First unit keys:', Object.keys(firstUnit));
+          console.log('   - Has item:', !!firstUnit.item);
+          console.log('   - Has item_data:', !!firstUnit.item_data);
+          console.log('   - Data type:', firstUnit.data_type);
+          
+          // Try alternative filtering
+          const altItemUnits = data.data.units.filter(unit => unit.data_type === 'item');
+          console.log('   - Units with data_type=item:', altItemUnits.length);
+          
+          if (altItemUnits.length > 0) {
+            productCount = altItemUnits.length;
+            hasProductData = productCount > 0;
+            console.log('   - Using alternative count:', productCount);
+          }
+        }
+      }
+      // Check untuk struktur items langsung
+      else if (data && data.items && Array.isArray(data.items)) {
+        productCount = data.items.length;
+        hasProductData = productCount > 0;
+      }
+      // Check untuk struktur data.items
+      else if (data && data.data && data.data.items && Array.isArray(data.data.items)) {
+        productCount = data.data.items.length;
+        hasProductData = productCount > 0;
+      }
+      
+      console.log('   - Has product data:', hasProductData);
+      console.log('   - Product count:', productCount);
+      
+      if (hasProductData && productCount > 0) {
+        console.log('✅ Category API has product data, storing...');
+        console.log(`📦 Storing ${productCount} products from category API`);
+        window.shopeeAPIData.categoryData = {
+          url: url,
+          data: data,
+          timestamp: Date.now()
+        };
+        notifyContentScript('CATEGORY_DATA', data);
+      } else {
+        console.log('⚠️ Category API has no product data, ignoring...');
+        console.log(`📊 Debug: hasProductData=${hasProductData}, productCount=${productCount}`);
+      }
+    }
+    // Fallback: Check if any API on category pages contains product data
+    else if ((window.location.pathname.includes('-cat.') || window.location.pathname.includes('/cat.')) &&
+             data && data.data) {
+      console.log('🔍 Checking unknown category API for product data:', url);
+      
+      let hasProductData = false;
+      let productCount = 0;
+      
+      // Check for various product data structures
+      if (data.data.units) {
+        // PERBAIKAN: Konsisten dengan validasi di atas
+        const itemUnits = data.data.units.filter(unit => 
+          unit.data_type === 'item' && (unit.item || unit.item_data)
+        );
+        productCount = itemUnits.length;
+        hasProductData = productCount > 0;
+        
+        // Try alternative if zero
+        if (productCount === 0) {
+          const altItemUnits = data.data.units.filter(unit => unit.data_type === 'item');
+          productCount = altItemUnits.length;
+          hasProductData = productCount > 0;
+        }
+      }
+      else if (data.data.items && Array.isArray(data.data.items)) {
+        productCount = data.data.items.length;
+        hasProductData = productCount > 0;
+      }
+      else if (data.items && Array.isArray(data.items)) {
+        productCount = data.items.length;
+        hasProductData = productCount > 0;
+      }
+      
+      if (hasProductData && productCount > 0) {
+        console.log('✅ Found category product data in unknown API:', {
+          url: url,
+          productCount: productCount,
+          structure: data.data.units ? 'units' : data.data.items ? 'data.items' : 'items'
+        });
+        
+        window.shopeeAPIData.categoryData = {
+          url: url,
+          data: data,
+          timestamp: Date.now()
+        };
+        notifyContentScript('CATEGORY_DATA', data);
+      } else {
+        console.log('📋 Unknown category API has no product data:', url);
+      }
+    }
+    // Ignore filter config APIs yang tidak memiliki product data
+    else if (url.includes('/search_filter_config')) {
+      console.log('📋 Ignoring filter config API (no product data):', url);
     }
     // Ignore other category-related APIs that might conflict
     else if (url.includes('/category') && !url.includes('/get_category')) {

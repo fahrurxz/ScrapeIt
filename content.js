@@ -199,6 +199,17 @@ class ShopeeAnalyticsObserver {  constructor() {
           // PERBAIKAN: SEMUA PAGE TYPE TUNGGU API DATA SETELAH NAVIGATION
         console.log(`⏳ Navigation to ${this.currentPageType}: waiting for API data`);
         
+        // PERBAIKAN: Tambahkan fallback timer untuk category page
+        if (this.currentPageType === 'category') {
+          // Set timer untuk force inject UI jika data tidak tersedia dalam 8 detik
+          setTimeout(() => {
+            if (!this.uiInjected) {
+              console.log('⏰ Category page fallback: Forcing UI injection after timeout');
+              this.waitForTargetAndInject();
+            }
+          }, 8000);
+        }
+        
         // Setup DOM observer untuk semua page types
         this.setupDOMObserver();
       }
@@ -862,10 +873,23 @@ class ShopeeAnalyticsObserver {  constructor() {
     
     // Handle API recommend_v2 structure
     if (data.data && data.data.units) {
-      const itemUnits = data.data.units.filter(unit => unit.data_type === 'item' && unit.item);
+      // PERBAIKAN: Konsisten dengan injected.js - cek unit.item atau unit.item_data
+      const itemUnits = data.data.units.filter(unit => 
+        unit.data_type === 'item' && (unit.item || unit.item_data)
+      );
+      
+      if (itemUnits.length === 0) {
+        // Fallback: cek hanya data_type
+        const altItemUnits = data.data.units.filter(unit => unit.data_type === 'item');
+        console.log(`🔄 Fallback: Found ${altItemUnits.length} units with data_type=item`);
+        if (altItemUnits.length > 0) {
+          return altItemUnits.map(unit => unit.item || unit.item_data || unit);
+        }
+      }
+      
       const items = itemUnits.map(unit => {
-        const item = unit.item;
-        if (item.item_data) {
+        const item = unit.item || unit.item_data;
+        if (item && item.item_data) {
           return {
             ...item.item_data,
             display_price: item.item_card_displayed_asset?.display_price,
@@ -912,10 +936,20 @@ class ShopeeAnalyticsObserver {  constructor() {
 
   // FUNGSI VALIDASI DATA - UNTUK MEMASTIKAN UI HANYA DIINJEKSI KETIKA DATA LENGKAP
   validateCategoryData(data) {
-    if (!data) return false;
+    console.log('🔍 Validating category data:', data ? Object.keys(data) : 'no data');
+    
+    if (!data) {
+      console.log('❌ Category validation failed: no data');
+      return false;
+    }
     
     const items = this.getItemsFromData(data);
-    if (!items || items.length === 0) return false;
+    console.log('🔍 Items extracted for validation:', items ? items.length : 'null');
+    
+    if (!items || items.length === 0) {
+      console.log('❌ Category validation failed: no items found');
+      return false;
+    }
     
     const hasValidItems = items.some(item => 
       item && (
@@ -924,6 +958,11 @@ class ShopeeAnalyticsObserver {  constructor() {
         item.price || item.price_min
       )
     );
+    
+    console.log('🔍 Has valid items:', hasValidItems);
+    if (!hasValidItems && items.length > 0) {
+      console.log('🔍 First item structure for debugging:', items[0] ? Object.keys(items[0]) : 'null item');
+    }
     
     return hasValidItems;
   }
@@ -1021,15 +1060,28 @@ class ShopeeAnalyticsObserver {  constructor() {
   hasValidAPIDataForCurrentPage() {
     const pageType = this.currentPageType;
     console.log(`🔍 Checking for valid API data for ${pageType} page...`);
+    console.log(`📊 Available API data keys:`, Object.keys(this.apiData));
     
     switch (pageType) {
       case 'search':
         const searchData = this.apiData['SEARCH_DATA']?.data;
-        return searchData && this.validateSearchData(searchData);
+        const searchValid = searchData && this.validateSearchData(searchData);
+        console.log(`🔍 Search data validation result:`, searchValid);
+        return searchValid;
         
       case 'category':
         const categoryData = this.apiData['CATEGORY_DATA']?.data || this.apiData['SEARCH_DATA']?.data;
-        return categoryData && this.validateCategoryData(categoryData);
+        const categoryValid = categoryData && this.validateCategoryData(categoryData);
+        console.log(`🔍 Category data validation result:`, categoryValid);
+        console.log(`📂 Category data source:`, this.apiData['CATEGORY_DATA'] ? 'CATEGORY_DATA' : 'SEARCH_DATA');
+        if (categoryData && !categoryValid) {
+          console.log(`❌ Category data validation failed. Debug info:`, {
+            hasCategoryData: !!this.apiData['CATEGORY_DATA'],
+            hasSearchData: !!this.apiData['SEARCH_DATA'],
+            dataStructure: categoryData ? Object.keys(categoryData) : 'no data'
+          });
+        }
+        return categoryValid;
         
       case 'product':
         const productData = this.apiData['PRODUCT_DATA']?.data;
