@@ -163,13 +163,10 @@ class ShopeeEventHandlers {
   }
 
   static showVolumeDetail(observer) {
-    console.log('Opening volume detail analysis...');
     // You can implement specific volume detail functionality here
     this.showDetailAnalysis(observer);
   }  static showMoreDataWithLoading(observer, buttonElement) {
-    console.log('Loading more data with loading indicator...');
-    
-    // Cek apakah ini halaman search atau category
+    // Check if this is search or category page
     if (observer.currentPageType !== 'search' && observer.currentPageType !== 'category') {
       alert('Fitur "Lebih banyak" hanya tersedia untuk halaman pencarian dan kategori');
       return;
@@ -209,7 +206,7 @@ class ShopeeEventHandlers {
         ShopeeUIUpdater.hidePaginationLoading();
         observer._isLoadingMore = false;
       }
-    }, 10000); // 10 second timeout
+    }, 5000); // Reduced from 10000ms to 5000ms
   }
 
   static setLoadingState(buttonElement, isLoading) {

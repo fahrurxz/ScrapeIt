@@ -1567,6 +1567,11 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+#ts-shop-stats {
+    margin-left: auto;
+    margin-right: auto;
+    width: 1200px;
+}
 
 /* Styling for product links in list view */
 .ts-list-product-name .ts-product-link {

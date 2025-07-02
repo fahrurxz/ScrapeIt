@@ -29,24 +29,15 @@ class ShopeeDataExtractor {
   }
 
   static extractStatsFromAPIData(observer) {
-    console.log('🔍 Extracting stats for page type:', observer.currentPageType);
-    console.log('📊 Available API data:', Object.keys(observer.apiData));
-    
-    // Extract statistics from intercepted API data
     let stats = null;
 
     if (observer.currentPageType === 'search' && observer.apiData.SEARCH_DATA) {
-      console.log('🔍 Processing search data');
-      
-      // PERBAIKAN: Gunakan accumulated data jika tersedia untuk analisis detail yang lengkap
+      // Use accumulated data if available for comprehensive analysis
       let dataToAnalyze = observer.apiData.SEARCH_DATA.data;
       
       if (observer.accumulatedData && observer.accumulatedData.searchData && 
           observer.accumulatedData.totalProducts > 0) {
-        console.log(`📊 Using accumulated data for detailed analysis (${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages)`);
         dataToAnalyze = observer.accumulatedData.searchData;
-      } else {
-        console.log('📊 Using current page data for analysis');
       }
       
       stats = this.extractSearchStats(dataToAnalyze);    } else if (observer.currentPageType === 'category') {
@@ -104,10 +95,8 @@ class ShopeeDataExtractor {
       }else {
         console.log('⚠️ No SEARCH_DATA or CATEGORY_DATA available for category page');      }
     } else if (observer.currentPageType === 'product' && observer.apiData.PRODUCT_DATA) {
-      console.log('🛍️ Processing product data');
       stats = this.extractProductStats(observer.apiData.PRODUCT_DATA.data);
     } else if (observer.currentPageType === 'shop' && observer.apiData.SHOP_DATA) {
-      console.log('🏪 Processing shop data');
       stats = this.extractShopStats(observer);
     }
 
@@ -115,10 +104,8 @@ class ShopeeDataExtractor {
     // Category dan product pages HARUS punya data real
     if (!stats) {
       if (observer.currentPageType === 'search') {
-        console.log('⚠️ Search page: No stats extracted, providing default stats');
         stats = this.getDefaultStats(observer.currentPageType);
       } else {
-        console.log(`⚠️ ${observer.currentPageType} page: No stats extracted, returning null (UI should not be shown)`);
         return null;
       }
     }
@@ -215,13 +202,6 @@ class ShopeeDataExtractor {
       if (price > 0) {
         price = price / 100000;
       }
-      
-      console.log('💰 Price extraction debug:', {
-        rawPrice: itemBasic.item_card_display_price?.price || itemBasic.price || itemBasic.price_min,
-        convertedPrice: price,
-        itemId: itemBasic.itemid,
-        expectedRp: price.toLocaleString('id-ID')
-      });
 
       if (price > 0) {
         prices.push(price);
@@ -293,13 +273,7 @@ class ShopeeDataExtractor {
     };
   }
   static extractCategoryStats(data) {
-    console.log('📂 Extracting category stats from data:', data);
-    console.log('📂 Data type:', typeof data);
-    console.log('📂 Has data.data:', !!data?.data);
-    console.log('📂 Has data.data.units:', !!data?.data?.units);
-    
     if (!data) {
-      console.log('❌ No data provided to extractCategoryStats');
       return null;
     }// Handle category API structure untuk recommend_v2
     let items = [];

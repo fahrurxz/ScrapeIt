@@ -29,40 +29,24 @@ class ShopeeAnalyticsObserver {  constructor() {
     this.detectPageType();
       // Watch for URL changes (SPA navigation)
     this.watchForNavigation();
-      // LOGIC BARU: UI injection berbeda berdasarkan page type
-    if (this.currentPageType === 'search') {
-      // Search page: inject UI immediately (tetap seperti dulu - stabil)
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          console.log('🔍 Search page: injecting UI immediately');
-          setTimeout(() => this.injectUI(), 300);
-        });
-      } else {
-        console.log('🔍 Search page: injecting UI immediately');
-        setTimeout(() => this.injectUI(), 300);
-      }    } else {
-      // Category, Product & Shop pages: TUNGGU API data dulu, JANGAN inject UI
-      console.log(`⏳ ${this.currentPageType} page: waiting for API data before injecting UI`);
-      
-      // Setup DOM observer untuk memantau perubahan (SEMUA non-search pages)
-      this.setupDOMObserver();
-      
-      // Fallback timeout: jika tidak ada API data dalam 8 detik, inject UI anyway
-      setTimeout(() => {
-        if (!this.uiInjected && Object.keys(this.apiData).length === 0) {
-          console.log(`⏰ ${this.currentPageType} page: timeout waiting for API, injecting UI with defaults`);
-          this.waitForTargetAndInject();
-        }
-      }, 8000);
-    }
+      // PERBAIKAN UI INJECTION: SEMUA PAGE TYPE TUNGGU API DATA DULU
+    console.log(`⏳ ${this.currentPageType} page: waiting for API data before injecting UI`);
+    
+    // Setup DOM observer untuk memantau perubahan DOM (SEMUA page types)
+    this.setupDOMObserver();
   }
   injectScript() {
+    // Set timestamp untuk tracking script age
+    this.injectedScriptTimestamp = Date.now();
+    
     const script = document.createElement('script');
     script.src = chrome.runtime.getURL('injected.js');
     script.onload = function() {
       this.remove();
     };
     (document.head || document.documentElement).appendChild(script);
+    
+    console.log('📜 Injected script loaded at:', new Date(this.injectedScriptTimestamp).toLocaleTimeString());
     
     // Load test script for debugging
     if (window.location.search.includes('debug=1') || localStorage.getItem('shopee-debug') === 'true') {
@@ -78,23 +62,10 @@ class ShopeeAnalyticsObserver {  constructor() {
     const url = window.location.href;
     const pathname = window.location.pathname;
     
-    console.log('🔍 Detecting page type for URL:', url);
-    console.log('🔍 Pathname:', pathname);
-    
-    // ENHANCED DEBUGGING untuk troubleshooting URL detection
-    console.log('🔍 URL Analysis:');
-    console.log('   - Contains /search?keyword=:', url.includes('/search?keyword='));
-    console.log('   - Contains -cat.:', pathname.includes('-cat.'));
-    console.log('   - Contains /category/:', pathname.includes('/category/'));
-    console.log('   - Contains /cat.:', pathname.includes('/cat.'));
-    console.log('   - Contains -i.:', pathname.includes('-i.'));
-    console.log('   - Regex /-i\\.\\d+\\.\\d+/ test:', /-i\.\d+\.\d+/.test(pathname));
-    
     if (url.includes('/search?keyword=')) {
       this.currentPageType = 'search';
       const urlParams = new URLSearchParams(window.location.search);
       this.currentKeyword = urlParams.get('keyword');
-      console.log('✅ Detected search page, keyword:', this.currentKeyword);
     } 
     else if (pathname.includes('-cat.') || pathname.includes('/category/') || pathname.includes('/cat.')) {
       this.currentPageType = 'category';
@@ -110,7 +81,6 @@ class ShopeeAnalyticsObserver {  constructor() {
         this.currentItemId = match[2];
       }
       console.log('✅ Detected product page, Shop ID:', this.currentShopId, 'Item ID:', this.currentItemId);
-      console.log('🔍 Full pathname for debugging:', pathname);
     }
     else if (pathname.match(/\/[^\/]+$/) && !pathname.includes('-cat.') && !pathname.includes('-i.') && pathname !== '/') {
       // Shop page: https://shopee.co.id/summerscent.indo
@@ -120,12 +90,6 @@ class ShopeeAnalyticsObserver {  constructor() {
     }
     else {
       this.currentPageType = 'other';
-      console.log('❌ Other page type detected');
-      console.log('🔍 Debug info for unrecognized page:');
-      console.log('   - URL:', url);
-      console.log('   - Pathname:', pathname);
-      console.log('   - Pathname length:', pathname.length);
-      console.log('   - Contains special chars:', /[()%]/.test(pathname));
     }
   }  watchForNavigation() {
     // Watch for URL changes in SPA
@@ -167,12 +131,10 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         const isPagination = isSearchPagination || isCategoryPagination;
         
-        console.log(`🔍 Navigation check: isPagination=${isPagination} (search=${isSearchPagination}, category=${isCategoryPagination}), oldPage=${oldPage}, newPage=${newPage}, keyword="${newKeyword}", oldCategoryId=${oldCategoryId}, newCategoryId=${this.currentCategoryId}, oldPageType=${oldPageType}, newPageType=${this.currentPageType}`);
         this.uiInjected = false;
         this.retryCount = 0; // Reset retry count on navigation
           // Reset data unless this is pagination
         if (!isPagination) {
-          console.log('🔄 Resetting API data and accumulated data for new navigation');
           this.apiData = {};
           this.accumulatedData = {
             searchData: null,
@@ -187,44 +149,19 @@ class ShopeeAnalyticsObserver {  constructor() {
             hasSearchData: !!this.accumulatedData.searchData
           });
         }
-          // LOGIC BARU: Inject UI strategy berdasarkan page type
-        if (this.currentPageType === 'search') {
-          // Search: inject immediately
-          console.log('🔍 Navigation to search: inject UI immediately');
-          setTimeout(() => this.injectUI(), 300);        } else {
-          // Category, Product & Shop: tunggu API data
-          console.log(`⏳ Navigation to ${this.currentPageType}: waiting for API data`);
-          
-          // Setup DOM observer untuk product pages juga
-          if (this.currentPageType === 'product') {
-            this.setupDOMObserver();
-          }
-          
-          // Fallback timeout untuk navigation
-          setTimeout(() => {
-            if (!this.uiInjected && Object.keys(this.apiData).length === 0) {
-              console.log(`⏰ Navigation ${this.currentPageType}: timeout, injecting UI anyway`);
-              this.injectUI();
-            }
-          }, 8000);
-        }
+          // PERBAIKAN: SEMUA PAGE TYPE TUNGGU API DATA SETELAH NAVIGATION
+        console.log(`⏳ Navigation to ${this.currentPageType}: waiting for API data`);
+        
+        // Setup DOM observer untuk semua page types
+        this.setupDOMObserver();
       }
     }).observe(observeTarget, { subtree: true, childList: true });
   }  handleAPIData(event) {
     const { type, data, timestamp } = event.detail;
-    console.log('🔔 Received API data:', type, 'at', new Date(timestamp).toLocaleTimeString());
-    console.log('📊 Current page type:', this.currentPageType);
-    console.log('� Current URL:', window.location.href);
-    console.log('�📦 Data preview:', data ? 'Data available' : 'No data');
     
     // ENHANCED DEBUGGING untuk product pages
     if (this.currentPageType === 'product') {
-      console.log('🛍️ PRODUCT PAGE DEBUG:');
-      console.log('   - Shop ID:', this.currentShopId);
-      console.log('   - Item ID:', this.currentItemId);
-      console.log('   - API Type received:', type);
-      console.log('   - UI already injected:', this.uiInjected);
-      console.log('   - Data keys:', data ? Object.keys(data) : 'No data');
+      // Skip detailed logging for product pages in production
     }
     
     // PERBAIKAN CRITICAL: Store API data IMMEDIATELY untuk SEMUA jenis data
@@ -234,24 +171,10 @@ class ShopeeAnalyticsObserver {  constructor() {
       timestamp: timestamp
     };
     
-    console.log('💾 Data stored in apiData for type:', type);
-    console.log('📊 Current apiData keys after storage:', Object.keys(this.apiData));
-    
     // Debug: Log API data structure for debugging
     if (type === 'PRODUCT_DATA') {
-      console.log('🔍 Product API Data Structure:', data);
-      console.log('🔍 Product Data Keys:', data ? Object.keys(data) : 'No data');
-      
-      // Additional debugging untuk product data
-      if (data && data.data) {
-        console.log('🔍 Product data.data keys:', Object.keys(data.data));
-        if (data.data.item) {
-          console.log('🔍 Product item data available:', !!data.data.item);
-          console.log('🔍 Product item keys:', Object.keys(data.data.item));
-        }
-      }
+      // Skip detailed product logging in production
     } else if (type === 'CATEGORY_DATA') {
-      console.log('🔍 Category API Data Structure:', data);
       
       // Handle pagination for category data
       if (this.currentPageType === 'category') {
@@ -268,66 +191,98 @@ class ShopeeAnalyticsObserver {  constructor() {
         }
       }
     } else if (type === 'SEARCH_DATA') {
-      console.log('🔍 Search API Data Structure:', data);
-      
-      // Handle pagination data accumulation untuk SEARCH_DATA setelah menyimpan
+      // Handle pagination data accumulation
       if (this.currentPageType === 'search') {
         this.handleSearchPagination(data);
-        
-        // Stop loading state if pagination was in progress
         this.stopLoadingState();
         
-        // Update accumulated data in API after pagination handling
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated SEARCH_DATA with accumulated data');
         }
       } else if (this.currentPageType === 'category') {
-        // Category pages also use SEARCH_DATA for product listings
-        console.log('📂 Category page detected - handling pagination with SEARCH_DATA');
         this.handleCategoryPagination(data);
-        
-        // Stop loading state if pagination was in progress
         this.stopLoadingState();
         
-        // Update accumulated data in API after pagination handling
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated SEARCH_DATA with accumulated category data');
         }
       }
     } else if (type === 'SHOP_DATA') {
-      console.log('🔍 Shop API Data Structure:', data);
-      console.log('🔍 Shop Data Keys:', Object.keys(data || {}));
-      console.log('🔍 Shop Data Full:', data);
+      
+      // ENHANCED DEBUGGING untuk shop data structure
+      if (data.baseData) {
+        console.log('🔍 Shop baseData keys:', Object.keys(data.baseData));
+        if (data.baseData.data) {
+          console.log('🔍 Shop baseData.data keys:', Object.keys(data.baseData.data));
+          if (data.baseData.data.data) {
+            console.log('🔍 Shop baseData.data.data keys:', Object.keys(data.baseData.data.data));
+          }
+        }
+      }
+      
+      if (data.itemsData) {
+        console.log('🔍 Shop itemsData keys:', Object.keys(data.itemsData));
+        if (data.itemsData.data) {
+          console.log('🔍 Shop itemsData.data keys:', Object.keys(data.itemsData.data));
+        }
+      }
+      
+      console.log('🔍 Shop Data Full preview:', data);
     }
     
     // Reset retry count when we receive data
     this.retryCount = 0;
     
-    // LOGIC BARU: Inject UI hanya setelah mendapat API data yang relevan
+    // PERBAIKAN CRITICAL: UI INJECTION LOGIC - TUNGGU API DATA YANG RELEVAN & VALIDASI DATA
     if (!this.uiInjected) {
       let shouldInjectUI = false;
+      let isDataValid = false;
       
+      // Validasi data berdasarkan page type
       if (this.currentPageType === 'search' && type === 'SEARCH_DATA') {
-        console.log('🔍 Search data received, UI should already be injected');
-        shouldInjectUI = false; // Search UI sudah di-inject di init()
+        // Validasi data search - pastikan ada items atau data yang valid
+        isDataValid = this.validateSearchData(data);
+        if (isDataValid) {
+          console.log('🔍 Valid search data received, injecting UI with data');
+          shouldInjectUI = true;
+        } else {
+          console.log('⚠️ Invalid search data, waiting for complete data');
+        }
       } else if (this.currentPageType === 'category' && (type === 'SEARCH_DATA' || type === 'CATEGORY_DATA')) {
-        console.log('📂 Category relevant data received, injecting UI with data');
-        shouldInjectUI = true;
+        // Validasi data category - pastikan ada items atau data yang valid
+        isDataValid = this.validateCategoryData(data);
+        if (isDataValid) {
+          console.log('📂 Valid category data received, injecting UI with data');
+          shouldInjectUI = true;
+        } else {
+          console.log('⚠️ Invalid category data, waiting for complete data');
+        }
       } else if (this.currentPageType === 'product' && type === 'PRODUCT_DATA') {
-        console.log('🛍️ Product data received, injecting UI with data');
-        shouldInjectUI = true;
+        // Validasi data product - pastikan ada item detail yang lengkap
+        isDataValid = this.validateProductData(data);
+        if (isDataValid) {
+          console.log('🛍️ Valid product data received, injecting UI with data');
+          shouldInjectUI = true;
+        } else {
+          console.log('⚠️ Invalid product data, waiting for complete data');
+        }
       } else if (this.currentPageType === 'shop' && type === 'SHOP_DATA') {
-        console.log('🏪 Shop data received, injecting UI with data');
-        shouldInjectUI = true;
+        // Validasi data shop - pastikan ada info shop yang lengkap
+        isDataValid = this.validateShopData(data);
+        if (isDataValid) {
+          console.log('🏪 Valid shop data received, injecting UI with data');
+          shouldInjectUI = true;
+        } else {
+          console.log('⚠️ Invalid shop data, waiting for complete data');
+        }
       }
       
-      if (shouldInjectUI) {
-        console.log('🎯 Injecting UI with fresh data for', this.currentPageType);
-        setTimeout(() => this.waitForTargetAndInject(), 500);
+      if (shouldInjectUI && isDataValid) {
+        // PERBAIKAN: Inject UI immediately when valid data received
+        console.log('🚀 Valid API data received, attempting immediate UI injection');
+        this.waitForTargetAndInject();
       } else {
-        console.log('⏳ Waiting for relevant API data for', this.currentPageType, '- received:', type);
+        console.log('⏳ Waiting for valid API data for', this.currentPageType, '- received:', type, 'valid:', isDataValid);
       }
     } else {
       // UI sudah ada, update dengan data baru
@@ -405,7 +360,7 @@ class ShopeeAnalyticsObserver {  constructor() {
     const uiElement = document.createElement('div');
     uiElement.innerHTML = uiHTML;
     
-    // Insert before the target element
+    // Insert UI based on target element and page type
     if (targetElement.tagName === 'H1' && targetElement.classList.contains('shopee-search-result-header')) {
       // Perfect placement: before the search result header
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
@@ -413,14 +368,49 @@ class ShopeeAnalyticsObserver {  constructor() {
     } else if (targetElement.classList.contains('shopee-search-item-result')) {
       // Perfect placement: before the category item result
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before .shopee-search-item-result');    } else if (targetElement.classList.contains('y_zeJr')) {
+      console.log('✅ UI injected before .shopee-search-item-result');
+    } else if (targetElement.classList.contains('y_zeJr')) {
       // Perfect placement: before the product detail element
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
       console.log('✅ UI injected before .y_zeJr (product page)');
-    } else if (targetElement.className && targetElement.className.includes('shop-decoration')) {
-      // Perfect placement: before the shop decoration element
-      targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before shop-decoration (shop page)');
+    }    else if (this.currentPageType === 'shop') {
+      // REVISI: Tempatkan UI di dalam div pertama di dalam .shop-decoration
+      let shopDecorationElement = null;
+      
+      // Cari .shop-decoration element
+      if (targetElement.className && targetElement.className.includes('shop-decoration')) {
+        shopDecorationElement = targetElement;
+      } else {
+        // Cari .shop-decoration di dalam target element atau di parent
+        shopDecorationElement = targetElement.querySelector('[class*="shop-decoration"]') ||
+                               document.querySelector('[class*="shop-decoration"]');
+      }
+      
+      if (shopDecorationElement) {
+        // Cari div pertama di dalam .shop-decoration
+        const firstDiv = shopDecorationElement.querySelector('div');
+        if (firstDiv) {
+          // Insert sebagai child pertama dari div pertama di dalam shop-decoration
+          firstDiv.insertBefore(uiElement.firstElementChild, firstDiv.firstChild);
+          console.log('✅ UI injected as first child in first div inside .shop-decoration');
+        } else {
+          // Fallback: insert sebagai child pertama dari shop-decoration itu sendiri
+          shopDecorationElement.insertBefore(uiElement.firstElementChild, shopDecorationElement.firstChild);
+          console.log('✅ UI injected as first child of .shop-decoration (no inner div found)');
+        }
+      } else {
+        // Fallback untuk shop pages ketika .shop-decoration tidak ditemukan
+        const shopPageMenu = targetElement.querySelector('.shop-page-menu');
+        if (shopPageMenu) {
+          // Insert setelah shop-page-menu
+          shopPageMenu.parentNode.insertBefore(uiElement.firstElementChild, shopPageMenu.nextSibling);
+          console.log('✅ UI injected after .shop-page-menu (fallback - no .shop-decoration found)');
+        } else {
+          // Insert di awal target element
+          targetElement.insertBefore(uiElement.firstElementChild, targetElement.firstChild);
+          console.log('✅ UI injected at beginning of target element (fallback - no .shop-decoration or .shop-page-menu found)');
+        }
+      }
     }else if (targetElement.tagName === 'H1') {
       // Any h1 element
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
@@ -442,36 +432,34 @@ class ShopeeAnalyticsObserver {  constructor() {
     ShopeeUIUpdater.updateUIWithData(this);
   }
 
-  // Fungsi untuk menunggu target element muncul sebelum inject UI
-  waitForTargetAndInject(maxWaitTime = 10000, checkInterval = 500) {
-    const startTime = Date.now();
+  // Dynamic UI injection based on HTML ready and API available
+  waitForTargetAndInject() {
+    // Quick checks - if all conditions met, inject immediately
+    if (document.readyState === 'loading') {
+      console.log('📄 DOM still loading, will wait for DOMContentLoaded');
+      return; // DOM observer will handle this
+    }
     
-    const checkTarget = () => {
-      const targetElement = this.findTargetElement();
-      
-      if (targetElement) {
-        console.log(`✅ Target element found, proceeding with UI injection`);
-        this.injectUI();
-        return;
-      }
-      
-      // Check if we've exceeded max wait time
-      if (Date.now() - startTime > maxWaitTime) {
-        console.log(`⏰ Timeout waiting for target element, injecting UI anyway`);
-        this.injectUI();
-        return;
-      }
-      
-      // Continue checking
-      setTimeout(checkTarget, checkInterval);
-    };
+    const isHTMLReady = this.checkHTMLReadiness(true);
+    if (!isHTMLReady) {
+      console.log('📄 HTML not fully ready, will wait for DOM changes');
+      return; // DOM observer will handle this
+    }
     
-    checkTarget();
+    const targetElement = this.findTargetElement();
+    if (!targetElement) {
+      console.log('🎯 Target element not found, will wait for DOM changes');
+      return; // DOM observer will handle this
+    }
+    
+    // All conditions met - inject UI immediately
+    console.log('✅ HTML ready and target found, injecting UI immediately');
+    this.injectUI();
   }
+
   // Fungsi untuk mencari target element berdasarkan page type
   findTargetElement() {
     let targetElement = null;
-    console.log(`🎯 Finding target element for ${this.currentPageType} page...`);
     
     if (this.currentPageType === 'category') {
       targetElement = document.querySelector('.shopee-search-item-result') ||
@@ -479,7 +467,6 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('[class*="item-result"]') ||
                      document.querySelector('[class*="product-list"]') ||
                      document.querySelector('.row.shopee-search-result-content') ||
-                     // Additional fallbacks for category
                      document.querySelector('h1') ||
                      document.querySelector('[class*="category"]') ||
                      document.querySelector('[class*="listing"]') ||
@@ -490,7 +477,6 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('h1[class*="search-result-header"]') ||
                      document.querySelector('h1[class*="search-header"]') ||
                      document.querySelector('h1[class*="result-header"]') ||
-                     // Additional fallbacks for search
                      document.querySelector('h1') ||
                      document.querySelector('[class*="search-item"]') ||
                      document.querySelector('[data-testid*="search"]') ||
@@ -498,32 +484,6 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('[role="main"]');
     }
     else if (this.currentPageType === 'product') {
-      // ENHANCED: Lebih banyak selector untuk product pages
-      console.log('🔍 Searching for product page elements...');
-      
-      // Log semua potential elements untuk debugging
-      const potentialElements = [
-        { selector: '.y_zeJr', element: document.querySelector('.y_zeJr') },
-        { selector: '[class*="pdp"]', element: document.querySelector('[class*="pdp"]') },
-        { selector: '[class*="product-detail"]', element: document.querySelector('[class*="product-detail"]') },
-        { selector: '[class*="item-detail"]', element: document.querySelector('[class*="item-detail"]') },
-        { selector: '.page-product', element: document.querySelector('.page-product') },
-        { selector: '[data-testid*="pdp"]', element: document.querySelector('[data-testid*="pdp"]') },
-        { selector: 'main', element: document.querySelector('main') },
-        { selector: '[role="main"]', element: document.querySelector('[role="main"]') },
-        { selector: 'h1', element: document.querySelector('h1') },
-        { selector: '.container', element: document.querySelector('.container') }
-      ];
-      
-      console.log('🔍 Product page elements found:');
-      potentialElements.forEach(({ selector, element }) => {
-        if (element) {
-          console.log(`   ✅ ${selector}: Found - ${element.className || element.tagName}`);
-        } else {
-          console.log(`   ❌ ${selector}: Not found`);
-        }
-      });
-      
       targetElement = document.querySelector('.y_zeJr') ||
                      document.querySelector('[class*="pdp"]') ||
                      document.querySelector('[class*="product-detail"]') ||
@@ -536,43 +496,22 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('.container');
     }
     else if (this.currentPageType === 'shop') {
-      // Untuk shop, cari target elements yang lebih spesifik dengan fallbacks yang lebih baik
+      // REVISI: Prioritaskan .shop-decoration sebagai target utama untuk shop page
       targetElement = document.querySelector('[class*="shop-decoration"]') ||
+                     document.querySelector('.container [class*="shop-decoration"]') ||
+                     document.querySelector('.shop-page [class*="shop-decoration"]') ||
+                     document.querySelector('.shop-page') ||
+                     document.querySelector('[role="main"]') ||
                      document.querySelector('.shop-header') ||
                      document.querySelector('[class*="shop-info"]') ||
                      document.querySelector('[class*="shop-profile"]') ||
                      document.querySelector('[class*="shop-banner"]') ||
-                     document.querySelector('.shop-page') ||
                      document.querySelector('[data-testid*="shop"]') ||
-                     // Additional fallbacks for shop
                      document.querySelector('h1') ||
                      document.querySelector('[class*="shop"]') ||
                      document.querySelector('[class*="store"]') ||
                      document.querySelector('.shop-wrapper') ||
                      document.querySelector('main');
-    }
-    
-    if (targetElement) {
-      console.log(`✅ Target element found for ${this.currentPageType}: ${targetElement.className || targetElement.tagName}`);
-    } else {
-      console.log(`❌ No target element found for ${this.currentPageType} page`);
-      
-      // Debug: Log semua elements di halaman untuk troubleshooting
-      console.log('🔍 Available elements on page:');
-      const allElements = document.querySelectorAll('*');
-      const elementStats = {};
-      for (let el of allElements) {
-        const tag = el.tagName.toLowerCase();
-        elementStats[tag] = (elementStats[tag] || 0) + 1;
-      }
-      console.log('📊 Element statistics:', elementStats);
-      
-      // Log beberapa elements dengan class untuk debugging
-      const elementsWithClass = Array.from(document.querySelectorAll('[class]')).slice(0, 10);
-      console.log('🏷️ First 10 elements with classes:');
-      elementsWithClass.forEach(el => {
-        console.log(`   ${el.tagName}: ${el.className}`);
-      });
     }
     
     return targetElement;
@@ -628,10 +567,14 @@ class ShopeeAnalyticsObserver {  constructor() {
               else if (this.currentPageType === 'shop' && 
                   (node.querySelector && (
                     node.querySelector('[class*="shop-decoration"]') ||
+                    node.querySelector('.shop-page') ||
+                    node.querySelector('.shop-page-menu') ||
                     node.querySelector('.shop-header') ||
                     node.querySelector('[class*="shop-info"]')
                   ) || node.matches && (
                     node.matches('[class*="shop-decoration"]') ||
+                    node.matches('.shop-page') ||
+                    node.matches('.shop-page-menu') ||
                     node.matches('.shop-header') ||
                     node.matches('[class*="shop-info"]')
                   ))) {
@@ -658,13 +601,21 @@ class ShopeeAnalyticsObserver {  constructor() {
       });
       
       if (shouldCheckTarget) {
-        console.log('🔍 DOM change detected, checking for target element...');
-        setTimeout(() => {
-          if (!this.uiInjected && this.findTargetElement()) {
-            console.log('✅ Target element now available after DOM change');
+        console.log('🔍 DOM change detected, checking for UI injection...');
+        // Try immediate injection without delay
+        if (!this.uiInjected && this.findTargetElement()) {
+          console.log('✅ Target element now available after DOM change');
+          
+          // PERBAIKAN: Immediate injection when target found
+          const hasValidAPIData = this.hasValidAPIDataForCurrentPage();
+          if (hasValidAPIData) {
+            console.log('✅ Valid API data available, injecting UI now');
             this.injectUI();
+          } else {
+            console.log('⏳ Target element ready, will inject when API data arrives');
+            // UI will be injected when API data arrives via handleAPIData
           }
-        }, 300);
+        }
       }
     });
     
@@ -675,126 +626,15 @@ class ShopeeAnalyticsObserver {  constructor() {
     });
       console.log('👁️ DOM observer setup for', this.currentPageType, 'page on target:', observeTarget.tagName);
   }  handleSearchPagination(newData) {
-    console.log('📊 Handling search pagination data');
+    if (!newData) return;
     
-    if (!newData) {
-      console.log('⚠️ No new data provided to handleSearchPagination');
-      return;
-    }
-    
-    // Get current page from URL
     const urlParams = new URLSearchParams(window.location.search);
     const currentPage = parseInt(urlParams.get('page') || '0');
     
-    console.log(`📄 Current page: ${currentPage}`);
-    console.log('🔍 Current accumulatedData state:', {
-      hasSearchData: !!this.accumulatedData.searchData,
-      totalProducts: this.accumulatedData.totalProducts,
-      storedPage: this.accumulatedData.currentPage
-    });
-    
-    // Check if new data has items
     const newItems = this.getItemsFromData(newData);
     const hasNewItems = newItems && newItems.length > 0;
     
-    console.log(`📦 New data has ${newItems ? newItems.length : 0} items`);
-    
-    // If this is the first page (page 0), initialize accumulated data
     if (currentPage === 0) {
-      console.log('🆕 Initializing accumulated data for first page');
-      this.accumulatedData = {
-        searchData: this.deepClone(newData),
-        totalProducts: 0,
-        currentPage: currentPage,
-        hasMorePages: hasNewItems
-      };
-    } else {      console.log(`📈 Accumulating data from page ${currentPage}`);
-      
-      // Check if accumulated data was lost (navigation issue) - reinitialize if needed
-      if (!this.accumulatedData.searchData) {
-        console.log('⚠️ Accumulated data was lost - treating page as first page');
-        this.accumulatedData = {
-          searchData: this.deepClone(newData),
-          totalProducts: 0,
-          currentPage: currentPage,
-          hasMorePages: hasNewItems
-        };
-      } else {
-        // Check if this page has no new items (end of results)
-        if (!hasNewItems) {
-          console.log('🚫 No new items found - reached end of results');
-          this.accumulatedData.hasMorePages = false;
-        } else {
-          // Merge new items with existing accumulated data
-          if (this.accumulatedData.searchData && newData) {
-            this.mergeSearchData(this.accumulatedData.searchData, newData);
-          }
-          
-          // Check if this page has fewer items than expected (might be last page)
-          this.accumulatedData.hasMorePages = newItems.length >= 50; // Shopee typically shows 60 items per page, but let's be conservative
-        }
-        
-        this.accumulatedData.currentPage = currentPage;
-      }
-    }
-    
-    // Count total products
-    this.countTotalProducts();
-      console.log(`✅ Accumulated data updated. Total products: ${this.accumulatedData.totalProducts}, Current page: ${currentPage}, Has more: ${this.accumulatedData.hasMorePages}`);
-  }
-
-  // Function to determine if category has more pages - more lenient than search
-  determineCategoryHasMorePages(currentPage, newItems, newData) {
-    console.log(`🔍 Determining category hasMorePages: page=${currentPage}, items=${newItems ? newItems.length : 0}`);
-    
-    // If we're on early pages (0-14), assume more pages exist even with 0 items
-    if (currentPage <= 14) {
-      console.log(`📂 Early category page (${currentPage}) - assuming more pages exist`);
-      return true;
-    }
-    
-    // If we have items, use lower threshold than search
-    if (newItems && newItems.length > 0) {
-      const hasMore = newItems.length >= 20; // Even lower threshold for categories
-      console.log(`📂 Category with ${newItems.length} items - hasMore: ${hasMore}`);
-      return hasMore;
-    }
-    
-    // For later pages with no items, still allow up to page 19
-    const hasMore = currentPage < 19;
-    console.log(`📂 Category page ${currentPage} with no items - hasMore: ${hasMore}`);
-    return hasMore;
-  }
-
-  // Function specifically for handling category pagination - mirrors search pagination logic
-  handleCategoryPagination(newData) {
-    console.log('📊 Handling category pagination data');
-    
-    if (!newData) {
-      console.log('⚠️ No new data provided to handleCategoryPagination');
-      return;
-    }
-    
-    // Get current page from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentPage = parseInt(urlParams.get('page') || '0');
-    
-    console.log(`📄 Category current page: ${currentPage}`);
-    console.log('🔍 Current category accumulatedData state:', {
-      hasSearchData: !!this.accumulatedData.searchData,
-      totalProducts: this.accumulatedData.totalProducts,
-      storedPage: this.accumulatedData.currentPage
-    });
-    
-    // Check if new data has items
-    const newItems = this.getItemsFromData(newData);
-    const hasNewItems = newItems && newItems.length > 0;
-    
-    console.log(`📦 Category new data has ${newItems ? newItems.length : 0} items`);
-    
-    // If this is the first page (page 0), initialize accumulated data
-    if (currentPage === 0) {
-      console.log('🆕 Initializing category accumulated data for first page');
       this.accumulatedData = {
         searchData: this.deepClone(newData),
         totalProducts: 0,
@@ -802,11 +642,7 @@ class ShopeeAnalyticsObserver {  constructor() {
         hasMorePages: hasNewItems
       };
     } else {
-      console.log(`📈 Accumulating category data from page ${currentPage}`);
-      
-      // Check if accumulated data was lost (navigation issue) - reinitialize if needed
       if (!this.accumulatedData.searchData) {
-        console.log('⚠️ Category accumulated data was lost - treating page as first page');
         this.accumulatedData = {
           searchData: this.deepClone(newData),
           totalProducts: 0,
@@ -814,11 +650,65 @@ class ShopeeAnalyticsObserver {  constructor() {
           hasMorePages: hasNewItems
         };
       } else {
-        // Use smart detection for category pagination instead of simple rules
-        console.log('� Category: Using smart hasMorePages detection');
+        if (!hasNewItems) {
+          this.accumulatedData.hasMorePages = false;
+        } else {
+          if (this.accumulatedData.searchData && newData) {
+            this.mergeSearchData(this.accumulatedData.searchData, newData);
+          }
+          this.accumulatedData.hasMorePages = newItems.length >= 50;
+        }
+        this.accumulatedData.currentPage = currentPage;
+      }
+    }
+    
+    this.countTotalProducts();
+  }
+
+  // Function to determine if category has more pages - more lenient than search
+  determineCategoryHasMorePages(currentPage, newItems, newData) {
+    // Early pages - assume more pages exist
+    if (currentPage <= 14) {
+      return true;
+    }
+    
+    // Check items threshold
+    if (newItems && newItems.length > 0) {
+      return newItems.length >= 20;
+    }
+    
+    // Later pages with no items
+    return currentPage < 19;
+  }
+
+  // Function specifically for handling category pagination - mirrors search pagination logic
+  handleCategoryPagination(newData) {
+    if (!newData) return;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page') || '0');
+    
+    const newItems = this.getItemsFromData(newData);
+    const hasNewItems = newItems && newItems.length > 0;
+    
+    if (currentPage === 0) {
+      this.accumulatedData = {
+        searchData: this.deepClone(newData),
+        totalProducts: 0,
+        currentPage: currentPage,
+        hasMorePages: hasNewItems
+      };
+    } else {
+      if (!this.accumulatedData.searchData) {
+        this.accumulatedData = {
+          searchData: this.deepClone(newData),
+          totalProducts: 0,
+          currentPage: currentPage,
+          hasMorePages: hasNewItems
+        };
+      } else {
         this.accumulatedData.hasMorePages = this.determineCategoryHasMorePages(currentPage, newItems, newData);
         
-        // Merge new items if they exist
         if (hasNewItems && this.accumulatedData.searchData && newData) {
           this.mergeSearchData(this.accumulatedData.searchData, newData);
         }
@@ -827,10 +717,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       }
     }
     
-    // Count total products
     this.countTotalProducts();
-    
-    console.log(`✅ Category accumulated data updated. Total products: ${this.accumulatedData.totalProducts}, Current page: ${currentPage}, Has more: ${this.accumulatedData.hasMorePages}`);
   }
   stopLoadingState() {
     if (this._isLoadingMore && this._loadingButton) {
@@ -854,80 +741,39 @@ class ShopeeAnalyticsObserver {  constructor() {
     }
   }
   mergeSearchData(accumulatedData, newData) {
-    console.log('🔄 Merging new search data with accumulated data');
+    if (!accumulatedData || !newData) return;
     
-    if (!accumulatedData || !newData) {
-      console.log('⚠️ Cannot merge data - missing accumulated or new data');
-      return;
-    }
-    
-    // Find items array in both data structures
     let accumulatedItems = this.getItemsFromData(accumulatedData);
     let newItems = this.getItemsFromData(newData);
     
     if (accumulatedItems && newItems && newItems.length > 0) {
-      console.log(`📦 Before merge: accumulated=${accumulatedItems.length}, new=${newItems.length}`);
-      
-      // Merge new items into accumulated items
       accumulatedItems.push(...newItems);
-      console.log(`📦 After merge: total items=${accumulatedItems.length}`);
       
-      // PERBAIKAN: Update structure based on data type
+      // Update structure based on data type
       if (accumulatedData.data && accumulatedData.data.units) {
-        // For recommend_v2 API structure, append units
-        console.log('🔄 Merging recommend_v2 units structure');
         if (newData.data && newData.data.units) {
           const newItemUnits = newData.data.units.filter(unit => unit.data_type === 'item' && unit.item);
           accumulatedData.data.units.push(...newItemUnits);
-          console.log(`📦 Added ${newItemUnits.length} new units to accumulated data`);
         }
       } else if (accumulatedData.items) {
-        // For regular items structure, update items directly
-        console.log('🔄 Updating regular items structure');
         accumulatedData.items = accumulatedItems;
       } else if (accumulatedData.data && accumulatedData.data.items) {
-        // For data.items structure, update data.items
-        console.log('🔄 Updating data.items structure');
         accumulatedData.data.items = accumulatedItems;
       }
-      
-    } else {
-      console.log('⚠️ Cannot merge items - one or both arrays are empty/null');
-      console.log('🔍 Accumulated items:', accumulatedItems ? accumulatedItems.length : 'null');
-      console.log('🔍 New items:', newItems ? newItems.length : 'null');
     }
   }
 
   getItemsFromData(data) {
-    console.log('🔍 getItemsFromData called with:', data ? 'Data exists' : 'No data');
+    if (!data) return null;
     
-    if (!data) {
-      console.log('❌ getItemsFromData: No data provided');
-      return null;
-    }
+    if (data.items) return data.items;
+    if (data.data && data.data.items) return data.data.items;
     
-    if (data.items) {
-      console.log(`✅ getItemsFromData: Found items array with ${data.items.length} items`);
-      return data.items;
-    }
-    
-    if (data.data && data.data.items) {
-      console.log(`✅ getItemsFromData: Found data.items array with ${data.data.items.length} items`);
-      return data.data.items;
-    }
-    
-    // PERBAIKAN: Handle API recommend_v2 structure (data.data.units)
+    // Handle API recommend_v2 structure
     if (data.data && data.data.units) {
-      console.log(`✅ getItemsFromData: Found recommend_v2 units structure with ${data.data.units.length} units`);
-      
-      // Filter only item units
       const itemUnits = data.data.units.filter(unit => unit.data_type === 'item' && unit.item);
-      console.log(`📦 getItemsFromData: Filtered to ${itemUnits.length} item units`);
-      
-      // Extract items from units
       const items = itemUnits.map(unit => {
         const item = unit.item;
-        // Merge item_data and item_card_displayed_asset for compatibility
         if (item.item_data) {
           return {
             ...item.item_data,
@@ -938,44 +784,22 @@ class ShopeeAnalyticsObserver {  constructor() {
         }
         return item;
       });
-      
-      console.log(`✅ getItemsFromData: Extracted ${items.length} items from recommend_v2 units`);
       return items;
     }
     
     if (data.sections) {
-      const items = data.sections.flatMap(section => section.data?.items || []);
-      console.log(`✅ getItemsFromData: Found sections with ${items.length} total items`);
-      return items;
+      return data.sections.flatMap(section => section.data?.items || []);
     }
     
-    if (Array.isArray(data)) {
-      console.log(`✅ getItemsFromData: Data is array with ${data.length} items`);
-      return data;
-    }
-    
-    console.log('❌ getItemsFromData: No recognizable data structure found');
-    console.log('🔍 Data keys:', Object.keys(data));
-    console.log('🔍 Data.data keys:', data.data ? Object.keys(data.data) : 'No data.data');
+    if (Array.isArray(data)) return data;
     
     return null;
   }
   countTotalProducts() {
-    console.log('🔢 Counting total products...');
-    console.log('🔍 AccumulatedData state:', this.accumulatedData);
-    
     if (this.accumulatedData && this.accumulatedData.searchData) {
       const items = this.getItemsFromData(this.accumulatedData.searchData);
-      console.log('🔍 Items extracted from accumulated data:', items ? items.length : 'null/undefined');
-      console.log('🔍 First few items:', items ? items.slice(0, 3) : 'No items');
-      
       this.accumulatedData.totalProducts = items ? items.length : 0;
-      console.log(`✅ Total products counted: ${this.accumulatedData.totalProducts}`);
     } else {
-      console.log('⚠️ Cannot count products - no accumulated search data');
-      console.log('🔍 AccumulatedData exists:', !!this.accumulatedData);
-      console.log('🔍 SearchData exists:', !!(this.accumulatedData && this.accumulatedData.searchData));
-      
       if (this.accumulatedData) {
         this.accumulatedData.totalProducts = 0;
       }
@@ -994,6 +818,282 @@ class ShopeeAnalyticsObserver {  constructor() {
       return copy;
     }
   }
+
+  // FUNGSI VALIDASI DATA - UNTUK MEMASTIKAN UI HANYA DIINJEKSI KETIKA DATA LENGKAP
+  validateCategoryData(data) {
+    if (!data) return false;
+    
+    const items = this.getItemsFromData(data);
+    if (!items || items.length === 0) return false;
+    
+    const hasValidItems = items.some(item => 
+      item && (
+        item.itemid || item.item_id || item.id ||
+        item.name || item.title ||
+        item.price || item.price_min
+      )
+    );
+    
+    return hasValidItems;
+  }
+
+  validateProductData(data) {
+    if (!data) return false;
+    
+    const item = data.data?.item || data.item || data;
+    if (!item) return false;
+    
+    const hasEssentialFields = (
+      (item.itemid || item.item_id || item.id) &&
+      (item.name || item.title) &&
+      (item.price !== undefined || item.price_min !== undefined)
+    );
+    
+    return hasEssentialFields;
+  }
+
+  validateShopData(data) {
+    if (!data) return false;
+    
+    let shop = null;
+    let hasBaseData = false;
+    let hasItemsData = false;
+    
+    // Check baseData for shop info
+    if (data.baseData && data.baseData.data && data.baseData.data.data) {
+      shop = data.baseData.data.data;
+      hasBaseData = true;
+    }
+    
+    // Check if we have items data
+    if (data.itemsData && data.itemsData.data) {
+      hasItemsData = true;
+    }
+    
+    // Fallback: check other possible structures
+    if (!shop) {
+      shop = data.data?.shop || data.shop || data.data?.data || data;
+    }
+    
+    if (!shop) return false;
+    
+    // Check for essential shop fields
+    const shopId = shop.shopid || shop.shop_id || shop.id || shop.userid;
+    const shopName = shop.name || shop.username || shop.account?.username || shop.shop_name;
+    
+    const hasEssentialData = hasBaseData || hasItemsData;
+    const hasShopIdentifier = !!(shopId || shopName);
+    
+    return hasEssentialData && hasShopIdentifier;
+  }
+
+  validateSearchData(data) {
+    if (!data) return false;
+    
+    const items = this.getItemsFromData(data);
+    if (!items || items.length === 0) return false;
+    
+    const hasValidItems = items.some(item => 
+      item && (
+        item.itemid || item.item_id || item.id ||
+        item.name || item.title ||
+        item.price || item.price_min
+      )
+    );
+    
+    return hasValidItems;
+  }
+
+  // Helper function to check if we have valid API data for current page
+  hasValidAPIDataForCurrentPage() {
+    const pageType = this.currentPageType;
+    console.log(`🔍 Checking for valid API data for ${pageType} page...`);
+    
+    switch (pageType) {
+      case 'search':
+        const searchData = this.apiData['SEARCH_DATA']?.data;
+        return searchData && this.validateSearchData(searchData);
+        
+      case 'category':
+        const categoryData = this.apiData['CATEGORY_DATA']?.data || this.apiData['SEARCH_DATA']?.data;
+        return categoryData && this.validateCategoryData(categoryData);
+        
+      case 'product':
+        const productData = this.apiData['PRODUCT_DATA']?.data;
+        return productData && this.validateProductData(productData);
+        
+      case 'shop':
+        const shopData = this.apiData['SHOP_DATA']?.data;
+        return shopData && this.validateShopData(shopData);
+        
+      default:
+        return false;
+    }
+  }
+
+  // FUNGSI UNTUK MENGECEK HTML READINESS - PASTIKAN HTML SUDAH BENAR-BENAR TER-LOAD
+  checkHTMLReadiness(quiet = true) { // Default to quiet mode
+    // Quick document ready check
+    if (document.readyState !== 'complete' && document.readyState !== 'interactive') {
+      return false;
+    }
+    
+    // Basic structure check
+    const hasBasicStructure = document.body && document.head;
+    if (!hasBasicStructure) return false;
+    
+    // Page-specific readiness (simplified)
+    let pageSpecificReady = false;
+    
+    switch (this.currentPageType) {
+      case 'search':
+        pageSpecificReady = !!(
+          document.querySelector('[class*="search"]') ||
+          document.querySelector('[class*="result"]') ||
+          document.querySelector('main') ||
+          document.querySelector('[role="main"]')
+        );
+        break;
+        
+      case 'category':
+        pageSpecificReady = !!(
+          document.querySelector('[class*="category"]') ||
+          document.querySelector('[class*="search"]') ||
+          document.querySelector('[class*="item-result"]') ||
+          document.querySelector('main')
+        );
+        break;
+        
+      case 'product':
+        pageSpecificReady = !!(
+          document.querySelector('[class*="product"]') ||
+          document.querySelector('[class*="pdp"]') ||
+          document.querySelector('[class*="item-detail"]') ||
+          document.querySelector('.y_zeJr') ||
+          document.querySelector('main')
+        );
+        break;
+        
+      case 'shop':
+        pageSpecificReady = !!(
+          document.querySelector('[class*="shop-decoration"]') ||
+          document.querySelector('.shop-page') ||
+          document.querySelector('[class*="shop"]') ||
+          document.querySelector('[class*="store"]') ||
+          document.querySelector('main') ||
+          document.querySelector('[role="main"]')
+        );
+        break;
+        
+      default:
+        pageSpecificReady = true;
+        break;
+    }
+    
+    // Check critical scripts and loading indicators
+    const criticalScriptsLoaded = this.checkCriticalScripts();
+    const noLoadingIndicators = this.checkNoLoadingIndicators();
+    
+    const isReady = pageSpecificReady && criticalScriptsLoaded && noLoadingIndicators;
+    
+    // Only log if explicitly requested or if there's an issue
+    if (!quiet && !isReady) {
+      console.log('📊 HTML Readiness Issue:');
+      console.log('   - Document ready:', document.readyState);
+      console.log('   - Basic structure:', hasBasicStructure);
+      console.log('   - Page specific ready:', pageSpecificReady);
+      console.log('   - Critical scripts loaded:', criticalScriptsLoaded);
+      console.log('   - No loading indicators:', noLoadingIndicators);
+    }
+    
+    return isReady;
+  }
+
+  // Check if critical scripts are loaded
+  checkCriticalScripts() {
+    const hasReact = !!(window.React || window.__REACT_DEVTOOLS_GLOBAL_HOOK__);
+    const hasMainApp = document.querySelectorAll('script[src*="app"]').length > 0;
+    const hasShopeeScripts = document.querySelectorAll('script[src*="shopee"]').length > 0;
+    
+    return hasReact || hasMainApp || hasShopeeScripts;
+  }
+
+  // Check if there are no critical loading indicators
+  checkNoLoadingIndicators() {
+    const loadingSelectors = [
+      '[class*="loading"]',
+      '[class*="spinner"]',
+      '[class*="skeleton"]',
+      '.loading',
+      '.spinner',
+      '.loader'
+    ];
+    
+    let hasLoadingIndicators = false;
+    
+    for (const selector of loadingSelectors) {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        // Check if any of these loading elements are visible
+        for (const el of elements) {
+          const style = window.getComputedStyle(el);
+          if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+            hasLoadingIndicators = true;
+            console.log('⏳ Found visible loading indicator:', selector);
+            break;
+          }
+        }
+        if (hasLoadingIndicators) break;
+      }
+    }
+    
+    return !hasLoadingIndicators;
+  }
+
+  // FUNGSI UNTUK MENGECEK API INTERCEPT READINESS - PASTIKAN INTERCEPT SUDAH BERJALAN
+  checkAPIInterceptReadiness() {
+    const injectedScriptExists = !!document.querySelector('script[src*="injected.js"]');
+    const hasShopeeAPIData = !!window.addEventListener;
+    const hasReceivedAnyAPI = Object.keys(this.apiData).length > 0;
+    const hasNetworkActivity = this.checkNetworkActivity();
+    const scriptAge = this.getInjectedScriptAge();
+    const hasMinimumAge = scriptAge > 1000;
+    
+    const isReady = injectedScriptExists && hasShopeeAPIData && 
+                   (hasReceivedAnyAPI || hasNetworkActivity || hasMinimumAge);
+    
+    return isReady;
+  }
+
+  // Check network activity (basic implementation)
+  checkNetworkActivity() {
+    // Check if Performance API shows recent network requests
+    if (window.performance && window.performance.getEntriesByType) {
+      const entries = window.performance.getEntriesByType('navigation');
+      const resourceEntries = window.performance.getEntriesByType('resource');
+      
+      // Check if there are recent resource loads (within last 5 seconds)
+      const recentThreshold = Date.now() - 5000;
+      const hasRecentActivity = resourceEntries.some(entry => 
+        entry.startTime > recentThreshold - window.performance.timing.navigationStart
+      );
+      
+      return hasRecentActivity;
+    }
+    
+    // Fallback: assume network activity exists if page loaded recently
+    return true;
+  }
+
+  // Get age of injected script
+  getInjectedScriptAge() {
+    if (!this.injectedScriptTimestamp) {
+      this.injectedScriptTimestamp = Date.now();
+    }
+    return Date.now() - this.injectedScriptTimestamp;
+  }
+
+  // ...existing code...
 }
 
 // Initialize the observer when the script loads
