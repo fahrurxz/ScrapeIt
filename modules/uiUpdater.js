@@ -48,8 +48,14 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       const activeTab = document.querySelector('.ts-tab-active');
       if (activeTab) {
         const tabName = activeTab.dataset.tab;
-        console.log('🔄 Updating tab with real data:', tabName);
+        console.log('🔄 Updating active tab with accumulated data:', tabName, `(${stats.productCount} products)`);
         this.updateTabData(tabName, observer);
+      }
+      
+      // PERBAIKAN: Juga update pagination info untuk memastikan count produk terupdate
+      if (observer.currentPageType === 'search' || observer.currentPageType === 'category') {
+        console.log('📄 Updating pagination info with accumulated data');
+        this.updatePaginationInfo(observer);
       }
     } else if (observer.currentPageType === 'search') {
       // Search page: show defaults if no real data (maintain backward compatibility)
@@ -254,6 +260,14 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
 
   static updateSummaryTab(stats, observer) {
+    console.log('📋 Updating Summary tab with stats:', {
+      minPrice: stats.minPrice,
+      maxPrice: stats.maxPrice,
+      sold30Days: stats.sold30Days,
+      revenue30Days: stats.revenue30Days,
+      productCount: stats.productCount
+    });
+    
     const priceRangeEl = document.getElementById('ts-price-range');
     const soldCountEl = document.getElementById('ts-sold-count');
     const revenueEl = document.getElementById('ts-revenue');
@@ -271,6 +285,8 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       revenueEl.textContent = `${ShopeeUtils.formatCurrency(stats.revenue30Days || stats.totalRevenue)} (${revenueTrend})`;
       ShopeeUtils.applyTrendStyling(revenueEl, revenueTrend);
     }
+    
+    console.log('📋 Summary tab updated successfully');
   }
 
   static updateMarketTab(stats, observer) {
@@ -279,6 +295,14 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     const avgMonthlyRevenue = stats.revenuePerMonth || (totalRevenue / 12); // Omset/bulan rata-rata
     const monthlyRevenue = stats.revenue30Days || stats.totalRevenue || 0; // Omset 30 hari
     const revenueTrend = ShopeeDataExtractor.calculateGrowth(null, 'revenue', observer); // Hitung trend yang benar
+
+    console.log('💰 Updating Market tab with stats:', {
+      totalRevenue: totalRevenue,
+      avgMonthlyRevenue: avgMonthlyRevenue,
+      monthlyRevenue: monthlyRevenue,
+      revenueTrend: revenueTrend,
+      productCount: stats.productCount
+    });
 
     const totalRevenueEl = document.getElementById('ts-total-revenue');
     const avgMonthlyRevenueEl = document.getElementById('ts-avg-monthly-revenue');
@@ -295,6 +319,8 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       revenueTrendEl.textContent = revenueTrend;
       ShopeeUtils.applyTrendStyling(revenueTrendEl, revenueTrend);
     }
+    
+    console.log('💰 Market tab updated successfully');
   }
 
   static updateVolumeTab(stats, observer) {

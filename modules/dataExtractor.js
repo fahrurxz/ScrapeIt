@@ -37,7 +37,10 @@ class ShopeeDataExtractor {
       
       if (observer.accumulatedData && observer.accumulatedData.searchData && 
           observer.accumulatedData.totalProducts > 0) {
+        console.log(`🔍 Using accumulated search data: ${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages`);
         dataToAnalyze = observer.accumulatedData.searchData;
+      } else {
+        console.log('🔍 Using single page search data (no accumulation)');
       }
       
       stats = this.extractSearchStats(dataToAnalyze);    } else if (observer.currentPageType === 'category') {
@@ -51,8 +54,10 @@ class ShopeeDataExtractor {
         
         if (observer.accumulatedData && observer.accumulatedData.searchData && 
             observer.accumulatedData.totalProducts > 0) {
-          console.log(`📂 Using accumulated data for category analysis (${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages)`);
+          console.log(`📂 Using accumulated category data: ${observer.accumulatedData.totalProducts} products from ${observer.accumulatedData.currentPage + 1} pages`);
           dataToAnalyze = observer.accumulatedData.searchData;
+        } else {
+          console.log('📂 Using single page category data (no accumulation)');
         }
         
         stats = this.extractSearchStats(dataToAnalyze);
@@ -256,6 +261,16 @@ class ShopeeDataExtractor {
     
     // Omset per bulan = total omset / rata-rata bulan  
     const omsetPerBulan = totalOmset / avgMonthsElapsed;
+
+    console.log('📊 Search stats calculation:', {
+      items: items.length,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      total30Days: total30Hari,
+      revenue30Days: omset30Hari,
+      totalSold: totalTerjual,
+      totalRevenue: totalOmset
+    });
 
     return {
       name: 'Search Results',
@@ -520,6 +535,16 @@ class ShopeeDataExtractor {
     
     // Omset per bulan = total omset / rata-rata bulan  
     const omsetPerBulan = totalOmset / avgMonthsElapsed;
+
+    console.log('📊 Category stats calculation:', {
+      items: items.length,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      total30Days: total30Hari,
+      revenue30Days: omset30Hari,
+      totalSold: totalTerjual,
+      totalRevenue: totalOmset
+    });
 
     const finalStats = {
       name: categoryInfo.name || 'Category Products',

@@ -245,7 +245,9 @@ class ShopeeAnalyticsObserver {  constructor() {
         // Update accumulated data in API after pagination handling
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated CATEGORY_DATA with accumulated data');
+          console.log('🔄 Updated CATEGORY_DATA with accumulated data - refreshing UI');
+          // PERBAIKAN: Update UI with accumulated data after pagination
+          ShopeeUIUpdater.updateUIWithData(this);
         }
       }
     } else if (type === 'SEARCH_DATA') {
@@ -277,6 +279,9 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
+          console.log('🔄 Updated SEARCH_DATA with accumulated data - refreshing UI');
+          // PERBAIKAN: Update UI with accumulated data after pagination
+          ShopeeUIUpdater.updateUIWithData(this);
         }
       } else if (this.currentPageType === 'category') {
         this.handleCategoryPagination(data);
@@ -284,6 +289,9 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
+          console.log('🔄 Updated SEARCH_DATA for category with accumulated data - refreshing UI');
+          // PERBAIKAN: Update UI with accumulated data after pagination
+          ShopeeUIUpdater.updateUIWithData(this);
         }
       }
     } else if (type === 'SHOP_DATA') {
