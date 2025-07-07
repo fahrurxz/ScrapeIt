@@ -757,7 +757,6 @@ class ShopeeModalManager {
     console.log('🔧 Attaching sortable listeners to', sortableHeaders.length, 'headers');
     
     if (sortableHeaders.length === 0) {
-      console.warn('⚠️ No sortable headers found! Checking in 1 second...');
       setTimeout(() => {
         const retryHeaders = document.querySelectorAll('.ts-sortable');
         console.log('🔄 Retry: Found', retryHeaders.length, 'sortable headers');

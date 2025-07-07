@@ -154,7 +154,7 @@ class ShopeeUIGenerator {
               <div class="ts-spinner"></div>
               Memuat data...
             </span>
-            <a href="#" class="ts-text-blue-500" id="ts-more-btn">+Lebih banyak</a>
+            ${observer.currentPageType !== 'similar' ? '<a href="#" class="ts-text-blue-500" id="ts-more-btn">+Lebih banyak</a>' : ''}
           </div>
         </div>
       </div>
