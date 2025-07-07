@@ -277,6 +277,50 @@ class ShopeeProductProcessor {
           console.log('✅ Found items in CATEGORY_DATA.data.data.items:', items.length);
         }      } else {
         console.log('❌ No SEARCH_DATA or CATEGORY_DATA available for category');      }
+    } else if (observer.currentPageType === 'similar') {
+      console.log('🔍 Processing SIMILAR_DATA for similar products page');
+      
+      if (observer.apiData.SIMILAR_DATA) {
+        console.log('✅ SIMILAR_DATA exists');
+        
+        // PERBAIKAN: Gunakan accumulated data jika tersedia untuk similar products
+        let dataToProcess = observer.apiData.SIMILAR_DATA.data;
+        
+        if (observer.accumulatedData && observer.accumulatedData.searchData && 
+            observer.accumulatedData.totalProducts > 0) {
+          console.log(`🔍 Using accumulated data for similar products extraction (${observer.accumulatedData.totalProducts} products)`);
+          dataToProcess = observer.accumulatedData.searchData;
+        }
+        
+        // Handle similar products structure - sections array
+        if (dataToProcess && dataToProcess.sections && Array.isArray(dataToProcess.sections)) {
+          console.log('🔍 Found sections in SIMILAR_DATA:', dataToProcess.sections.length);
+          
+          const firstSection = dataToProcess.sections[0];
+          if (firstSection && firstSection.data && firstSection.data.item) {
+            items = firstSection.data.item;
+            console.log('✅ Found items in SIMILAR_DATA.sections[0].data.item:', items.length);
+          } else {
+            console.log('❌ No items found in first section');
+          }
+        } else if (dataToProcess && dataToProcess.data && dataToProcess.data.sections) {
+          // Handle nested data.sections structure
+          console.log('🔍 Found sections in SIMILAR_DATA.data.sections:', dataToProcess.data.sections.length);
+          
+          const firstSection = dataToProcess.data.sections[0];
+          if (firstSection && firstSection.data && firstSection.data.item) {
+            items = firstSection.data.item;
+            console.log('✅ Found items in SIMILAR_DATA.data.sections[0].data.item:', items.length);
+          } else {
+            console.log('❌ No items found in first section of data.sections');
+          }
+        } else {
+          console.log('❌ No sections found in SIMILAR_DATA');
+          console.log('🔍 SIMILAR_DATA structure:', dataToProcess ? Object.keys(dataToProcess) : 'no data');
+        }
+      } else {
+        console.log('❌ No SIMILAR_DATA available for similar products');
+      }
     } else if (observer.currentPageType === 'shop') {
       console.log('🏪 Processing SHOP_DATA for shop page');
       console.log('🔍 Debug: observer.apiData keys:', Object.keys(observer.apiData));
