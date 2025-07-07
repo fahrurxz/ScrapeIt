@@ -12,6 +12,7 @@
     categoryData: null,
     productData: null,
     shopData: null,
+    similarData: null,
     lastUpdate: null
   };
   // Intercept fetch requests
@@ -143,6 +144,51 @@
         };
         notifyContentScript('CATEGORY_DATA', data);
       }
+    }
+    // Process similar products API
+    else if (url.includes('/recommend/recommend_post') && 
+             window.location.pathname.includes('find_similar_products')) {
+      console.log('🔍 Detected SIMILAR PRODUCTS API:', url);
+      
+      // Extract similar products parameters from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const categoryId = urlParams.get('catid');
+      const itemId = urlParams.get('itemid');
+      const shopId = urlParams.get('shopid');
+      
+      // Handle both direct sections and nested data.sections structure
+      let sections = null;
+      let itemsCount = 0;
+      let totalCount = 'unknown';
+      
+      if (data.sections && Array.isArray(data.sections)) {
+        sections = data.sections;
+      } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
+        sections = data.data.sections;
+      }
+      
+      if (sections && sections.length > 0 && sections[0].data && sections[0].data.item) {
+        itemsCount = sections[0].data.item.length;
+        totalCount = sections[0].total || 'unknown';
+      }
+      
+      console.log('🎯 Similar products details:', {
+        categoryId: categoryId,
+        itemId: itemId,
+        shopId: shopId,
+        itemsCount: itemsCount,
+        totalCount: totalCount
+      });
+      
+      window.shopeeAPIData.similarData = {
+        url: url,
+        data: data,
+        timestamp: Date.now(),
+        categoryId: categoryId,
+        itemId: itemId,
+        shopId: shopId
+      };
+      notifyContentScript('SIMILAR_DATA', data);
     }
     // Process category API dengan improved detection - HANYA yang memiliki product data
     else if (url.includes('/recommend_v2') || 

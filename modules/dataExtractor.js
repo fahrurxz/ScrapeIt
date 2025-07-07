@@ -43,7 +43,20 @@ class ShopeeDataExtractor {
         console.log('🔍 Using single page search data (no accumulation)');
       }
       
-      stats = this.extractSearchStats(dataToAnalyze);    } else if (observer.currentPageType === 'category') {
+      stats = this.extractSearchStats(dataToAnalyze);
+    } else if (observer.currentPageType === 'similar' && observer.apiData.SIMILAR_DATA) {
+      // Use accumulated data if available for similar products analysis
+      let dataToAnalyze = observer.apiData.SIMILAR_DATA.data;
+      
+      if (observer.accumulatedData && observer.accumulatedData.searchData && 
+          observer.accumulatedData.totalProducts > 0) {
+        console.log(`🔍 Using accumulated similar products data: ${observer.accumulatedData.totalProducts} products`);
+        dataToAnalyze = observer.accumulatedData.searchData;
+      } else {
+        console.log('🔍 Using single page similar products data (no accumulation)');
+      }
+      
+      stats = this.extractSimilarProductsStats(dataToAnalyze);    } else if (observer.currentPageType === 'category') {
       // Untuk kategori, coba search data terlebih dahulu (lebih stabil)
       if (observer.apiData.SEARCH_DATA) {
         console.log('📂 Processing category with search data (preferred)');
@@ -287,6 +300,145 @@ class ShopeeDataExtractor {
       avgMonthsElapsed: avgMonthsElapsed
     };
   }
+
+  static extractSimilarProductsStats(data) {
+    if (!data) return null;
+
+    // Handle similar products API structure - check for sections in both direct and nested formats
+    let items = [];
+    let sections = null;
+    
+    if (data.sections && Array.isArray(data.sections)) {
+      sections = data.sections;
+    } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
+      sections = data.data.sections;
+      console.log('🔍 Using data.data.sections structure for similar products');
+    }
+    
+    if (sections && sections.length > 0) {
+      const firstSection = sections[0];
+      if (firstSection && firstSection.data && firstSection.data.item) {
+        items = firstSection.data.item;
+      }
+    }
+
+    if (!items || items.length === 0) {
+      console.log('⚠️ No items found in similar products data');
+      console.log('🔍 Debug - data keys:', data ? Object.keys(data) : 'no data');
+      if (data.data) {
+        console.log('🔍 Debug - data.data keys:', Object.keys(data.data));
+      }
+      return null;
+    }
+
+    console.log(`📊 Processing ${items.length} similar products for analysis`);
+
+    // Extract data sesuai dengan spesifikasi yang benar
+    let totalTerjual = 0; // Total dari global_sold_count
+    let total30Hari = 0; // Total dari sold (terjual 30 hari)
+    let totalOmset = 0; // Total omset dari harga * global_sold_count
+    let omset30Hari = 0; // Omset 30 hari dari harga * sold
+
+    const prices = [];
+    let totalMonthsElapsed = 0;
+
+    items.forEach(item => {
+      // Extract price
+      let price = 0;
+      if (item.price) {
+        price = item.price;
+      } else if (item.price_min) {
+        price = item.price_min;
+      } else if (item.item_card_display_price && item.item_card_display_price.price) {
+        price = item.item_card_display_price.price;
+      }
+      
+      // PERBAIKAN: Shopee API price format is always price * 100000
+      // Examples: 56800000000 = Rp 568.000, 129000000 = Rp 1.290
+      if (price > 0) {
+        price = price / 100000;
+        prices.push(price);
+      }
+      
+      // Extract global sold count (total terjual sepanjang masa)
+      let globalSoldCount = 0;
+      if (item.item_card_display_sold_count) {
+        globalSoldCount = item.item_card_display_sold_count.rounded_display_sold_count || 
+                         item.item_card_display_sold_count.rounded_global_historical_sold_count_text || 0;
+      } else if (item.historical_sold) {
+        globalSoldCount = item.historical_sold;
+      } else if (item.global_sold_count) {
+        globalSoldCount = item.global_sold_count;
+      }
+      
+      // Extract sold 30 days (usually in 'sold' field)
+      let sold30Days = 0;
+      if (item.item_card_display_sold_count) {
+        sold30Days = item.item_card_display_sold_count.rounded_local_monthly_sold_count || 0;
+      } else if (item.sold) {
+        sold30Days = item.sold;
+      }
+      
+      totalTerjual += globalSoldCount;
+      total30Hari += sold30Days;
+      totalOmset += price * globalSoldCount;
+      omset30Hari += price * sold30Days;
+      
+      // Calculate months elapsed since creation
+      if (item.ctime) {
+        const createTime = new Date(item.ctime * 1000);
+        const now = new Date();
+        const monthsElapsed = (now.getFullYear() - createTime.getFullYear()) * 12 + 
+                             (now.getMonth() - createTime.getMonth());
+        totalMonthsElapsed += Math.max(monthsElapsed, 1);
+      }
+    });
+    
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const avgMonthsElapsed = totalMonthsElapsed / items.length;
+    
+    // Calculate per-month averages
+    const terjualPerBulan = avgMonthsElapsed > 0 ? totalTerjual / avgMonthsElapsed : 0;
+    const omsetPerBulan = avgMonthsElapsed > 0 ? totalOmset / avgMonthsElapsed : 0;
+
+    console.log('📊 Similar products extraction completed:', {
+      name: 'Similar Products',
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      total30Days: total30Hari,
+      revenue30Days: omset30Hari,
+      totalSold: totalTerjual,
+      totalRevenue: totalOmset,
+      itemsProcessed: items.length,
+      hasValidPrices: prices.length > 0
+    });
+
+    // Additional debugging for UI display issue
+    console.log('🔍 Debug: Similar products stats for UI:', {
+      sold30Days: total30Hari,
+      revenue30Days: omset30Hari,
+      hasSold30Days: total30Hari > 0,
+      hasRevenue30Days: omset30Hari > 0
+    });
+
+    return {
+      name: 'Similar Products',
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      totalSold: totalTerjual,
+      sold30Days: total30Hari,
+      totalRevenue: totalOmset,
+      revenue30Days: omset30Hari,
+      soldPerMonth: terjualPerBulan,
+      revenuePerMonth: omsetPerBulan,
+      productCount: items.length,
+      avgPrice: avgPrice,
+      avgMonthsElapsed: avgMonthsElapsed
+    };
+  }
+  
   static extractCategoryStats(data) {
     if (!data) {
       return null;
@@ -783,6 +935,9 @@ class ShopeeDataExtractor {
     if (observer.currentPageType === 'search' && observer.apiData.SEARCH_DATA) {
       currentData = observer.apiData.SEARCH_DATA.data;
       console.log('🔍 Using SEARCH_DATA for growth calculation');
+    } else if (observer.currentPageType === 'similar' && observer.apiData.SIMILAR_DATA) {
+      currentData = observer.apiData.SIMILAR_DATA.data;
+      console.log('🔍 Using SIMILAR_DATA for growth calculation');
     } else if (observer.currentPageType === 'category' && observer.apiData.SEARCH_DATA) {
       currentData = observer.apiData.SEARCH_DATA.data;
       console.log('📂 Using SEARCH_DATA for category growth calculation');
@@ -828,10 +983,11 @@ class ShopeeDataExtractor {
     });
     
     // Jika umur produk kurang dari 60 hari atau penjualan sedikit
-    // PERBAIKAN: Untuk kategori, gunakan kriteria yang lebih longgar karena data agregat
+    // PERBAIKAN: Untuk kategori dan similar, gunakan kriteria yang lebih longgar karena data agregat
     const isCategory = observer.currentPageType === 'category';
-    const minMonths = isCategory ? 1 : 2; // Kategori hanya butuh 1 bulan data
-    const minSales = isCategory ? 0.1 : 1; // Kategori boleh sales rendah karena agregat
+    const isSimilar = observer.currentPageType === 'similar';
+    const minMonths = (isCategory || isSimilar) ? 1 : 2; // Kategori dan similar hanya butuh 1 bulan data
+    const minSales = (isCategory || isSimilar) ? 0.1 : 1; // Kategori dan similar boleh sales rendah karena agregat
     
     if (stats.avgMonthsElapsed < minMonths || monthlyAverage < minSales) {
       console.log(`⚠️ Insufficient data for trend calculation (age: ${stats.avgMonthsElapsed}, sales: ${monthlyAverage}, pageType: ${observer.currentPageType})`);
@@ -861,6 +1017,8 @@ class ShopeeDataExtractor {
     // Extract basic stats needed for trend calculation
     if (observer.currentPageType === 'search') {
       return this.extractSearchStatsForTrend(data);
+    } else if (observer.currentPageType === 'similar') {
+      return this.extractSimilarProductsStatsForTrend(data);
     } else if (observer.currentPageType === 'category') {
       return this.extractCategoryStatsForTrend(data); // Use category-specific logic
     } else if (observer.currentPageType === 'product') {
@@ -1148,6 +1306,114 @@ class ShopeeDataExtractor {
       soldPerMonth: 0,
       revenuePerMonth: 0,
       avgMonthsElapsed: 1
+    };
+  }
+
+  static extractSimilarProductsStatsForTrend(data) {
+    if (!data) return null;
+
+    // Handle similar products API structure - check for sections in both direct and nested formats
+    let items = [];
+    let sections = null;
+    
+    if (data.sections && Array.isArray(data.sections)) {
+      sections = data.sections;
+    } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
+      sections = data.data.sections;
+      console.log('🔍 Using data.data.sections structure for similar products trend');
+    }
+    
+    if (sections && sections.length > 0) {
+      const firstSection = sections[0];
+      if (firstSection && firstSection.data && firstSection.data.item) {
+        items = firstSection.data.item;
+      }
+    }
+
+    if (!items || items.length === 0) {
+      console.log('⚠️ No items found in similar products data for trend calculation');
+      return null;
+    }
+
+    console.log(`📊 Processing ${items.length} similar products for trend analysis`);
+
+    // Extract data same as main similar products function but only for trend calculation
+    let totalTerjual = 0; // Total dari global_sold_count
+    let total30Hari = 0; // Total dari sold (terjual 30 hari)
+    let totalOmset = 0; // Total omset dari harga * global_sold_count
+    let omset30Hari = 0; // Omset 30 hari dari harga * sold
+    let totalMonthsElapsed = 0;
+
+    items.forEach(item => {
+      // Extract price
+      let price = 0;
+      if (item.price) {
+        price = item.price;
+      } else if (item.price_min) {
+        price = item.price_min;
+      } else if (item.item_card_display_price && item.item_card_display_price.price) {
+        price = item.item_card_display_price.price;
+      }
+      
+      // PERBAIKAN: Shopee API price format is always price * 100000
+      if (price > 0) {
+        price = price / 100000;
+      }
+      
+      // Extract global sold count (total terjual sepanjang masa)
+      let globalSoldCount = 0;
+      if (item.item_card_display_sold_count) {
+        globalSoldCount = item.item_card_display_sold_count.rounded_display_sold_count || 
+                         item.item_card_display_sold_count.rounded_global_historical_sold_count_text || 0;
+      } else if (item.historical_sold) {
+        globalSoldCount = item.historical_sold;
+      } else if (item.global_sold_count) {
+        globalSoldCount = item.global_sold_count;
+      }
+      
+      // Extract sold 30 days (usually in 'sold' field)
+      let sold30Days = 0;
+      if (item.item_card_display_sold_count) {
+        sold30Days = item.item_card_display_sold_count.rounded_local_monthly_sold_count || 0;
+      } else if (item.sold) {
+        sold30Days = item.sold;
+      }
+      
+      totalTerjual += globalSoldCount;
+      total30Hari += sold30Days;
+      totalOmset += price * globalSoldCount;
+      omset30Hari += price * sold30Days;
+      
+      // Calculate months elapsed since creation
+      if (item.ctime) {
+        const createTime = new Date(item.ctime * 1000);
+        const now = new Date();
+        const monthsElapsed = (now.getFullYear() - createTime.getFullYear()) * 12 + 
+                             (now.getMonth() - createTime.getMonth());
+        totalMonthsElapsed += Math.max(monthsElapsed, 1);
+      }
+    });
+    
+    const avgMonthsElapsed = totalMonthsElapsed / items.length;
+    
+    // Calculate per-month averages
+    const terjualPerBulan = avgMonthsElapsed > 0 ? totalTerjual / avgMonthsElapsed : 0;
+    const omsetPerBulan = avgMonthsElapsed > 0 ? totalOmset / avgMonthsElapsed : 0;
+
+    console.log('📊 Similar products trend extraction completed:', {
+      total30Days: total30Hari,
+      revenue30Days: omset30Hari,
+      soldPerMonth: terjualPerBulan,
+      revenuePerMonth: omsetPerBulan,
+      avgMonthsElapsed: avgMonthsElapsed
+    });
+
+    return {
+      sold30Days: total30Hari,
+      revenue30Days: omset30Hari,
+      soldPerMonth: terjualPerBulan,
+      revenuePerMonth: omsetPerBulan,
+      avgMonthsElapsed: avgMonthsElapsed
     };
   }
 

@@ -80,6 +80,14 @@ class ShopeeAnalyticsObserver {  constructor() {
         this.isFacetSearch = false;
       }
     } 
+    else if (pathname.includes('find_similar_products')) {
+      this.currentPageType = 'similar';
+      const urlParams = new URLSearchParams(window.location.search);
+      this.currentCategoryId = urlParams.get('catid');
+      this.currentItemId = urlParams.get('itemid');
+      this.currentShopId = urlParams.get('shopid');
+      console.log('✅ Detected similar products page, Category ID:', this.currentCategoryId, 'Item ID:', this.currentItemId, 'Shop ID:', this.currentShopId);
+    }
     else if (pathname.includes('-cat.') || pathname.includes('/category/') || pathname.includes('/cat.')) {
       this.currentPageType = 'category';
       const match = pathname.match(/-cat\.(\d+)/) || pathname.match(/cat\.(\d+)/) || pathname.match(/category\/(\d+)/);
@@ -294,6 +302,49 @@ class ShopeeAnalyticsObserver {  constructor() {
           ShopeeUIUpdater.updateUIWithData(this);
         }
       }
+    } else if (type === 'SIMILAR_DATA') {
+      // Handle similar products data
+      if (this.currentPageType === 'similar') {
+        console.log('🔍 Similar products data received');
+        
+        // Extract sections from the correct structure
+        let sections = null;
+        let actualData = null;
+        
+        if (data.sections && Array.isArray(data.sections)) {
+          sections = data.sections;
+          actualData = data;
+        } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
+          sections = data.data.sections;
+          actualData = data.data;
+          console.log('🔍 Using data.data.sections structure');
+        }
+        
+        console.log('🎯 Similar products details:', {
+          categoryId: this.currentCategoryId,
+          itemId: this.currentItemId,
+          shopId: this.currentShopId,
+          itemsCount: sections && sections[0] ? sections[0].data.item.length : 0,
+          totalCount: sections && sections[0] ? sections[0].total : 'unknown'
+        });
+        
+        // Store similar products data with the correct structure
+        this.accumulatedData = {
+          searchData: actualData,
+          totalProducts: sections && sections[0] ? sections[0].data.item.length : 0,
+          currentPage: 0,
+          hasMorePages: false // Similar products usually don't have pagination
+        };
+        
+        this.stopLoadingState();
+        
+        if (this.accumulatedData.searchData) {
+          this.apiData[type].data = this.accumulatedData.searchData;
+          console.log('🔄 Updated SIMILAR_DATA - refreshing UI');
+          // Update UI with similar products data
+          ShopeeUIUpdater.updateUIWithData(this);
+        }
+      }
     } else if (type === 'SHOP_DATA') {
       
       // ENHANCED DEBUGGING untuk shop data structure
@@ -334,6 +385,15 @@ class ShopeeAnalyticsObserver {  constructor() {
           shouldInjectUI = true;
         } else {
           console.log('⚠️ Invalid search data, waiting for complete data');
+        }
+      } else if (this.currentPageType === 'similar' && type === 'SIMILAR_DATA') {
+        // Validasi data similar products - pastikan ada items atau data yang valid
+        isDataValid = this.validateSimilarData(data);
+        if (isDataValid) {
+          console.log('🔍 Valid similar products data received, injecting UI with data');
+          shouldInjectUI = true;
+        } else {
+          console.log('⚠️ Invalid similar products data, waiting for complete data');
         }
       } else if (this.currentPageType === 'category' && (type === 'SEARCH_DATA' || type === 'CATEGORY_DATA')) {
         // Validasi data category - pastikan ada items atau data yang valid
@@ -483,6 +543,10 @@ class ShopeeAnalyticsObserver {  constructor() {
       // Perfect placement: before the product detail element
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
       console.log('✅ UI injected before .y_zeJr (product page)');
+    } else if (this.currentPageType === 'similar' && targetElement.classList.contains('miIYkb')) {
+      // Perfect placement for similar products: after the .miIYkb div
+      targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement.nextSibling);
+      console.log('✅ UI injected after .miIYkb (similar products page)');
     }    else if (this.currentPageType === 'shop') {
       // REVISI: Tempatkan UI di dalam div pertama di dalam .shop-decoration
       let shopDecorationElement = null;
@@ -550,15 +614,25 @@ class ShopeeAnalyticsObserver {  constructor() {
       return; // DOM observer will handle this
     }
     
-    const isHTMLReady = this.checkHTMLReadiness(true);
-    if (!isHTMLReady) {
-      console.log('📄 HTML not fully ready, will wait for DOM changes');
-      return; // DOM observer will handle this
-    }
-    
     const targetElement = this.findTargetElement();
     if (!targetElement) {
       console.log('🎯 Target element not found, will wait for DOM changes');
+      return; // DOM observer will handle this
+    }
+    
+    // For similar products pages, be more aggressive about injection
+    if (this.currentPageType === 'similar') {
+      const hasValidData = this.hasValidAPIDataForCurrentPage();
+      if (hasValidData && targetElement) {
+        console.log('✅ Similar products: Valid data and target available, injecting UI immediately');
+        this.injectUI();
+        return;
+      }
+    }
+    
+    const isHTMLReady = this.checkHTMLReadiness(true);
+    if (!isHTMLReady) {
+      console.log('📄 HTML not fully ready, will wait for DOM changes');
       return; // DOM observer will handle this
     }
     
@@ -592,6 +666,19 @@ class ShopeeAnalyticsObserver {  constructor() {
                      document.querySelector('[data-testid*="search"]') ||
                      document.querySelector('.search-wrapper') ||
                      document.querySelector('[role="main"]');
+    }
+    else if (this.currentPageType === 'similar') {
+      targetElement = document.querySelector('.miIYkb') ||
+                     document.querySelector('h1') ||
+                     document.querySelector('[class*="similar"]') ||
+                     document.querySelector('[class*="recommend"]') ||
+                     document.querySelector('[class*="product-list"]') ||
+                     document.querySelector('[class*="item-list"]') ||
+                     document.querySelector('[class*="grid"]') ||
+                     document.querySelector('[role="main"]') ||
+                     document.querySelector('.container') ||
+                     document.querySelector('main') ||
+                     document.querySelector('body');
     }
     else if (this.currentPageType === 'product') {
       targetElement = document.querySelector('.y_zeJr') ||
@@ -703,6 +790,26 @@ class ShopeeAnalyticsObserver {  constructor() {
                     node.matches('[class*="item-result"]')
                   ))) {
                 console.log('📂 Category page elements detected in DOM changes');
+                shouldCheckTarget = true;
+              }
+              // Check for similar products elements
+              else if (this.currentPageType === 'similar' && 
+                  (node.querySelector && (
+                    node.querySelector('.miIYkb') ||
+                    node.querySelector('[class*="similar"]') ||
+                    node.querySelector('[class*="recommend"]') ||
+                    node.querySelector('[class*="product-list"]') ||
+                    node.querySelector('[class*="item-list"]') ||
+                    node.querySelector('[class*="grid"]')
+                  ) || node.matches && (
+                    node.matches('.miIYkb') ||
+                    node.matches('[class*="similar"]') ||
+                    node.matches('[class*="recommend"]') ||
+                    node.matches('[class*="product-list"]') ||
+                    node.matches('[class*="item-list"]') ||
+                    node.matches('[class*="grid"]')
+                  ))) {
+                console.log('🔍 Similar products page elements detected in DOM changes');
                 shouldCheckTarget = true;
               }
             }
@@ -878,6 +985,14 @@ class ShopeeAnalyticsObserver {  constructor() {
     
     if (data.items) return data.items;
     if (data.data && data.data.items) return data.data.items;
+    
+    // Handle similar products structure
+    if (data.sections && Array.isArray(data.sections) && data.sections.length > 0) {
+      const firstSection = data.sections[0];
+      if (firstSection && firstSection.data && firstSection.data.item) {
+        return firstSection.data.item;
+      }
+    }
     
     // Handle API recommend_v2 structure
     if (data.data && data.data.units) {
@@ -1064,6 +1179,62 @@ class ShopeeAnalyticsObserver {  constructor() {
     return hasValidItems;
   }
 
+  validateSimilarData(data) {
+    console.log('🔍 Validating similar products data:', data ? Object.keys(data) : 'no data');
+    
+    if (!data) {
+      console.log('❌ Similar products validation failed: no data');
+      return false;
+    }
+    
+    // Check if data has sections structure - handle both direct sections and nested data.sections
+    let sections = null;
+    if (data.sections && Array.isArray(data.sections)) {
+      sections = data.sections;
+    } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
+      sections = data.data.sections;
+      console.log('🔍 Found sections in data.data.sections structure');
+    }
+    
+    if (!sections || sections.length === 0) {
+      console.log('❌ Similar products validation failed: no sections found');
+      console.log('🔍 Debug - available keys:', data ? Object.keys(data) : 'no data');
+      if (data.data) {
+        console.log('🔍 Debug - data.data keys:', Object.keys(data.data));
+      }
+      return false;
+    }
+    
+    const firstSection = sections[0];
+    if (!firstSection || !firstSection.data || !firstSection.data.item) {
+      console.log('❌ Similar products validation failed: no items in first section');
+      return false;
+    }
+    
+    const items = firstSection.data.item;
+    console.log('🔍 Items extracted for validation:', items ? items.length : 'null');
+    
+    if (!items || items.length === 0) {
+      console.log('❌ Similar products validation failed: no items found');
+      return false;
+    }
+    
+    const hasValidItems = items.some(item => 
+      item && (
+        item.itemid || item.item_id || item.id ||
+        item.name || item.title ||
+        item.price || item.price_min
+      )
+    );
+    
+    console.log('🔍 Has valid items:', hasValidItems);
+    if (!hasValidItems && items.length > 0) {
+      console.log('🔍 First item structure for debugging:', items[0] ? Object.keys(items[0]) : 'null item');
+    }
+    
+    return hasValidItems;
+  }
+
   // Helper function to check if we have valid API data for current page
   hasValidAPIDataForCurrentPage() {
     const pageType = this.currentPageType;
@@ -1076,6 +1247,12 @@ class ShopeeAnalyticsObserver {  constructor() {
         const searchValid = searchData && this.validateSearchData(searchData);
         console.log(`🔍 Search data validation result:`, searchValid);
         return searchValid;
+        
+      case 'similar':
+        const similarData = this.apiData['SIMILAR_DATA']?.data;
+        const similarValid = similarData && this.validateSimilarData(similarData);
+        console.log(`🔍 Similar products data validation result:`, similarValid);
+        return similarValid;
         
       case 'category':
         const categoryData = this.apiData['CATEGORY_DATA']?.data || this.apiData['SEARCH_DATA']?.data;
@@ -1137,6 +1314,17 @@ class ShopeeAnalyticsObserver {  constructor() {
         );
         break;
         
+      case 'similar':
+        pageSpecificReady = !!(
+          document.querySelector('.miIYkb') ||
+          document.querySelector('[class*="similar"]') ||
+          document.querySelector('[class*="recommend"]') ||
+          document.querySelector('[class*="product-list"]') ||
+          document.querySelector('main') ||
+          document.querySelector('[role="main"]')
+        );
+        break;
+        
       case 'product':
         pageSpecificReady = !!(
           document.querySelector('[class*="product"]') ||
@@ -1193,6 +1381,42 @@ class ShopeeAnalyticsObserver {  constructor() {
 
   // Check if there are no critical loading indicators
   checkNoLoadingIndicators() {
+    // For similar products pages, be more lenient with loading indicators
+    if (this.currentPageType === 'similar') {
+      // Only check for loading indicators that would affect our target area
+      const criticalLoadingSelectors = [
+        '.miIYkb [class*="loading"]',
+        '.miIYkb [class*="spinner"]',
+        '.miIYkb [class*="skeleton"]',
+        '[class*="similar"] [class*="loading"]',
+        '[class*="recommend"] [class*="loading"]'
+      ];
+      
+      for (const selector of criticalLoadingSelectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          // Check if any of these loading elements are visible
+          for (const el of elements) {
+            const style = window.getComputedStyle(el);
+            if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+              console.log('⏳ Found critical loading indicator for similar products:', selector);
+              return false;
+            }
+          }
+        }
+      }
+      
+      // For similar products, if we have valid data and target element, proceed
+      const hasValidData = this.hasValidAPIDataForCurrentPage();
+      const hasTargetElement = !!this.findTargetElement();
+      
+      if (hasValidData && hasTargetElement) {
+        console.log('✅ Similar products: Valid data and target available, ignoring other loading indicators');
+        return true;
+      }
+    }
+    
+    // Original loading indicator check for other page types
     const loadingSelectors = [
       '[class*="loading"]',
       '[class*="spinner"]',
@@ -1211,6 +1435,14 @@ class ShopeeAnalyticsObserver {  constructor() {
         for (const el of elements) {
           const style = window.getComputedStyle(el);
           if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+            // Skip common non-critical loading indicators
+            if (el.closest('.notification') || 
+                el.closest('.chat') || 
+                el.closest('[class*="ads"]') ||
+                el.closest('[class*="banner"]') ||
+                el.closest('[class*="widget"]')) {
+              continue;
+            }
             hasLoadingIndicators = true;
             console.log('⏳ Found visible loading indicator:', selector);
             break;

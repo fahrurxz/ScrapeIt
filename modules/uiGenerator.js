@@ -11,7 +11,7 @@ class ShopeeUIGenerator {
       return this.createShopUI(observer);
     }
     
-    // For other pages (search, category), use the original UI
+    // For other pages (search, category, similar), use the original UI
     const pageTypeText = this.getPageTypeText(observer);
     const lastUpdate = new Date().toLocaleString('id-ID');
     
@@ -167,6 +167,8 @@ class ShopeeUIGenerator {
         return `Pencarian "${observer.currentKeyword || 'N/A'}"`;
       case 'category':
         return 'Kategori';
+      case 'similar':
+        return 'Produk Serupa';
       case 'product':
         return 'Produk';
       case 'shop':

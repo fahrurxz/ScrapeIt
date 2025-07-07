@@ -273,17 +273,29 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     const revenueEl = document.getElementById('ts-revenue');
 
     if (priceRangeEl) priceRangeEl.textContent = `${ShopeeUtils.formatCurrency(stats.minPrice)} - ${ShopeeUtils.formatCurrency(stats.maxPrice)}`;
-    // REVISI: Gunakan sold30Days untuk "Terjual 30 hari" dengan trend yang benar
+    
+    // REVISI: Always show actual values, optionally with trend in parentheses
     const soldTrend = ShopeeDataExtractor.calculateGrowth(null, 'sold', observer);
     if (soldCountEl) {
-      soldCountEl.textContent = `${ShopeeUtils.formatNumber(stats.sold30Days || stats.totalSold)} (${soldTrend})`;
-      ShopeeUtils.applyTrendStyling(soldCountEl, soldTrend);
+      const soldValue = stats.sold30Days || stats.totalSold || 0;
+      if (soldTrend && soldTrend !== 'No data') {
+        soldCountEl.textContent = `${ShopeeUtils.formatNumber(soldValue)} (${soldTrend})`;
+        ShopeeUtils.applyTrendStyling(soldCountEl, soldTrend);
+      } else {
+        soldCountEl.textContent = `${ShopeeUtils.formatNumber(soldValue)}`;
+      }
     }
-    // REVISI: Gunakan revenue30Days untuk "Omset 30 hari" dengan trend yang benar
+    
+    // REVISI: Always show actual values, optionally with trend in parentheses
     const revenueTrend = ShopeeDataExtractor.calculateGrowth(null, 'revenue', observer);
     if (revenueEl) {
-      revenueEl.textContent = `${ShopeeUtils.formatCurrency(stats.revenue30Days || stats.totalRevenue)} (${revenueTrend})`;
-      ShopeeUtils.applyTrendStyling(revenueEl, revenueTrend);
+      const revenueValue = stats.revenue30Days || stats.totalRevenue || 0;
+      if (revenueTrend && revenueTrend !== 'No data') {
+        revenueEl.textContent = `${ShopeeUtils.formatCurrency(revenueValue)} (${revenueTrend})`;
+        ShopeeUtils.applyTrendStyling(revenueEl, revenueTrend);
+      } else {
+        revenueEl.textContent = `${ShopeeUtils.formatCurrency(revenueValue)}`;
+      }
     }
     
     console.log('📋 Summary tab updated successfully');
