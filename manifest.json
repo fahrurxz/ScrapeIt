@@ -14,11 +14,13 @@
     "storage"
   ],
   "host_permissions": [
-    "https://shopee.co.id/*"
+    "https://shopee.co.id/*",
+    "https://yourserver.com/*"
   ],  "content_scripts": [
     {
       "matches": ["https://shopee.co.id/*"],
       "js": [
+        "modules/authManager.js",
         "modules/utils.js",
         "modules/dataExtractor.js", 
         "modules/productProcessor.js",
@@ -37,7 +39,7 @@
     "service_worker": "background.js"
   },  "web_accessible_resources": [
     {
-      "resources": ["injected.js", "test_reload.js"],
+      "resources": ["injected.js", "test_reload.js", "test_auth_system.js", "auto_test_auth.js"],
       "matches": ["https://shopee.co.id/*"]
     }
   ]

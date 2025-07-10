@@ -6,7 +6,9 @@
   "scripts": {
     "build": "echo 'Extension ready for installation'",
     "test": "echo 'Open debug.js in browser console for testing'",
-    "preview": "open preview.html"
+    "preview": "open preview.html",
+    "start-auth-server": "node demo_auth_server.js",
+    "test-auth": "echo 'Load test_auth_system.js in browser console'"
   },
   "keywords": [
     "shopee",

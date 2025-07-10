@@ -19,7 +19,31 @@ class ShopeeAnalyticsObserver {  constructor() {
     };
     
     this.init();
-  }  init() {
+  }  async init() {
+    // Check authentication first
+    console.log('🔐 Checking authentication...');
+    const isAuthenticated = await window.authManager.init();
+    
+    if (!isAuthenticated) {
+      console.log('❌ Authentication failed, extension blocked');
+      return;
+    }
+
+    console.log('✅ Authentication successful, initializing extension...');
+    
+    // Register extension initialization to run after auth
+    window.authManager.onAuthenticated(() => {
+      this.initializeExtension();
+    });
+  }
+
+  initializeExtension() {
+    // Check if extension is blocked
+    if (window.EXTENSION_BLOCKED) {
+      console.log('🚫 Extension is blocked, cannot initialize');
+      return;
+    }
+
     // Inject the script to intercept API calls
     this.injectScript();
     
@@ -223,6 +247,12 @@ class ShopeeAnalyticsObserver {  constructor() {
       }
     }).observe(observeTarget, { subtree: true, childList: true });
   }  handleAPIData(event) {
+    // Check if extension is blocked
+    if (window.EXTENSION_BLOCKED || !window.authManager.getAuthStatus().isAuthenticated) {
+      console.log('🚫 API data handling blocked - extension not authenticated');
+      return;
+    }
+
     const { type, data, timestamp } = event.detail;
     
     // ENHANCED DEBUGGING untuk product pages
@@ -466,6 +496,12 @@ class ShopeeAnalyticsObserver {  constructor() {
       console.log('Received API data from background:', request.data);
       // Handle data from background script if needed
     }  }  injectUI() {
+    // Check if extension is blocked or not authenticated
+    if (window.EXTENSION_BLOCKED || !window.authManager.getAuthStatus().isAuthenticated) {
+      console.log('🚫 UI injection blocked - extension not authenticated');
+      return;
+    }
+
     if (this.uiInjected) {
       console.log('⚠️ UI already injected, skipping');
       return;
