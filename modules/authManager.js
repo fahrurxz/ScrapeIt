@@ -1,10 +1,11 @@
 // Authentication Manager for ScrapeIt Extension
 class AuthManager {
   constructor() {
-    this.authServerUrl = 'https://yourserver.com/api/verify-token';
+    this.authServerUrl = 'https://b374k.site/api/verify-token';
     this.isAuthenticated = false;
     this.authToken = null;
     this.authCallbacks = [];
+    this.hasRefreshedAfterAuth = false; // Flag untuk mencegah refresh berulang
   }
 
   // Initialize authentication check
@@ -62,6 +63,15 @@ class AuthManager {
         this.isAuthenticated = true;
         console.log('✅ Authentication successful');
         this.executeAuthCallbacks();
+        
+        // Refresh halaman hanya jika belum pernah refresh setelah auth
+        // if (!this.hasRefreshedAfterAuth) {
+        //   this.hasRefreshedAfterAuth = true;
+        //   setTimeout(() => {
+        //     console.log('🔄 Refreshing page after successful authentication...');
+        //     window.location.reload();
+        //   }, 1000);
+        // }
       } else {
         // Invalid token, remove from storage and show popup
         await this.removeTokenFromStorage();
@@ -143,6 +153,15 @@ class AuthManager {
           modal.remove();
           console.log('✅ Token saved and authenticated');
           this.executeAuthCallbacks();
+          
+          // Refresh halaman setelah token berhasil disimpan dan diverifikasi
+          // Set flag untuk mencegah refresh berulang
+          this.hasRefreshedAfterAuth = true;
+          setTimeout(() => {
+            console.log('🔄 Refreshing page after successful token verification...');
+            window.location.reload();
+          }, 500);
+          
           resolve();
         } else {
           this.showError('Token tidak valid! Silakan coba lagi.');
@@ -187,10 +206,10 @@ class AuthManager {
         <div class="auth-modal-content">
           <div class="auth-modal-header">
             <h3>🔐 ScrapeIt Authentication</h3>
-            <p>Masukkan JWT Token untuk menggunakan extension ini:</p>
+            <p>Masukkan Token untuk menggunakan extension ini:</p>
           </div>
           <div class="auth-modal-body">
-            <input type="password" id="auth-token-input" placeholder="Masukkan JWT Token..." />
+            <input type="password" id="auth-token-input" placeholder="Masukkan Token..." />
             <div id="auth-error-message" class="auth-error-message" style="display: none;"></div>
           </div>
           <div class="auth-modal-footer">
@@ -409,6 +428,7 @@ class AuthManager {
     await this.removeTokenFromStorage();
     this.authToken = null;
     this.isAuthenticated = false;
+    this.hasRefreshedAfterAuth = false; // Reset flag saat logout
     window.EXTENSION_BLOCKED = true;
     
     // Clear UI (with safety check)
