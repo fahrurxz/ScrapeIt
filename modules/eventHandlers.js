@@ -1280,10 +1280,6 @@ class ShopeeEventHandlers {
               <h5>${stats.avgRating.toFixed(1)}/5</h5>
               <p>Rating Rata-rata</p>
             </div>
-            <div class="ts-stat-card">
-              <h5>${totalPages} halaman</h5>
-              <p>Dalam ${duration}s</p>
-            </div>
           </div>
         </div>
         
