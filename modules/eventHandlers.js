@@ -10,6 +10,7 @@ class ShopeeEventHandlers {
     
     // Shop-specific buttons
     const shopAnalyzeBtn = document.getElementById('ts-shop-analyze-btn');
+    const shopAnalyzeAllBtn = document.getElementById('ts-shop-analyze-all-btn');
     const shopRevenueDetailBtn = document.getElementById('ts-shop-revenue-detail-btn');
     const shopVolumeDetailBtn = document.getElementById('ts-shop-volume-detail-btn');
     const shopInfoDetailBtn = document.getElementById('ts-shop-info-detail-btn');
@@ -59,6 +60,13 @@ class ShopeeEventHandlers {
       shopAnalyzeBtn.addEventListener('click', (e) => {
         e.preventDefault();
         this.showShopAnalysis(observer);
+      });
+    }
+
+    if (shopAnalyzeAllBtn) {
+      shopAnalyzeAllBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.startShopFullAnalysis(observer);
       });
     }
 
@@ -532,6 +540,815 @@ class ShopeeEventHandlers {
     link.click();
     
     console.log('✅ Product data exported successfully');
+  }
+
+  // === SHOP FULL ANALYSIS FUNCTIONS ===
+  
+  static startShopFullAnalysis(observer) {
+    console.log('🚀 Starting full shop analysis...');
+    
+    // Check if already running
+    if (observer._fullAnalysisRunning) {
+      console.log('⚠️ Full analysis already running');
+      return;
+    }
+    
+    // Initialize full analysis state
+    observer._fullAnalysisRunning = true;
+    observer._fullAnalysisData = {
+      allProducts: [],
+      totalPages: 0,
+      currentPage: 1,
+      startTime: Date.now(),
+      isComplete: false
+    };
+    
+    // Show progress modal
+    this.showFullAnalysisProgressModal(observer);
+    
+    // Start the scraping process
+    this.executeFullShopScraping(observer);
+  }
+  
+  static showFullAnalysisProgressModal(observer) {
+    const modalHTML = `
+      <div id="ts-full-analysis-progress" class="ts-modal-overlay">
+        <div class="ts-modal-content" style="max-width: 500px;">
+          <div class="ts-modal-header">
+            <h3>🔍 Analisa Semua Produk Toko</h3>
+            <button class="ts-modal-close" id="ts-close-full-analysis">&times;</button>
+          </div>
+          <div class="ts-modal-body">
+            <div class="ts-progress-container">
+              <div class="ts-progress-info">
+                <div class="ts-progress-status">
+                  <span id="ts-progress-status">Memulai analisa...</span>
+                </div>
+                <div class="ts-progress-details">
+                  <div>Halaman: <span id="ts-current-page">0</span> / <span id="ts-total-pages">?</span></div>
+                  <div>Produk ditemukan: <span id="ts-products-found">0</span></div>
+                  <div>Waktu berlalu: <span id="ts-elapsed-time">0s</span></div>
+                </div>
+              </div>
+              <div class="ts-progress-bar-container">
+                <div class="ts-progress-bar">
+                  <div id="ts-progress-fill" class="ts-progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="ts-progress-percentage">
+                  <span id="ts-progress-percent">0%</span>
+                </div>
+              </div>
+            </div>
+            <div class="ts-progress-actions">
+              <button id="ts-cancel-analysis" class="ts-btn ts-bg-red-600 ts-hover:bg-red-700 ts-text-white ts-px-4 ts-py-2 ts-rounded">
+                Batalkan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('ts-full-analysis-progress');
+    if (existingModal) {
+      existingModal.remove();
+    }
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add event listeners
+    const cancelBtn = document.getElementById('ts-cancel-analysis');
+    const closeBtn = document.getElementById('ts-close-full-analysis');
+    
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.cancelFullAnalysis(observer));
+    }
+    
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.cancelFullAnalysis(observer));
+    }
+    
+    // Start timer update
+    observer._progressTimer = setInterval(() => {
+      this.updateProgressTime(observer);
+    }, 1000);
+  }
+  
+  static updateProgressTime(observer) {
+    const elapsedTimeEl = document.getElementById('ts-elapsed-time');
+    if (elapsedTimeEl && observer._fullAnalysisData) {
+      const elapsed = Math.floor((Date.now() - observer._fullAnalysisData.startTime) / 1000);
+      elapsedTimeEl.textContent = `${elapsed}s`;
+    }
+  }
+  
+  static updateProgress(observer, status, currentPage, totalPages, productsFound) {
+    // Update status
+    const statusEl = document.getElementById('ts-progress-status');
+    if (statusEl) statusEl.textContent = status;
+    
+    // Update page info
+    const currentPageEl = document.getElementById('ts-current-page');
+    const totalPagesEl = document.getElementById('ts-total-pages');
+    const productsFoundEl = document.getElementById('ts-products-found');
+    
+    if (currentPageEl) currentPageEl.textContent = currentPage;
+    if (totalPagesEl) totalPagesEl.textContent = totalPages || '?';
+    if (productsFoundEl) productsFoundEl.textContent = productsFound;
+    
+    // Update progress bar
+    if (totalPages > 0) {
+      const percentage = Math.floor((currentPage / totalPages) * 100);
+      const progressFill = document.getElementById('ts-progress-fill');
+      const progressPercent = document.getElementById('ts-progress-percent');
+      
+      if (progressFill) progressFill.style.width = `${percentage}%`;
+      if (progressPercent) progressPercent.textContent = `${percentage}%`;
+    }
+  }
+  
+  static async executeFullShopScraping(observer) {
+    try {
+      console.log('🔍 Starting shop scraping process...');
+      this.updateProgress(observer, 'Memulai scraping...', 0, 0, 0);
+      
+      // First, scroll to bottom to ensure pagination is loaded
+      await this.scrollToShopPagination();
+      this.updateProgress(observer, 'Mencari halaman...', 0, 0, 0);
+      
+      // Get total pages from pagination
+      const totalPages = this.getTotalShopPages();
+      observer._fullAnalysisData.totalPages = totalPages;
+      
+      console.log(`📄 Total pages detected: ${totalPages}`);
+      this.updateProgress(observer, 'Memuat halaman 1...', 1, totalPages, 0);
+      
+      // Start listening for shop API data
+      this.setupShopAPIListener(observer);
+      
+      // Process current page first (page 1)
+      await this.processCurrentShopPage(observer, 1);
+      
+      // If there are more pages, continue with pagination
+      if (totalPages > 1) {
+        for (let page = 2; page <= totalPages; page++) {
+          if (!observer._fullAnalysisRunning) {
+            console.log('❌ Analysis cancelled by user');
+            break;
+          }
+          
+          console.log(`📄 Processing page ${page}/${totalPages}`);
+          this.updateProgress(observer, `Memuat halaman ${page}...`, page, totalPages, observer._fullAnalysisData.allProducts.length);
+          
+          // Navigate to next page
+          await this.navigateToNextPage();
+          
+          // Wait for page load and API response
+          await this.waitForPageLoad(2000);
+          
+          // Process the new page
+          await this.processCurrentShopPage(observer, page);
+        }
+      }
+      
+      // Analysis complete
+      this.completeFullAnalysis(observer);
+      
+    } catch (error) {
+      console.error('❌ Error during shop scraping:', error);
+      this.handleFullAnalysisError(observer, error);
+    }
+  }
+  
+  static async scrollToShopPagination() {
+    console.log('📜 Scrolling to shop pagination...');
+    
+    // Find the pagination container
+    const paginationSelector = '.shopee-page-controller';
+    let paginationElement = document.querySelector(paginationSelector);
+    
+    if (!paginationElement) {
+      // Try scrolling to bottom first
+      window.scrollTo(0, document.body.scrollHeight);
+      await this.waitForPageLoad(1000);
+      paginationElement = document.querySelector(paginationSelector);
+    }
+    
+    if (paginationElement) {
+      paginationElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      await this.waitForPageLoad(500);
+      console.log('✅ Scrolled to pagination');
+    } else {
+      console.log('⚠️ Pagination not found, assuming single page');
+    }
+  }
+  
+  static getTotalShopPages() {
+    // Look for pagination buttons to determine total pages
+    const paginationContainer = document.querySelector('.shopee-page-controller');
+    if (!paginationContainer) {
+      console.log('📄 No pagination found, assuming 1 page');
+      return 1;
+    }
+    
+    // Try to find page numbers in pagination
+    const pageButtons = paginationContainer.querySelectorAll('button');
+    let maxPage = 1;
+    
+    pageButtons.forEach(btn => {
+      const pageText = btn.textContent.trim();
+      const pageNum = parseInt(pageText);
+      if (!isNaN(pageNum) && pageNum > maxPage) {
+        maxPage = pageNum;
+      }
+    });
+    
+    // Also check for "..." indicators which might suggest more pages
+    const hasEllipsis = paginationContainer.textContent.includes('...');
+    if (hasEllipsis && maxPage < 20) {
+      // For shop pages, be more conservative
+      maxPage = Math.min(maxPage + 5, 15);
+    }
+    
+    // Check if there's a next button to confirm there are more pages
+    const hasNextButton = paginationContainer.querySelector('.shopee-icon-button--right') ||
+                          paginationContainer.querySelector('button[class*="next"]') ||
+                          paginationContainer.querySelector('button[aria-label*="next"]');
+    
+    if (hasNextButton && !hasNextButton.disabled) {
+      // If we found a next button and max page is still 1, set to at least 2
+      maxPage = Math.max(maxPage, 2);
+    }
+    
+    console.log(`📄 Detected ${maxPage} total pages for shop`);
+    return maxPage;
+  }
+  
+  static setupShopAPIListener(observer) {
+    // Listen for shop API responses during pagination
+    if (observer._shopAPIListener) {
+      window.removeEventListener('shopeeAPIData', observer._shopAPIListener);
+    }
+    
+    observer._shopAPIListener = (event) => {
+      const { type, data } = event.detail;
+      
+      if (type === 'SHOP_DATA' && data && data.itemsData) {
+        console.log('🏪 Received shop API data during pagination');
+        this.processShopAPIResponse(observer, data);
+      }
+    };
+    
+    window.addEventListener('shopeeAPIData', observer._shopAPIListener);
+  }
+  
+  static processShopAPIResponse(observer, shopData) {
+    if (!shopData.itemsData || !shopData.itemsData.data) {
+      console.log('⚠️ No items data in shop API response');
+      return;
+    }
+    
+    const rcmdData = shopData.itemsData.data;
+    console.log('📦 Processing rcmd items:', rcmdData);
+    
+    // Extract products from API response
+    const products = this.extractProductsFromShopAPI(rcmdData);
+    console.log(`📦 Extracted ${products.length} products from API`);
+    
+    // Add to accumulated data
+    if (products.length > 0) {
+      observer._fullAnalysisData.allProducts.push(...products);
+      console.log(`📊 Total products collected: ${observer._fullAnalysisData.allProducts.length}`);
+    }
+  }
+  
+  static extractProductsFromShopAPI(apiData) {
+    const products = [];
+    
+    try {
+      // Handle different API response structures
+      let items = [];
+      
+      // PERBAIKAN: Handle rcmd_items API structure dengan centralize_item_card
+      if (apiData.data && apiData.data.centralize_item_card && apiData.data.centralize_item_card.item_cards) {
+        console.log('🔍 Found centralize_item_card structure');
+        items = apiData.data.centralize_item_card.item_cards;
+        console.log(`✅ Extracted ${items.length} items from centralize_item_card`);
+        
+        // Debug first item structure
+        if (items.length > 0) {
+          console.log('🔍 First item structure:', {
+            keys: Object.keys(items[0]),
+            hasItemData: !!items[0].item_data,
+            hasDisplayedAsset: !!items[0].item_card_displayed_asset,
+            itemDataKeys: items[0].item_data ? Object.keys(items[0].item_data) : 'none',
+            displayedAssetKeys: items[0].item_card_displayed_asset ? Object.keys(items[0].item_card_displayed_asset) : 'none'
+          });
+        }
+      } else if (apiData.sections && Array.isArray(apiData.sections)) {
+        // Structure: data.sections[].data.item[]
+        apiData.sections.forEach(section => {
+          if (section.data && section.data.item && Array.isArray(section.data.item)) {
+            items.push(...section.data.item);
+          }
+        });
+      } else if (apiData.items && Array.isArray(apiData.items)) {
+        // Direct items array
+        items = apiData.items;
+      } else if (apiData.data && apiData.data.items && Array.isArray(apiData.data.items)) {
+        // Nested data.items
+        items = apiData.data.items;
+      }
+      
+      // Process each item
+      items.forEach(item => {
+        try {
+          // PERBAIKAN: Handle item_cards structure yang berbeda dari item biasa
+          let processedItem = {};
+          
+          // Jika ini dari centralize_item_card, item memiliki struktur berbeda
+          if (item.item_card_displayed_asset || item.item_data) {
+            // Struktur untuk item_cards dari rcmd_items
+            const itemData = item.item_data || {};
+            const displayedAsset = item.item_card_displayed_asset || {};
+            
+            processedItem = {
+              itemid: itemData.itemid || item.itemid, // PERBAIKAN: item.itemid ada langsung di level atas
+              shopid: itemData.shopid || item.shopid, // PERBAIKAN: item.shopid ada langsung di level atas  
+              name: displayedAsset.name || itemData.name || item.name || 'Produk Tanpa Nama',
+              price: this.extractPriceFromShopItem(item) || itemData.price || item.price || 0,
+              price_before_discount: itemData.price_before_discount || item.price_before_discount || 0,
+              price_min: itemData.price_min || item.price_min || 0,
+              price_max: itemData.price_max || item.price_max || 0,
+              historical_sold: this.extractSoldFromShopItem(item) || itemData.historical_sold || item.historical_sold || 0,
+              liked_count: itemData.liked_count || item.liked_count || 0,
+              view_count: itemData.view_count || item.view_count || 0,
+              stock: itemData.stock || item.stock || 0,
+              shop_location: (itemData.shop_data || item.shop_data)?.shop_location || '',
+              tier_variations: itemData.tier_variations || item.tier_variations || [],
+              images: displayedAsset.image ? [displayedAsset.image] : (itemData.images || item.images || []),
+              rating_star: (itemData.item_rating || item.item_rating)?.rating_star || 0,
+              rating_count: (itemData.item_rating || item.item_rating)?.rating_count || [],
+              ctime: itemData.ctime || item.ctime || Date.now()
+            };
+          } else {
+            // Struktur item biasa
+            processedItem = {
+              itemid: item.itemid || item.item_id,
+              shopid: item.shopid || item.shop_id,
+              name: item.name || item.title || 'Produk Tanpa Nama',
+              price: item.price || item.price_min || 0,
+              price_before_discount: item.price_before_discount || 0,
+              price_min: item.price_min || item.price || 0,
+              price_max: item.price_max || item.price || 0,
+              historical_sold: item.historical_sold || item.sold || 0,
+              liked_count: item.liked_count || 0,
+              view_count: item.view_count || 0,
+              stock: item.stock || 0,
+              shop_location: item.shop_location || '',
+              tier_variations: item.tier_variations || [],
+              images: item.images || [item.image] || [],
+              rating_star: item.item_rating?.rating_star || 0,
+              rating_count: item.item_rating?.rating_count || [],
+              ctime: item.ctime || Date.now()
+            };
+          }
+          
+          // Only add if we have essential data
+          if (processedItem.itemid && processedItem.shopid) {
+            // Calculate revenue
+            processedItem.revenue = ((processedItem.price || 0) / 100000) * (processedItem.historical_sold || 0);
+            products.push(processedItem);
+          } else {
+            console.log('⚠️ Skipping item without itemid/shopid:', {
+              itemid: processedItem.itemid,
+              shopid: processedItem.shopid,
+              hasItemData: !!item.item_data,
+              hasDisplayedAsset: !!item.item_card_displayed_asset,
+              rawItemId: item.itemid,
+              rawShopId: item.shopid,
+              itemKeys: Object.keys(item).slice(0, 10) // First 10 keys only
+            });
+          }
+          
+        } catch (itemError) {
+          console.error('❌ Error processing individual item:', itemError, item);
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error extracting products from shop API:', error);
+    }
+    
+    return products;
+  }
+  
+  // Helper function to extract price from shop item structure
+  static extractPriceFromShopItem(item) {
+    // Try different price sources in shop item
+    if (item.item_card_display_price && item.item_card_display_price.price) {
+      return item.item_card_display_price.price;
+    }
+    
+    if (item.price) return item.price;
+    if (item.price_min) return item.price_min;
+    
+    return 0;
+  }
+  
+  // Helper function to extract sold count from shop item structure  
+  static extractSoldFromShopItem(item) {
+    // Try different sold sources in shop item
+    if (item.item_card_display_sold_count) {
+      const soldData = item.item_card_display_sold_count;
+      
+      // Try historical_sold_count first
+      if (soldData.historical_sold_count) {
+        return soldData.historical_sold_count;
+      }
+      
+      // Try parsing from text format
+      if (soldData.historical_sold_count_text) {
+        const match = soldData.historical_sold_count_text.match(/(\d+)/);
+        if (match) {
+          return parseInt(match[1]);
+        }
+      }
+      
+      // Try monthly count as fallback
+      if (soldData.monthly_sold_count) {
+        return soldData.monthly_sold_count;
+      }
+    }
+    
+    if (item.historical_sold) return item.historical_sold;
+    if (item.sold) return item.sold;
+    
+    return 0;
+  }
+  
+  static async processCurrentShopPage(observer, pageNumber) {
+    console.log(`📄 Processing shop page ${pageNumber}`);
+    
+    // Wait for API response (shop rcmd_items call)
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        console.log(`⚠️ Timeout waiting for shop API on page ${pageNumber}`);
+        resolve();
+      }, 10000); // 10 second timeout
+      
+      // Setup one-time listener for this page
+      const pageListener = (event) => {
+        const { type, data } = event.detail;
+        
+        if (type === 'SHOP_DATA' && data && data.itemsData) {
+          clearTimeout(timeout);
+          window.removeEventListener('shopeeAPIData', pageListener);
+          
+          this.processShopAPIResponse(observer, data);
+          resolve();
+        }
+      };
+      
+      window.addEventListener('shopeeAPIData', pageListener);
+      
+      // Trigger a small scroll to ensure page is fully loaded
+      window.scrollBy(0, 100);
+      setTimeout(() => window.scrollBy(0, -100), 500);
+    });
+  }
+  
+  static async navigateToNextPage() {
+    console.log('➡️ Navigating to next page...');
+    
+    // Find the next page button - try multiple selectors for shop pagination
+    const nextButtonSelectors = [
+      '.shopee-icon-button--right',
+      'button[class*="next"]',
+      'button[aria-label*="next"]',
+      'button[aria-label*="Next"]',
+      '.shopee-page-controller button:last-child',
+      '.shopee-page-controller [class*="right"]',
+      '.shopee-page-controller [class*="arrow-right"]'
+    ];
+    
+    let nextButton = null;
+    
+    for (const selector of nextButtonSelectors) {
+      nextButton = document.querySelector(selector);
+      if (nextButton && !nextButton.disabled && !nextButton.classList.contains('disabled')) {
+        console.log(`✅ Found next button with selector: ${selector}`);
+        break;
+      }
+    }
+    
+    if (nextButton && !nextButton.disabled) {
+      // Scroll to button first to ensure it's visible
+      nextButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      await this.waitForPageLoad(500);
+      
+      nextButton.click();
+      console.log('✅ Clicked next page button');
+      await this.waitForPageLoad(2000);
+    } else {
+      console.log('⚠️ Next button not found or disabled');
+      throw new Error('Cannot navigate to next page');
+    }
+  }
+  
+  static async waitForPageLoad(ms = 1000) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  
+  static completeFullAnalysis(observer) {
+    console.log('✅ Full shop analysis complete!');
+    
+    observer._fullAnalysisData.isComplete = true;
+    observer._fullAnalysisRunning = false;
+    
+    // Clear progress timer
+    if (observer._progressTimer) {
+      clearInterval(observer._progressTimer);
+      delete observer._progressTimer;
+    }
+    
+    // Remove API listener
+    if (observer._shopAPIListener) {
+      window.removeEventListener('shopeeAPIData', observer._shopAPIListener);
+      delete observer._shopAPIListener;
+    }
+    
+    // Hide progress modal
+    const progressModal = document.getElementById('ts-full-analysis-progress');
+    if (progressModal) {
+      progressModal.remove();
+    }
+    
+    // Show results
+    this.showFullAnalysisResults(observer);
+  }
+  
+  static showFullAnalysisResults(observer) {
+    const allProducts = observer._fullAnalysisData.allProducts;
+    const totalPages = observer._fullAnalysisData.totalPages;
+    const duration = Math.floor((Date.now() - observer._fullAnalysisData.startTime) / 1000);
+    
+    console.log(`📊 Analysis results: ${allProducts.length} products from ${totalPages} pages in ${duration}s`);
+    
+    // Calculate statistics
+    const stats = this.calculateFullShopStats(allProducts);
+    
+    // Create results modal
+    const modalHTML = this.createFullAnalysisResultsModal(stats, allProducts, totalPages, duration);
+    
+    // Show modal with event listeners
+    ShopeeModalManager.showCustomModal('Hasil Analisa Semua Produk', modalHTML, () => {
+      // Add event listeners after modal is ready
+      const exportBtn = document.getElementById('ts-export-full-results');
+      const showTopBtn = document.getElementById('ts-show-top-products');
+      const topProductsList = document.getElementById('ts-top-products-list');
+      
+      if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+          this.exportFullAnalysisResults(allProducts, stats);
+        });
+      }
+      
+      if (showTopBtn && topProductsList) {
+        showTopBtn.addEventListener('click', () => {
+          if (topProductsList.style.display === 'none') {
+            topProductsList.style.display = 'block';
+            showTopBtn.textContent = '🔼 Sembunyikan Top 10';
+          } else {
+            topProductsList.style.display = 'none';
+            showTopBtn.textContent = '🏆 Lihat Top 10 Produk';
+          }
+        });
+      }
+    });
+  }
+  
+  static exportFullAnalysisResults(products, stats) {
+    console.log('📥 Exporting full analysis results...');
+    
+    // Prepare CSV data
+    const csvData = [
+      // Header row
+      [
+        'No',
+        'Nama Produk',
+        'Harga (Rp)',
+        'Harga Sebelum Diskon (Rp)',
+        'Terjual',
+        'Omset (Rp)',
+        'Rating',
+        'Stok',
+        'Lokasi Toko',
+        'ID Produk',
+        'ID Toko',
+        'Tanggal Dibuat'
+      ]
+    ];
+    
+    // Add product data
+    products.forEach((product, index) => {
+      csvData.push([
+        index + 1,
+        product.name || 'Tidak ada nama',
+        Math.round(product.price / 100000),
+        Math.round(product.price_before_discount / 100000),
+        product.historical_sold || 0,
+        Math.round(product.revenue || 0),
+        product.rating_star || 0,
+        product.stock || 0,
+        product.shop_location || '',
+        product.itemid || '',
+        product.shopid || '',
+        product.ctime ? new Date(product.ctime * 1000).toLocaleDateString('id-ID') : ''
+      ]);
+    });
+    
+    // Add summary at the end
+    csvData.push([]);
+    csvData.push(['=== RINGKASAN ANALISA ===']);
+    csvData.push(['Total Produk', stats.totalProducts]);
+    csvData.push(['Total Omset (Rp)', Math.round(stats.totalRevenue)]);
+    csvData.push(['Total Terjual', stats.totalSold]);
+    csvData.push(['Harga Rata-rata (Rp)', Math.round(stats.avgPrice)]);
+    csvData.push(['Harga Minimum (Rp)', Math.round(stats.minPrice)]);
+    csvData.push(['Harga Maximum (Rp)', Math.round(stats.maxPrice)]);
+    csvData.push(['Rating Rata-rata', stats.avgRating.toFixed(2)]);
+    
+    // Convert to CSV string
+    const csvString = csvData.map(row => 
+      row.map(cell => `"${cell}"`).join(',')
+    ).join('\n');
+    
+    // Download CSV
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `shopee-full-analysis-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    console.log('✅ Full analysis data exported successfully');
+  }
+  
+  static calculateFullShopStats(products) {
+    if (!products || products.length === 0) {
+      return {
+        totalProducts: 0,
+        totalRevenue: 0,
+        totalSold: 0,
+        avgPrice: 0,
+        minPrice: 0,
+        maxPrice: 0,
+        avgRating: 0,
+        topProducts: []
+      };
+    }
+    
+    const validProducts = products.filter(p => p.price > 0);
+    
+    const stats = {
+      totalProducts: products.length,
+      totalRevenue: products.reduce((sum, p) => sum + (p.revenue || 0), 0),
+      totalSold: products.reduce((sum, p) => sum + (p.historical_sold || 0), 0),
+      avgPrice: validProducts.length > 0 ? 
+        validProducts.reduce((sum, p) => sum + (p.price / 100000), 0) / validProducts.length : 0,
+      minPrice: validProducts.length > 0 ? 
+        Math.min(...validProducts.map(p => p.price / 100000)) : 0,
+      maxPrice: validProducts.length > 0 ? 
+        Math.max(...validProducts.map(p => p.price / 100000)) : 0,
+      avgRating: products.filter(p => p.rating_star > 0).length > 0 ?
+        products.filter(p => p.rating_star > 0).reduce((sum, p) => sum + p.rating_star, 0) / 
+        products.filter(p => p.rating_star > 0).length : 0,
+      topProducts: products
+        .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+        .slice(0, 10)
+    };
+    
+    return stats;
+  }
+  
+  static createFullAnalysisResultsModal(stats, products, totalPages, duration) {
+    const formatCurrency = (amount) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    };
+    
+    const formatNumber = (num) => {
+      return new Intl.NumberFormat('id-ID').format(num);
+    };
+    
+    return `
+      <div class="ts-full-analysis-results">
+        <div class="ts-results-summary">
+          <h4>📊 Ringkasan Analisa</h4>
+          <div class="ts-stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0;">
+            <div class="ts-stat-card">
+              <h5>${formatNumber(stats.totalProducts)}</h5>
+              <p>Total Produk</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${formatCurrency(stats.totalRevenue)}</h5>
+              <p>Total Omset</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${formatNumber(stats.totalSold)}</h5>
+              <p>Total Terjual</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${formatCurrency(stats.avgPrice)}</h5>
+              <p>Harga Rata-rata</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${stats.avgRating.toFixed(1)}/5</h5>
+              <p>Rating Rata-rata</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${totalPages} halaman</h5>
+              <p>Dalam ${duration}s</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ts-results-actions" style="margin: 1rem 0; text-align: center;">
+          <button id="ts-export-full-results" class="ts-btn ts-bg-green-600 ts-hover:bg-green-700 ts-text-white ts-px-4 ts-py-2 ts-rounded ts-mr-2">
+            💾 Export Semua Data
+          </button>
+          <button id="ts-show-top-products" class="ts-btn ts-bg-blue-600 ts-hover:bg-blue-700 ts-text-white ts-px-4 ts-py-2 ts-rounded">
+            🏆 Lihat Top 10 Produk
+          </button>
+        </div>
+        
+        <div id="ts-top-products-list" style="display: none;">
+          <h4>🏆 Top 10 Produk Berdasarkan Omset</h4>
+          <div class="ts-products-list">
+            ${stats.topProducts.map((product, index) => `
+              <div class="ts-product-item" style="border: 1px solid #ddd; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>#${index + 1}</strong>
+                    <span>${product.name}</span>
+                  </div>
+                  <div style="text-align: right;">
+                    <div>${formatCurrency(product.revenue || 0)}</div>
+                    <small>${formatNumber(product.historical_sold || 0)} terjual</small>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  static cancelFullAnalysis(observer) {
+    console.log('❌ Cancelling full shop analysis...');
+    
+    observer._fullAnalysisRunning = false;
+    
+    // Clear timers
+    if (observer._progressTimer) {
+      clearInterval(observer._progressTimer);
+      delete observer._progressTimer;
+    }
+    
+    // Remove listeners
+    if (observer._shopAPIListener) {
+      window.removeEventListener('shopeeAPIData', observer._shopAPIListener);
+      delete observer._shopAPIListener;
+    }
+    
+    // Remove modal
+    const progressModal = document.getElementById('ts-full-analysis-progress');
+    if (progressModal) {
+      progressModal.remove();
+    }
+    
+    // Clean up analysis data
+    delete observer._fullAnalysisData;
+  }
+  
+  static handleFullAnalysisError(observer, error) {
+    console.error('❌ Full analysis error:', error);
+    
+    this.cancelFullAnalysis(observer);
+    
+    // Show error modal
+    ShopeeModalManager.showModal('Error Analisa', `
+      <p>Terjadi kesalahan selama analisa:</p>
+      <p><code>${error.message}</code></p>
+      <p>Silakan coba lagi atau hubungi developer.</p>
+    `);
   }
 }
 

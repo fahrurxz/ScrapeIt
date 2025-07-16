@@ -15,7 +15,7 @@
   ],
   "host_permissions": [
     "https://shopee.co.id/*",
-    "https://yourserver.com/*"
+    "https://scrape.dropshipaja.com/*"
   ],  "content_scripts": [
     {
       "matches": ["https://shopee.co.id/*"],

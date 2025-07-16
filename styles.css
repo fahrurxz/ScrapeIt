@@ -2604,3 +2604,170 @@ h4.ts-product-name a {
     justify-content: flex-end;
   }
 }
+
+/* Full Analysis Progress Modal Styles */
+.ts-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.ts-progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ts-progress-status {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-progress-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.ts-progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ts-progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ts-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.ts-progress-percentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 3rem;
+  text-align: right;
+}
+
+.ts-progress-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.ts-full-analysis-results {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.ts-results-summary {
+  margin-bottom: 1.5rem;
+}
+
+.ts-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.ts-stat-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.ts-stat-card h5 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 0.25rem 0;
+}
+
+.ts-stat-card p {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.ts-results-actions {
+  margin: 1rem 0;
+  text-align: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.ts-products-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.ts-product-item {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  background: white;
+}
+
+.ts-product-item:hover {
+  background: #f8fafc;
+}
+
+/* Modal overlay improvements for progress */
+#ts-full-analysis-progress .ts-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+#ts-full-analysis-progress .ts-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 1rem 1.5rem;
+}
+
+#ts-full-analysis-progress .ts-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+#ts-full-analysis-progress .ts-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+#ts-full-analysis-progress .ts-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

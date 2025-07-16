@@ -1,7 +1,7 @@
 // Authentication Manager for ScrapeIt Extension
 class AuthManager {
   constructor() {
-    this.authServerUrl = 'https://b374k.site/api/verify-token';
+    this.authServerUrl = 'https://scrape.dropshipaja.com/api/verify-token';
     this.isAuthenticated = false;
     this.authToken = null;
     this.authCallbacks = [];

@@ -877,6 +877,65 @@ class ShopeeModalManager {
     
     return sortedProducts;
   }
+
+  static showCustomModal(title, content, onModalReady = null) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('ts-custom-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Create custom modal structure
+    const modalHTML = `
+      <div id="ts-custom-modal" class="ts-modal-overlay">
+        <div class="ts-modal-container" style="max-width: 900px;">
+          <div class="ts-modal-content">
+            <div class="ts-modal-header">
+              <h2 class="ts-modal-title">${title}</h2>
+              <button class="ts-modal-close" id="ts-custom-modal-close">×</button>
+            </div>
+            <div class="ts-modal-body">
+              ${content}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const modalElement = document.createElement('div');
+    modalElement.innerHTML = modalHTML;
+    document.body.appendChild(modalElement.firstElementChild);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+    
+    // Add close event listener
+    const closeBtn = document.getElementById('ts-custom-modal-close');
+    const overlay = document.getElementById('ts-custom-modal');
+    
+    const closeModal = () => {
+      overlay.remove();
+      document.body.style.overflow = '';
+    };
+    
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+    
+    // ESC key to close
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', escHandler);
+      }
+    });
+
+    // Call onModalReady callback if provided
+    if (onModalReady && typeof onModalReady === 'function') {
+      onModalReady();
+    }
+  }
 }
 
 // Export for use in other modules

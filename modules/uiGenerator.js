@@ -285,9 +285,12 @@ class ShopeeUIGenerator {
                   </div>
                 </div>
               </div>              <div class="ts-col-start-7 ts-items-center ts-justify-center ts-flex">
-                <div class="ts-relative">
+                <div class="ts-relative ts-flex ts-gap-2">
                   <button class="ts-btn ts-bg-orange-600 ts-hover:bg-orange-700 ts-active:bg-orange-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-analyze-btn">
-                    Analisa Detail
+                    Berdasarkan 30 Produk
+                  </button>
+                  <button class="ts-btn ts-bg-blue-600 ts-hover:bg-blue-700 ts-active:bg-blue-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-analyze-all-btn">
+                    Analisa Semua Produk
                   </button>
                   <span class="ts-flex ts-absolute ts-h-3 ts-w-3 ts-top-0 ts-right-0 ts--mt-1 ts--mr-1">
                     <span class="ts-animate-ping ts-absolute its-nline-flex ts-h-full ts-w-full ts-rounded-full ts-bg-red-400 ts-opacity-75"></span>
