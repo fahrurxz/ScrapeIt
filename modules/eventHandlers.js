@@ -117,7 +117,7 @@ class ShopeeEventHandlers {
   }
 
   static refreshData(observer) {
-    console.log('Refreshing data...');
+    
     ShopeeUIUpdater.updateUIWithData(observer);
     
     // Update timestamp
@@ -147,14 +147,14 @@ class ShopeeEventHandlers {
       selectedTabContent.style.display = 'block';
     }
     
-    console.log('Switched to tab:', tabName);
+    
     
     // Update data for the selected tab
     ShopeeUIUpdater.updateTabData(tabName, observer);
   }
 
   static showDetailAnalysis(observer) {
-    console.log('Opening detailed analysis...');
+    
     const stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
     if (!stats) {
       alert('Data belum tersedia untuk analisis detail');
@@ -165,7 +165,7 @@ class ShopeeEventHandlers {
   }
 
   static showMarketDetail(observer) {
-    console.log('Opening market detail analysis...');
+    
     // You can implement specific market detail functionality here
     this.showDetailAnalysis(observer);
   }
@@ -199,7 +199,7 @@ class ShopeeEventHandlers {
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('page', nextPage.toString());
     
-    console.log(`🔄 Loading page ${nextPage} for more data...`);
+    
     
     // Navigate to next page
     window.history.pushState({}, '', newUrl.toString());
@@ -209,7 +209,7 @@ class ShopeeEventHandlers {
       // Set timeout untuk fallback jika loading terlalu lama
     observer._loadingTimeout = setTimeout(() => {
       if (observer._isLoadingMore) {
-        console.log('⏰ Loading timeout reached, stopping loading state');
+        
         this.setLoadingState(buttonElement, false);
         ShopeeUIUpdater.hidePaginationLoading();
         observer._isLoadingMore = false;
@@ -251,7 +251,7 @@ class ShopeeEventHandlers {
   }
 
   static showMoreData(observer) {
-    console.log('Loading more data...');
+    
     
     // Cek apakah ini halaman search atau category
     if (observer.currentPageType !== 'search' && observer.currentPageType !== 'category') {
@@ -276,7 +276,7 @@ class ShopeeEventHandlers {
       moreBtn.disabled = true;
       
       // Navigate to next page
-      console.log(`🔄 Loading page ${nextPage} for more data...`);
+      
       window.history.pushState({}, '', newUrl.toString());
       
       // Trigger navigation detection
@@ -292,7 +292,7 @@ class ShopeeEventHandlers {
     }
   }
   static exportData(observer) {
-    console.log('Exporting data...');
+    
     
     if (observer.currentPageType === 'product') {
       this.exportProductData(observer);
@@ -357,10 +357,10 @@ class ShopeeEventHandlers {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-      console.log('Product data exported successfully');
+      
   }
   static showShopAnalysis(observer) {
-    console.log('🏪 Showing shop analysis for:', observer.currentShopUsername);
+    
     
     const stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
     if (!stats || !stats.shopStats) {
@@ -373,16 +373,16 @@ class ShopeeEventHandlers {
   }
 
   static showShopRevenueDetail(observer) {
-    console.log('💰 Showing shop revenue detail');
+    
     this.showShopAnalysis(observer); // For now, reuse the main analysis
   }
 
   static showShopVolumeDetail(observer) {
-    console.log('📊 Showing shop volume detail');
+    
     this.showShopAnalysis(observer); // For now, reuse the main analysis
   }
   static showShopInfoDetail(observer) {
-    console.log('ℹ️ Showing shop info detail');
+    
     this.showShopAnalysis(observer); // For now, reuse the main analysis
   }
 
@@ -407,7 +407,7 @@ class ShopeeEventHandlers {
       if (e.target.closest('.ts-shop-product-card')) {
         const card = e.target.closest('.ts-shop-product-card');
         const itemId = card.dataset.productId;
-        console.log('🛍️ Product card clicked:', itemId);
+        
         // Optional: add visual feedback or highlight
         card.style.borderColor = '#f97316';
         setTimeout(() => {
@@ -435,7 +435,7 @@ class ShopeeEventHandlers {
   }
 
   static viewProductDetail(itemId, observer) {
-    console.log('👀 Viewing product detail for item:', itemId);
+    
     
     // Get product data
     const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
@@ -451,7 +451,7 @@ class ShopeeEventHandlers {
   }
 
   static analyzeProduct(itemId, observer) {
-    console.log('📊 Analyzing product:', itemId);
+    
     
     // Get product data
     const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
@@ -467,7 +467,7 @@ class ShopeeEventHandlers {
   }
 
   static sortShopProducts(sortBy, observer) {
-    console.log('📋 Sorting shop products by:', sortBy);
+    
     
     // Get current products
     const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
@@ -502,7 +502,7 @@ class ShopeeEventHandlers {
   }
 
   static exportShopProducts(observer) {
-    console.log('📄 Exporting shop products data');
+    
     
     const products = ShopeeProductProcessor.extractProductsFromAPI(999, observer);
     if (!products || products.length === 0) {
@@ -539,17 +539,17 @@ class ShopeeEventHandlers {
     link.download = `shopee-products-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     
-    console.log('✅ Product data exported successfully');
+    
   }
 
   // === SHOP FULL ANALYSIS FUNCTIONS ===
   
   static startShopFullAnalysis(observer) {
-    console.log('🚀 Starting full shop analysis...');
+    
     
     // Check if already running
     if (observer._fullAnalysisRunning) {
-      console.log('⚠️ Full analysis already running');
+      
       return;
     }
     
@@ -671,7 +671,7 @@ class ShopeeEventHandlers {
   
   static async executeFullShopScraping(observer) {
     try {
-      console.log('🔍 Starting shop scraping process...');
+      
       this.updateProgress(observer, 'Memulai scraping...', 0, 0, 0);
       
       // First, scroll to bottom to ensure pagination is loaded
@@ -682,21 +682,21 @@ class ShopeeEventHandlers {
       const totalPages = this.getTotalShopPages();
       observer._fullAnalysisData.totalPages = totalPages;
       
-      console.log(`📄 Total pages detected: ${totalPages}`);
+      
       this.updateProgress(observer, 'Memuat halaman 1...', 1, totalPages, 0);
       
       // Start listening for shop API data
       this.setupShopAPIListener(observer);
       
       // PERBAIKAN: Process current page first (page 1) - ambil data yang sudah ada
-      console.log('📦 Processing existing page 1 data...');
+      
       if (observer.apiData && observer.apiData.SHOP_DATA && observer.apiData.SHOP_DATA.data) {
         const existingShopData = observer.apiData.SHOP_DATA.data;
-        console.log('✅ Found existing page 1 shop data');
+        
         this.processShopAPIResponse(observer, existingShopData);
         this.updateProgress(observer, 'Page 1 data loaded...', 1, totalPages, observer._fullAnalysisData.allProducts.length);
       } else {
-        console.log('⚠️ No existing page 1 data found, waiting for API...');
+        
         await this.processCurrentShopPage(observer, 1);
       }
       
@@ -704,11 +704,11 @@ class ShopeeEventHandlers {
       if (totalPages > 1) {
         for (let page = 2; page <= totalPages; page++) {
           if (!observer._fullAnalysisRunning) {
-            console.log('❌ Analysis cancelled by user');
+            
             break;
           }
           
-          console.log(`📄 Processing page ${page}/${totalPages}`);
+          
           this.updateProgress(observer, `Memuat halaman ${page}...`, page, totalPages, observer._fullAnalysisData.allProducts.length);
           
           // Navigate to next page
@@ -732,13 +732,12 @@ class ShopeeEventHandlers {
       this.completeFullAnalysis(observer);
       
     } catch (error) {
-      console.error('❌ Error during shop scraping:', error);
       this.handleFullAnalysisError(observer, error);
     }
   }
   
   static async scrollToShopPagination() {
-    console.log('📜 Scrolling to shop pagination...');
+    
     
     // Find the pagination container
     const paginationSelector = '.shopee-page-controller';
@@ -754,9 +753,9 @@ class ShopeeEventHandlers {
     if (paginationElement) {
       paginationElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       await this.waitForPageLoad(500);
-      console.log('✅ Scrolled to pagination');
+      
     } else {
-      console.log('⚠️ Pagination not found, assuming single page');
+      
     }
   }
   
@@ -764,7 +763,7 @@ class ShopeeEventHandlers {
     // Look for pagination buttons to determine total pages
     const paginationContainer = document.querySelector('.shopee-page-controller');
     if (!paginationContainer) {
-      console.log('📄 No pagination found, assuming 1 page');
+      
       return 1;
     }
     
@@ -797,7 +796,7 @@ class ShopeeEventHandlers {
       maxPage = Math.max(maxPage, 2);
     }
     
-    console.log(`📄 Detected ${maxPage} total pages for shop`);
+    
     return maxPage;
   }
   
@@ -811,7 +810,7 @@ class ShopeeEventHandlers {
       const { type, data } = event.detail;
       
       if (type === 'SHOP_DATA' && data && data.itemsData) {
-        console.log('🏪 Received shop API data during pagination');
+        
         this.processShopAPIResponse(observer, data);
       }
     };
@@ -821,16 +820,16 @@ class ShopeeEventHandlers {
   
   static processShopAPIResponse(observer, shopData) {
     if (!shopData.itemsData || !shopData.itemsData.data) {
-      console.log('⚠️ No items data in shop API response');
+      
       return;
     }
     
     const rcmdData = shopData.itemsData.data;
-    console.log('📦 Processing rcmd items:', rcmdData);
+    
     
     // Extract products from API response
     const products = this.extractProductsFromShopAPI(rcmdData);
-    console.log(`📦 Extracted ${products.length} products from API`);
+    
     
     // Add to accumulated data
     if (products.length > 0) {
@@ -839,13 +838,13 @@ class ShopeeEventHandlers {
       const newProducts = products.filter(p => !existingIds.has(p.itemid));
       
       observer._fullAnalysisData.allProducts.push(...newProducts);
-      console.log(`📊 Added ${newProducts.length} new products. Total: ${observer._fullAnalysisData.allProducts.length}`);
+      
       
       if (newProducts.length < products.length) {
-        console.log(`⚠️ Skipped ${products.length - newProducts.length} duplicate products`);
+        
       }
     } else {
-      console.log('⚠️ No products extracted from this API call');
+      
     }
   }
   
@@ -858,19 +857,13 @@ class ShopeeEventHandlers {
       
       // PERBAIKAN: Handle rcmd_items API structure dengan centralize_item_card
       if (apiData.data && apiData.data.centralize_item_card && apiData.data.centralize_item_card.item_cards) {
-        console.log('🔍 Found centralize_item_card structure');
+        
         items = apiData.data.centralize_item_card.item_cards;
-        console.log(`✅ Extracted ${items.length} items from centralize_item_card`);
+        
         
         // Debug first item structure
         if (items.length > 0) {
-          console.log('🔍 First item structure:', {
-            keys: Object.keys(items[0]),
-            hasItemData: !!items[0].item_data,
-            hasDisplayedAsset: !!items[0].item_card_displayed_asset,
-            itemDataKeys: items[0].item_data ? Object.keys(items[0].item_data) : 'none',
-            displayedAssetKeys: items[0].item_card_displayed_asset ? Object.keys(items[0].item_card_displayed_asset) : 'none'
-          });
+
         }
       } else if (apiData.sections && Array.isArray(apiData.sections)) {
         // Structure: data.sections[].data.item[]
@@ -947,24 +940,14 @@ class ShopeeEventHandlers {
             processedItem.revenue = ((processedItem.price || 0) / 100000) * (processedItem.historical_sold || 0);
             products.push(processedItem);
           } else {
-            console.log('⚠️ Skipping item without itemid/shopid:', {
-              itemid: processedItem.itemid,
-              shopid: processedItem.shopid,
-              hasItemData: !!item.item_data,
-              hasDisplayedAsset: !!item.item_card_displayed_asset,
-              rawItemId: item.itemid,
-              rawShopId: item.shopid,
-              itemKeys: Object.keys(item).slice(0, 10) // First 10 keys only
-            });
+
           }
           
         } catch (itemError) {
-          console.error('❌ Error processing individual item:', itemError, item);
         }
       });
       
     } catch (error) {
-      console.error('❌ Error extracting products from shop API:', error);
     }
     
     return products;
@@ -1015,12 +998,12 @@ class ShopeeEventHandlers {
   }
   
   static async processCurrentShopPage(observer, pageNumber) {
-    console.log(`📄 Processing shop page ${pageNumber}`);
+    
     
     // Wait for API response (shop rcmd_items call)
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
-        console.log(`⚠️ Timeout waiting for shop API on page ${pageNumber}`);
+        
         resolve();
       }, 10000); // 10 second timeout
       
@@ -1046,7 +1029,7 @@ class ShopeeEventHandlers {
   }
   
   static async navigateToNextPage() {
-    console.log('➡️ Navigating to next page...');
+    
     
     // Find the next page button - try multiple selectors for shop pagination
     const nextButtonSelectors = [
@@ -1064,7 +1047,7 @@ class ShopeeEventHandlers {
     for (const selector of nextButtonSelectors) {
       nextButton = document.querySelector(selector);
       if (nextButton && !nextButton.disabled && !nextButton.classList.contains('disabled')) {
-        console.log(`✅ Found next button with selector: ${selector}`);
+        
         break;
       }
     }
@@ -1075,10 +1058,10 @@ class ShopeeEventHandlers {
       await this.waitForPageLoad(500);
       
       nextButton.click();
-      console.log('✅ Clicked next page button');
+      
       await this.waitForPageLoad(2000);
     } else {
-      console.log('⚠️ Next button not found or disabled');
+      
       throw new Error('Cannot navigate to next page');
     }
   }
@@ -1088,7 +1071,7 @@ class ShopeeEventHandlers {
   }
   
   static completeFullAnalysis(observer) {
-    console.log('✅ Full shop analysis complete!');
+    
     
     observer._fullAnalysisData.isComplete = true;
     observer._fullAnalysisRunning = false;
@@ -1120,7 +1103,7 @@ class ShopeeEventHandlers {
     const totalPages = observer._fullAnalysisData.totalPages;
     const duration = Math.floor((Date.now() - observer._fullAnalysisData.startTime) / 1000);
     
-    console.log(`📊 Analysis results: ${allProducts.length} products from ${totalPages} pages in ${duration}s`);
+    
     
     // Calculate statistics
     const stats = this.calculateFullShopStats(allProducts);
@@ -1156,7 +1139,7 @@ class ShopeeEventHandlers {
   }
   
   static exportFullAnalysisResults(products, stats) {
-    console.log('📥 Exporting full analysis results...');
+    
     
     // Prepare CSV data
     const csvData = [
@@ -1218,7 +1201,7 @@ class ShopeeEventHandlers {
     link.download = `shopee-full-analysis-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     
-    console.log('✅ Full analysis data exported successfully');
+    
   }
   
   static calculateFullShopStats(products) {
@@ -1337,7 +1320,7 @@ class ShopeeEventHandlers {
   }
   
   static cancelFullAnalysis(observer) {
-    console.log('❌ Cancelling full shop analysis...');
+    
     
     observer._fullAnalysisRunning = false;
     
@@ -1364,7 +1347,6 @@ class ShopeeEventHandlers {
   }
   
   static handleFullAnalysisError(observer, error) {
-    console.error('❌ Full analysis error:', error);
     
     this.cancelFullAnalysis(observer);
     

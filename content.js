@@ -21,15 +21,15 @@ class ShopeeAnalyticsObserver {  constructor() {
     this.init();
   }  async init() {
     // Check authentication first
-    console.log('🔐 Checking authentication...');
+    
     const isAuthenticated = await window.authManager.init();
     
     if (!isAuthenticated) {
-      console.log('❌ Authentication failed, extension blocked');
+      
       return;
     }
 
-    console.log('✅ Authentication successful, initializing extension...');
+    
     
     // Register extension initialization to run after auth
     window.authManager.onAuthenticated(() => {
@@ -40,7 +40,7 @@ class ShopeeAnalyticsObserver {  constructor() {
   initializeExtension() {
     // Check if extension is blocked
     if (window.EXTENSION_BLOCKED) {
-      console.log('🚫 Extension is blocked, cannot initialize');
+      
       return;
     }
 
@@ -58,7 +58,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       // Watch for URL changes (SPA navigation)
     this.watchForNavigation();
       // PERBAIKAN UI INJECTION: SEMUA PAGE TYPE TUNGGU API DATA DULU
-    console.log(`⏳ ${this.currentPageType} page: waiting for API data before injecting UI`);
+    
     
     // Setup DOM observer untuk memantau perubahan DOM (SEMUA page types)
     this.setupDOMObserver();
@@ -74,14 +74,14 @@ class ShopeeAnalyticsObserver {  constructor() {
     };
     (document.head || document.documentElement).appendChild(script);
     
-    console.log('📜 Injected script loaded at:', new Date(this.injectedScriptTimestamp).toLocaleTimeString());
+    
     
     // Load test script for debugging
     if (window.location.search.includes('debug=1') || localStorage.getItem('shopee-debug') === 'true') {
       const testScript = document.createElement('script');
       testScript.src = chrome.runtime.getURL('test_reload.js');
       testScript.onload = function() {
-        console.log('🧪 Test script loaded for debugging');
+        
       };
       (document.head || document.documentElement).appendChild(testScript);
     }
@@ -98,7 +98,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       
       // Deteksi jika ini adalah search dengan filter facet
       if (this.currentFacet) {
-        console.log('🔍 Detected search with facet filter:', this.currentFacet, 'keyword:', this.currentKeyword);
+        
         this.isFacetSearch = true;
       } else {
         this.isFacetSearch = false;
@@ -110,13 +110,13 @@ class ShopeeAnalyticsObserver {  constructor() {
       this.currentCategoryId = urlParams.get('catid');
       this.currentItemId = urlParams.get('itemid');
       this.currentShopId = urlParams.get('shopid');
-      console.log('✅ Detected similar products page, Category ID:', this.currentCategoryId, 'Item ID:', this.currentItemId, 'Shop ID:', this.currentShopId);
+      
     }
     else if (pathname.includes('-cat.') || pathname.includes('/category/') || pathname.includes('/cat.')) {
       this.currentPageType = 'category';
       const match = pathname.match(/-cat\.(\d+)/) || pathname.match(/cat\.(\d+)/) || pathname.match(/category\/(\d+)/);
       this.currentCategoryId = match ? match[1] : null;
-      console.log('✅ Detected category page, ID:', this.currentCategoryId);
+      
     }    // PERBAIKAN: Enhanced regex untuk product pages yang menangani karakter khusus
     else if (pathname.match(/-i\.\d+\.\d+/)) {
       this.currentPageType = 'product';
@@ -125,13 +125,13 @@ class ShopeeAnalyticsObserver {  constructor() {
         this.currentShopId = match[1];
         this.currentItemId = match[2];
       }
-      console.log('✅ Detected product page, Shop ID:', this.currentShopId, 'Item ID:', this.currentItemId);
+      
     }
     else if (pathname.match(/\/[^\/]+$/) && !pathname.includes('-cat.') && !pathname.includes('-i.') && pathname !== '/') {
       // Shop page: https://shopee.co.id/summerscent.indo
       this.currentPageType = 'shop';
       this.currentShopUsername = pathname.replace('/', '');
-      console.log('✅ Detected shop page, username:', this.currentShopUsername);
+      
     }
     else {
       this.currentPageType = 'other';
@@ -143,7 +143,7 @@ class ShopeeAnalyticsObserver {  constructor() {
     // PERBAIKAN: Pastikan document.documentElement tersedia sebelum observe
     const observeTarget = document.documentElement || document.body;
     if (!observeTarget) {
-      console.log('❌ Cannot setup navigation observer: no valid target element');
+      
       return;
     }
     
@@ -151,7 +151,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       const url = location.href;
       if (url !== lastUrl) {
         lastUrl = url;
-        console.log('🔄 URL changed to:', url);
+        
           // Check if this is a pagination navigation (same search/category, different page)
         const oldUrlParams = new URLSearchParams(new URL(lastUrl).search);
         const newUrlParams = new URLSearchParams(window.location.search);
@@ -173,14 +173,7 @@ class ShopeeAnalyticsObserver {  constructor() {
                                     (oldFacet !== newFacet || oldKeyword !== newKeyword) &&
                                     (newFacet || oldFacet));
         
-        if (isFacetFilterChange) {
-          console.log('🔄 Facet filter change detected:', {
-            oldFacet: oldFacet,
-            newFacet: newFacet,
-            oldKeyword: oldKeyword,
-            newKeyword: newKeyword
-          });
-          
+        if (isFacetFilterChange) {          
           // Reset accumulated data on facet change since it's new search criteria
           this.apiData = {};
           this.accumulatedData = {
@@ -194,7 +187,7 @@ class ShopeeAnalyticsObserver {  constructor() {
           this.uiInjected = false;
           this.retryCount = 0;
           
-          console.log('🔄 Facet filter applied - waiting for new API data to refresh UI');
+          
           this.setupDOMObserver();
           return; // Exit early since we handled facet change
         }
@@ -222,21 +215,16 @@ class ShopeeAnalyticsObserver {  constructor() {
             hasMorePages: true
           };
         } else {
-          console.log('📄 Pagination detected - keeping accumulated data:', {
-            currentProducts: this.accumulatedData.totalProducts,
-            currentPage: this.accumulatedData.currentPage,
-            hasSearchData: !!this.accumulatedData.searchData
-          });
         }
           // PERBAIKAN: SEMUA PAGE TYPE TUNGGU API DATA SETELAH NAVIGATION
-        console.log(`⏳ Navigation to ${this.currentPageType}: waiting for API data`);
+        
         
         // PERBAIKAN: Tambahkan fallback timer untuk category page
         if (this.currentPageType === 'category') {
           // Set timer untuk force inject UI jika data tidak tersedia dalam 8 detik
           setTimeout(() => {
             if (!this.uiInjected) {
-              console.log('⏰ Category page fallback: Forcing UI injection after timeout');
+              
               this.waitForTargetAndInject();
             }
           }, 8000);
@@ -249,7 +237,7 @@ class ShopeeAnalyticsObserver {  constructor() {
   }  handleAPIData(event) {
     // Check if extension is blocked
     if (window.EXTENSION_BLOCKED || !window.authManager.getAuthStatus().isAuthenticated) {
-      console.log('🚫 API data handling blocked - extension not authenticated');
+      
       return;
     }
 
@@ -274,7 +262,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       
       // Handle pagination for category data
       if (this.currentPageType === 'category') {
-        console.log('📂 Category page detected - handling pagination with CATEGORY_DATA');
+        
         this.handleCategoryPagination(data);
         
         // Stop loading state if pagination was in progress
@@ -283,7 +271,7 @@ class ShopeeAnalyticsObserver {  constructor() {
         // Update accumulated data in API after pagination handling
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated CATEGORY_DATA with accumulated data - refreshing UI');
+          
           // PERBAIKAN: Update UI with accumulated data after pagination
           ShopeeUIUpdater.updateUIWithData(this);
         }
@@ -293,13 +281,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       if (this.currentPageType === 'search') {
         // Check if this is a facet search - if so, always refresh with new data
         if (this.isFacetSearch) {
-          console.log('🔍 Facet search detected - refreshing with new search data');
-          console.log('🎯 Facet details:', {
-            facet: this.currentFacet,
-            keyword: this.currentKeyword,
-            itemsCount: data.items ? data.items.length : 0,
-            totalCount: data.total_count || 'unknown'
-          });
+          
           
           // For facet searches, always use fresh data (don't accumulate)
           this.accumulatedData = {
@@ -317,7 +299,7 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated SEARCH_DATA with accumulated data - refreshing UI');
+          
           // PERBAIKAN: Update UI with accumulated data after pagination
           ShopeeUIUpdater.updateUIWithData(this);
         }
@@ -327,7 +309,7 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated SEARCH_DATA for category with accumulated data - refreshing UI');
+          
           // PERBAIKAN: Update UI with accumulated data after pagination
           ShopeeUIUpdater.updateUIWithData(this);
         }
@@ -335,7 +317,7 @@ class ShopeeAnalyticsObserver {  constructor() {
     } else if (type === 'SIMILAR_DATA') {
       // Handle similar products data
       if (this.currentPageType === 'similar') {
-        console.log('🔍 Similar products data received');
+        
         
         // Extract sections from the correct structure
         let sections = null;
@@ -347,16 +329,9 @@ class ShopeeAnalyticsObserver {  constructor() {
         } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
           sections = data.data.sections;
           actualData = data.data;
-          console.log('🔍 Using data.data.sections structure');
+          
         }
         
-        console.log('🎯 Similar products details:', {
-          categoryId: this.currentCategoryId,
-          itemId: this.currentItemId,
-          shopId: this.currentShopId,
-          itemsCount: sections && sections[0] ? sections[0].data.item.length : 0,
-          totalCount: sections && sections[0] ? sections[0].total : 'unknown'
-        });
         
         // Store similar products data with the correct structure
         this.accumulatedData = {
@@ -370,7 +345,7 @@ class ShopeeAnalyticsObserver {  constructor() {
         
         if (this.accumulatedData.searchData) {
           this.apiData[type].data = this.accumulatedData.searchData;
-          console.log('🔄 Updated SIMILAR_DATA - refreshing UI');
+          
           // Update UI with similar products data
           ShopeeUIUpdater.updateUIWithData(this);
         }
@@ -379,23 +354,23 @@ class ShopeeAnalyticsObserver {  constructor() {
       
       // ENHANCED DEBUGGING untuk shop data structure
       if (data.baseData) {
-        console.log('🔍 Shop baseData keys:', Object.keys(data.baseData));
+        
         if (data.baseData.data) {
-          console.log('🔍 Shop baseData.data keys:', Object.keys(data.baseData.data));
+          
           if (data.baseData.data.data) {
-            console.log('🔍 Shop baseData.data.data keys:', Object.keys(data.baseData.data.data));
+            
           }
         }
       }
       
       if (data.itemsData) {
-        console.log('🔍 Shop itemsData keys:', Object.keys(data.itemsData));
+        
         if (data.itemsData.data) {
-          console.log('🔍 Shop itemsData.data keys:', Object.keys(data.itemsData.data));
+          
         }
       }
       
-      console.log('🔍 Shop Data Full preview:', data);
+      
     }
     
     // Reset retry count when we receive data
@@ -411,69 +386,69 @@ class ShopeeAnalyticsObserver {  constructor() {
         // Validasi data search - pastikan ada items atau data yang valid
         isDataValid = this.validateSearchData(data);
         if (isDataValid) {
-          console.log('🔍 Valid search data received, injecting UI with data');
+          
           shouldInjectUI = true;
         } else {
-          console.log('⚠️ Invalid search data, waiting for complete data');
+          
         }
       } else if (this.currentPageType === 'similar' && type === 'SIMILAR_DATA') {
         // Validasi data similar products - pastikan ada items atau data yang valid
         isDataValid = this.validateSimilarData(data);
         if (isDataValid) {
-          console.log('🔍 Valid similar products data received, injecting UI with data');
+          
           shouldInjectUI = true;
         } else {
-          console.log('⚠️ Invalid similar products data, waiting for complete data');
+          
         }
       } else if (this.currentPageType === 'category' && (type === 'SEARCH_DATA' || type === 'CATEGORY_DATA')) {
         // Validasi data category - pastikan ada items atau data yang valid
         isDataValid = this.validateCategoryData(data);
         if (isDataValid) {
-          console.log('📂 Valid category data received, injecting UI with data');
+          
           shouldInjectUI = true;
         } else {
-          console.log('⚠️ Invalid category data, waiting for complete data');
+          
         }
       } else if (this.currentPageType === 'product' && type === 'PRODUCT_DATA') {
         // Validasi data product - pastikan ada item detail yang lengkap
         isDataValid = this.validateProductData(data);
         if (isDataValid) {
-          console.log('🛍️ Valid product data received, injecting UI with data');
+          
           shouldInjectUI = true;
         } else {
-          console.log('⚠️ Invalid product data, waiting for complete data');
+          
         }
       } else if (this.currentPageType === 'shop' && type === 'SHOP_DATA') {
         // Validasi data shop - pastikan ada info shop yang lengkap
         isDataValid = this.validateShopData(data);
         if (isDataValid) {
-          console.log('🏪 Valid shop data received, injecting UI with data');
+          
           shouldInjectUI = true;
         } else {
-          console.log('⚠️ Invalid shop data, waiting for complete data');
+          
         }
       }
       
       if (shouldInjectUI && isDataValid) {
         // PERBAIKAN: Inject UI immediately when valid data received
-        console.log('🚀 Valid API data received, attempting immediate UI injection');
+        
         this.waitForTargetAndInject();
       } else {
-        console.log('⏳ Waiting for valid API data for', this.currentPageType, '- received:', type, 'valid:', isDataValid);
+        
       }
     } else {
       // UI sudah ada, update dengan data baru
-      console.log('🔄 Updating existing UI with new data');
+      
       
       // Untuk facet search, force refresh UI completely
       if (this.isFacetSearch && type === 'SEARCH_DATA') {
-        console.log('🎯 Facet search detected - forcing complete UI refresh');
+        
         
         // Remove existing UI and inject fresh one
         const existingUI = document.querySelector('#shopee-analytics-panel');
         if (existingUI) {
           existingUI.remove();
-          console.log('🗑️ Removed existing UI for facet search refresh');
+          
         }
         
         // Reset UI injection flag and reinject
@@ -493,59 +468,59 @@ class ShopeeAnalyticsObserver {  constructor() {
 
   handleBackgroundMessage(request, sender, sendResponse) {
     if (request.type === 'API_DATA') {
-      console.log('Received API data from background:', request.data);
+      
       // Handle data from background script if needed
     }  }  injectUI() {
     // Check if extension is blocked or not authenticated
     if (window.EXTENSION_BLOCKED || !window.authManager.getAuthStatus().isAuthenticated) {
-      console.log('🚫 UI injection blocked - extension not authenticated');
+      
       return;
     }
 
     if (this.uiInjected) {
-      console.log('⚠️ UI already injected, skipping');
+      
       return;
     }
     
-    console.log(`🎨 Starting UI injection for page type: ${this.currentPageType}`);
-    console.log('📊 Available API data:', Object.keys(this.apiData));
+    
+    
     
     // PERBAIKAN CRITICAL: Debugging data yang tersedia saat UI injection
     if (Object.keys(this.apiData).length > 0) {
-      console.log('💾 API Data tersedia saat UI injection:');
+      
       Object.keys(this.apiData).forEach(key => {
-        console.log(`   - ${key}: ${this.apiData[key]?.data ? 'Has data' : 'No data'} (${this.apiData[key]?.timestamp})`);
+        
       });
     } else {
-      console.log('⚠️ CRITICAL: No API data available during UI injection!');
-      console.log('🔍 This may indicate a race condition or data storage issue');
+      
+      
     }
     
     // Don't wait for data - inject UI immediately like search page
     // UI will update automatically when API data arrives
-    console.log('✅ Proceeding with UI injection (data will update automatically)');
+    
       // Gunakan findTargetElement() untuk konsistensi
     let targetElement = this.findTargetElement();
     
     if (targetElement) {
-      console.log(`✅ Found target element for ${this.currentPageType}:`, targetElement.className || targetElement.tagName);
+      
     }    if (!targetElement) {
-      console.log(`❌ No target element found for ${this.currentPageType} page`);
+      
       
       // Increment retry count
       this.retryCount++;
       
       if (this.retryCount <= this.maxRetries) {
-        console.log(`🔄 Retrying UI injection (${this.retryCount}/${this.maxRetries}) in 2 seconds...`);
+        
         setTimeout(() => this.injectUI(), 2000);
         return;
       } else {
-        console.log(`⚠️ Max retries (${this.maxRetries}) reached, forcing UI injection with fallback`);
+        
         
         // Force injection with document.body as last resort
         targetElement = document.body;
         if (!targetElement) {
-          console.log('❌ Even document.body not available, aborting UI injection');
+          
           return;
         }
       }
@@ -554,7 +529,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       this.retryCount = 0;
     }
 
-    console.log('Injecting UI before element:', targetElement);
+    
       // Remove existing UI if any
     const existingUI = document.getElementById('ts-category-stats') || document.getElementById('ts-shop-stats');
     if (existingUI) {
@@ -570,19 +545,19 @@ class ShopeeAnalyticsObserver {  constructor() {
     if (targetElement.tagName === 'H1' && targetElement.classList.contains('shopee-search-result-header')) {
       // Perfect placement: before the search result header
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before h1.shopee-search-result-header');
+      
     } else if (targetElement.classList.contains('shopee-search-item-result')) {
       // Perfect placement: before the category item result
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before .shopee-search-item-result');
+      
     } else if (targetElement.classList.contains('y_zeJr')) {
       // Perfect placement: before the product detail element
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before .y_zeJr (product page)');
+      
     } else if (this.currentPageType === 'similar' && targetElement.classList.contains('miIYkb')) {
       // Perfect placement for similar products: after the .miIYkb div
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement.nextSibling);
-      console.log('✅ UI injected after .miIYkb (similar products page)');
+      
     }    else if (this.currentPageType === 'shop') {
       // REVISI: Tempatkan UI di dalam div pertama di dalam .shop-decoration
       let shopDecorationElement = null;
@@ -602,11 +577,11 @@ class ShopeeAnalyticsObserver {  constructor() {
         if (firstDiv) {
           // Insert sebagai child pertama dari div pertama di dalam shop-decoration
           firstDiv.insertBefore(uiElement.firstElementChild, firstDiv.firstChild);
-          console.log('✅ UI injected as first child in first div inside .shop-decoration');
+          
         } else {
           // Fallback: insert sebagai child pertama dari shop-decoration itu sendiri
           shopDecorationElement.insertBefore(uiElement.firstElementChild, shopDecorationElement.firstChild);
-          console.log('✅ UI injected as first child of .shop-decoration (no inner div found)');
+          
         }
       } else {
         // Fallback untuk shop pages ketika .shop-decoration tidak ditemukan
@@ -614,28 +589,28 @@ class ShopeeAnalyticsObserver {  constructor() {
         if (shopPageMenu) {
           // Insert setelah shop-page-menu
           shopPageMenu.parentNode.insertBefore(uiElement.firstElementChild, shopPageMenu.nextSibling);
-          console.log('✅ UI injected after .shop-page-menu (fallback - no .shop-decoration found)');
+          
         } else {
           // Insert di awal target element
           targetElement.insertBefore(uiElement.firstElementChild, targetElement.firstChild);
-          console.log('✅ UI injected at beginning of target element (fallback - no .shop-decoration or .shop-page-menu found)');
+          
         }
       }
     }else if (targetElement.tagName === 'H1') {
       // Any h1 element
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before h1 element');
+      
     } else {
       // Other elements - insert before them
       targetElement.parentNode.insertBefore(uiElement.firstElementChild, targetElement);
-      console.log('✅ UI injected before target element');
+      
     }
       this.uiInjected = true;
     
     // Cleanup DOM observer setelah UI berhasil diinjeksi
     if (this.domObserver) {
       this.domObserver.disconnect();
-      console.log('👁️ DOM observer disconnected after successful UI injection');
+      
     }
     
     ShopeeEventHandlers.attachEventListeners(this);
@@ -646,13 +621,13 @@ class ShopeeAnalyticsObserver {  constructor() {
   waitForTargetAndInject() {
     // Quick checks - if all conditions met, inject immediately
     if (document.readyState === 'loading') {
-      console.log('📄 DOM still loading, will wait for DOMContentLoaded');
+      
       return; // DOM observer will handle this
     }
     
     const targetElement = this.findTargetElement();
     if (!targetElement) {
-      console.log('🎯 Target element not found, will wait for DOM changes');
+      
       return; // DOM observer will handle this
     }
     
@@ -660,7 +635,7 @@ class ShopeeAnalyticsObserver {  constructor() {
     if (this.currentPageType === 'similar') {
       const hasValidData = this.hasValidAPIDataForCurrentPage();
       if (hasValidData && targetElement) {
-        console.log('✅ Similar products: Valid data and target available, injecting UI immediately');
+        
         this.injectUI();
         return;
       }
@@ -668,12 +643,12 @@ class ShopeeAnalyticsObserver {  constructor() {
     
     const isHTMLReady = this.checkHTMLReadiness(true);
     if (!isHTMLReady) {
-      console.log('📄 HTML not fully ready, will wait for DOM changes');
+      
       return; // DOM observer will handle this
     }
     
     // All conditions met - inject UI immediately
-    console.log('✅ HTML ready and target found, injecting UI immediately');
+    
     this.injectUI();
   }
 
@@ -759,10 +734,10 @@ class ShopeeAnalyticsObserver {  constructor() {
     // PERBAIKAN: Pastikan ada target element yang valid sebelum observe
     const observeTarget = document.body || document.documentElement;
     if (!observeTarget) {
-      console.log('❌ Cannot setup DOM observer: no valid target element (body/documentElement)');
+      
       // Retry setelah DOM ready
       setTimeout(() => {
-        console.log('🔄 Retrying DOM observer setup...');
+        
         this.setupDOMObserver();
       }, 1000);
       return;
@@ -793,7 +768,7 @@ class ShopeeAnalyticsObserver {  constructor() {
                     node.matches('[class*="item-detail"]') ||
                     node.matches('.page-product')
                   ))) {
-                console.log('🛍️ Product page elements detected in DOM changes');
+                
                 shouldCheckTarget = true;
               }
               // Check if any shop-related elements were added
@@ -811,7 +786,7 @@ class ShopeeAnalyticsObserver {  constructor() {
                     node.matches('.shop-header') ||
                     node.matches('[class*="shop-info"]')
                   ))) {
-                console.log('🏪 Shop page elements detected in DOM changes');
+                
                 shouldCheckTarget = true;
               }
               // Check for category elements
@@ -825,7 +800,7 @@ class ShopeeAnalyticsObserver {  constructor() {
                     node.matches('[class*="search-item-result"]') ||
                     node.matches('[class*="item-result"]')
                   ))) {
-                console.log('📂 Category page elements detected in DOM changes');
+                
                 shouldCheckTarget = true;
               }
               // Check for similar products elements
@@ -845,7 +820,7 @@ class ShopeeAnalyticsObserver {  constructor() {
                     node.matches('[class*="item-list"]') ||
                     node.matches('[class*="grid"]')
                   ))) {
-                console.log('🔍 Similar products page elements detected in DOM changes');
+                
                 shouldCheckTarget = true;
               }
             }
@@ -854,18 +829,18 @@ class ShopeeAnalyticsObserver {  constructor() {
       });
       
       if (shouldCheckTarget) {
-        console.log('🔍 DOM change detected, checking for UI injection...');
+        
         // Try immediate injection without delay
         if (!this.uiInjected && this.findTargetElement()) {
-          console.log('✅ Target element now available after DOM change');
+          
           
           // PERBAIKAN: Immediate injection when target found
           const hasValidAPIData = this.hasValidAPIDataForCurrentPage();
           if (hasValidAPIData) {
-            console.log('✅ Valid API data available, injecting UI now');
+            
             this.injectUI();
           } else {
-            console.log('⏳ Target element ready, will inject when API data arrives');
+            
             // UI will be injected when API data arrives via handleAPIData
           }
         }
@@ -877,7 +852,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       childList: true,
       subtree: true
     });
-      console.log('👁️ DOM observer setup for', this.currentPageType, 'page on target:', observeTarget.tagName);
+      
   }  handleSearchPagination(newData) {
     if (!newData) return;
     
@@ -974,7 +949,7 @@ class ShopeeAnalyticsObserver {  constructor() {
   }
   stopLoadingState() {
     if (this._isLoadingMore && this._loadingButton) {
-      console.log('🔄 Stopping loading state - data received');
+      
       
       // Clear timeout
       if (this._loadingTimeout) {
@@ -1040,7 +1015,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       if (itemUnits.length === 0) {
         // Fallback: cek hanya data_type
         const altItemUnits = data.data.units.filter(unit => unit.data_type === 'item');
-        console.log(`🔄 Fallback: Found ${altItemUnits.length} units with data_type=item`);
+        
         if (altItemUnits.length > 0) {
           return altItemUnits.map(unit => unit.item || unit.item_data || unit);
         }
@@ -1095,18 +1070,18 @@ class ShopeeAnalyticsObserver {  constructor() {
 
   // FUNGSI VALIDASI DATA - UNTUK MEMASTIKAN UI HANYA DIINJEKSI KETIKA DATA LENGKAP
   validateCategoryData(data) {
-    console.log('🔍 Validating category data:', data ? Object.keys(data) : 'no data');
+    
     
     if (!data) {
-      console.log('❌ Category validation failed: no data');
+      
       return false;
     }
     
     const items = this.getItemsFromData(data);
-    console.log('🔍 Items extracted for validation:', items ? items.length : 'null');
+    
     
     if (!items || items.length === 0) {
-      console.log('❌ Category validation failed: no items found');
+      
       return false;
     }
     
@@ -1118,9 +1093,9 @@ class ShopeeAnalyticsObserver {  constructor() {
       )
     );
     
-    console.log('🔍 Has valid items:', hasValidItems);
+    
     if (!hasValidItems && items.length > 0) {
-      console.log('🔍 First item structure for debugging:', items[0] ? Object.keys(items[0]) : 'null item');
+      
     }
     
     return hasValidItems;
@@ -1181,7 +1156,7 @@ class ShopeeAnalyticsObserver {  constructor() {
     
     // Untuk facet search, validasi lebih permisif karena hasil mungkin kosong
     if (this.isFacetSearch) {
-      console.log('🔍 Validating facet search data with permissive rules');
+      
       
       // Cek apakah data punya struktur yang valid (bahkan jika items kosong)
       const hasValidStructure = data && (
@@ -1193,7 +1168,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       
       if (hasValidStructure) {
         const items = this.getItemsFromData(data);
-        console.log('🔍 Facet search - items found:', items ? items.length : 0);
+        
         return true; // Return true for facet search even with empty results
       }
       
@@ -1216,10 +1191,10 @@ class ShopeeAnalyticsObserver {  constructor() {
   }
 
   validateSimilarData(data) {
-    console.log('🔍 Validating similar products data:', data ? Object.keys(data) : 'no data');
+    
     
     if (!data) {
-      console.log('❌ Similar products validation failed: no data');
+      
       return false;
     }
     
@@ -1229,29 +1204,29 @@ class ShopeeAnalyticsObserver {  constructor() {
       sections = data.sections;
     } else if (data.data && data.data.sections && Array.isArray(data.data.sections)) {
       sections = data.data.sections;
-      console.log('🔍 Found sections in data.data.sections structure');
+      
     }
     
     if (!sections || sections.length === 0) {
-      console.log('❌ Similar products validation failed: no sections found');
-      console.log('🔍 Debug - available keys:', data ? Object.keys(data) : 'no data');
+      
+      
       if (data.data) {
-        console.log('🔍 Debug - data.data keys:', Object.keys(data.data));
+        
       }
       return false;
     }
     
     const firstSection = sections[0];
     if (!firstSection || !firstSection.data || !firstSection.data.item) {
-      console.log('❌ Similar products validation failed: no items in first section');
+      
       return false;
     }
     
     const items = firstSection.data.item;
-    console.log('🔍 Items extracted for validation:', items ? items.length : 'null');
+    
     
     if (!items || items.length === 0) {
-      console.log('❌ Similar products validation failed: no items found');
+      
       return false;
     }
     
@@ -1263,9 +1238,9 @@ class ShopeeAnalyticsObserver {  constructor() {
       )
     );
     
-    console.log('🔍 Has valid items:', hasValidItems);
+    
     if (!hasValidItems && items.length > 0) {
-      console.log('🔍 First item structure for debugging:', items[0] ? Object.keys(items[0]) : 'null item');
+      
     }
     
     return hasValidItems;
@@ -1274,33 +1249,28 @@ class ShopeeAnalyticsObserver {  constructor() {
   // Helper function to check if we have valid API data for current page
   hasValidAPIDataForCurrentPage() {
     const pageType = this.currentPageType;
-    console.log(`🔍 Checking for valid API data for ${pageType} page...`);
-    console.log(`📊 Available API data keys:`, Object.keys(this.apiData));
+    
+    
     
     switch (pageType) {
       case 'search':
         const searchData = this.apiData['SEARCH_DATA']?.data;
         const searchValid = searchData && this.validateSearchData(searchData);
-        console.log(`🔍 Search data validation result:`, searchValid);
+        
         return searchValid;
         
       case 'similar':
         const similarData = this.apiData['SIMILAR_DATA']?.data;
         const similarValid = similarData && this.validateSimilarData(similarData);
-        console.log(`🔍 Similar products data validation result:`, similarValid);
+        
         return similarValid;
         
       case 'category':
         const categoryData = this.apiData['CATEGORY_DATA']?.data || this.apiData['SEARCH_DATA']?.data;
         const categoryValid = categoryData && this.validateCategoryData(categoryData);
-        console.log(`🔍 Category data validation result:`, categoryValid);
-        console.log(`📂 Category data source:`, this.apiData['CATEGORY_DATA'] ? 'CATEGORY_DATA' : 'SEARCH_DATA');
+        
+        
         if (categoryData && !categoryValid) {
-          console.log(`❌ Category data validation failed. Debug info:`, {
-            hasCategoryData: !!this.apiData['CATEGORY_DATA'],
-            hasSearchData: !!this.apiData['SEARCH_DATA'],
-            dataStructure: categoryData ? Object.keys(categoryData) : 'no data'
-          });
         }
         return categoryValid;
         
@@ -1395,12 +1365,12 @@ class ShopeeAnalyticsObserver {  constructor() {
     
     // Only log if explicitly requested or if there's an issue
     if (!quiet && !isReady) {
-      console.log('📊 HTML Readiness Issue:');
-      console.log('   - Document ready:', document.readyState);
-      console.log('   - Basic structure:', hasBasicStructure);
-      console.log('   - Page specific ready:', pageSpecificReady);
-      console.log('   - Critical scripts loaded:', criticalScriptsLoaded);
-      console.log('   - No loading indicators:', noLoadingIndicators);
+      
+      
+      
+      
+      
+      
     }
     
     return isReady;
@@ -1435,7 +1405,7 @@ class ShopeeAnalyticsObserver {  constructor() {
           for (const el of elements) {
             const style = window.getComputedStyle(el);
             if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
-              console.log('⏳ Found critical loading indicator for similar products:', selector);
+              
               return false;
             }
           }
@@ -1447,7 +1417,7 @@ class ShopeeAnalyticsObserver {  constructor() {
       const hasTargetElement = !!this.findTargetElement();
       
       if (hasValidData && hasTargetElement) {
-        console.log('✅ Similar products: Valid data and target available, ignoring other loading indicators');
+        
         return true;
       }
     }
@@ -1480,7 +1450,7 @@ class ShopeeAnalyticsObserver {  constructor() {
               continue;
             }
             hasLoadingIndicators = true;
-            console.log('⏳ Found visible loading indicator:', selector);
+            
             break;
           }
         }

@@ -1,16 +1,16 @@
 // UI update functions for Shopee Analytics Observer
 class ShopeeUIUpdater {  static updateUIWithData(observer) {
-    console.log('🎨 Updating UI with data for page type:', observer.currentPageType);
-    console.log('📊 Available API data keys:', Object.keys(observer.apiData));
+    
+    
     
     // Extract data based on page type and available API data
     let stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
-    console.log('📈 Extracted stats:', stats);
+    
     
     // PERBAIKAN: Untuk category pages, jika extractStatsFromAPIData gagal, 
     // coba extract manual dari data yang tersedia
     if (!stats && observer.currentPageType === 'category' && Object.keys(observer.apiData).length > 0) {
-      console.log('🔄 Category stats extraction failed, trying manual extraction...');
+      
       stats = this.extractCategoryStatsManual(observer);
     }// Untuk category dan product pages: UI hanya di-inject jika ada data real
     // Untuk search page: tetap menggunakan approach lama (bisa default atau real data)
@@ -18,7 +18,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     const shopStatusEl = document.getElementById('ts-shop-status');
     
     if (stats && (observer.currentPageType === 'search' || observer.currentPageType === 'shop' || stats.productCount > 0)) {
-      console.log('✅ Real stats available, updating UI with actual data');
+      
       
       // Update product count (common for all page types except shop)
       if (productCountEl && observer.currentPageType !== 'shop') {
@@ -48,18 +48,18 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       const activeTab = document.querySelector('.ts-tab-active');
       if (activeTab) {
         const tabName = activeTab.dataset.tab;
-        console.log('🔄 Updating active tab with accumulated data:', tabName, `(${stats.productCount} products)`);
+        
         this.updateTabData(tabName, observer);
       }
       
       // PERBAIKAN: Juga update pagination info untuk memastikan count produk terupdate
       if (observer.currentPageType === 'search' || observer.currentPageType === 'category') {
-        console.log('📄 Updating pagination info with accumulated data');
+        
         this.updatePaginationInfo(observer);
       }
     } else if (observer.currentPageType === 'search') {
       // Search page: show defaults if no real data (maintain backward compatibility)
-      console.log('📝 Search page: showing default values');
+      
       
       if (productCountEl) {
         productCountEl.textContent = '0';
@@ -67,7 +67,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       
       this.showDefaultValues(observer.currentPageType);    } else {
       // Category/Product/Shop pages: show fallback atau debugging info
-      console.log(`⚠️ ${observer.currentPageType} page with no real data - showing fallback`);
+      
       
       if (observer.currentPageType === 'category') {
         // Untuk kategori, coba tampilkan informasi debugging
@@ -78,11 +78,11 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
         // IMPORTANT: Still update pagination info even with no data to show "Lebih banyak" button
         this.updatePaginationInfo(observer);
         
-        console.log('📂 Category page: Updated pagination info with fallback data');
+        
       } else {
         // Coba lagi setelah delay untuk page type lain
         setTimeout(() => {
-          console.log('🔄 Retrying data extraction after delay...');
+          
           this.updateUIWithData(observer);
         }, 2000);
       }
@@ -91,12 +91,12 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
 
   static showLoadingState() {
     // DEPRECATED: No longer show loading states - always show defaults immediately
-    console.log('⚠️ showLoadingState() called but showing defaults instead');
+    
     this.showDefaultValues('search'); // Default to search-like behavior
   }
 
   static showDefaultValues(pageType) {
-    console.log('📝 Showing default values for page type:', pageType);
+    
     
     if (pageType === 'product') {
       // Product detail default values
@@ -134,7 +134,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
 
   static updateProductDetailElements(productDetail) {
-    console.log('🛍️ Updating product detail elements with:', productDetail);
+    
     
     // Update Product Info Tab
     this.updateElement('ts-product-current-price', ShopeeUtils.formatCurrency(productDetail.currentPrice || 0));
@@ -165,7 +165,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
 
   static updateShopElements(shopStats) {
-    console.log('🏪 Updating shop elements with:', shopStats);
+    
     
     // Update status indicator
     this.updateElement('ts-shop-status', `Berdasarkan ${shopStats.productCount || 0} produk`);
@@ -260,13 +260,6 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
 
   static updateSummaryTab(stats, observer) {
-    console.log('📋 Updating Summary tab with stats:', {
-      minPrice: stats.minPrice,
-      maxPrice: stats.maxPrice,
-      sold30Days: stats.sold30Days,
-      revenue30Days: stats.revenue30Days,
-      productCount: stats.productCount
-    });
     
     const priceRangeEl = document.getElementById('ts-price-range');
     const soldCountEl = document.getElementById('ts-sold-count');
@@ -298,7 +291,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       }
     }
     
-    console.log('📋 Summary tab updated successfully');
+    
   }
 
   static updateMarketTab(stats, observer) {
@@ -308,13 +301,6 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     const monthlyRevenue = stats.revenue30Days || stats.totalRevenue || 0; // Omset 30 hari
     const revenueTrend = ShopeeDataExtractor.calculateGrowth(null, 'revenue', observer); // Hitung trend yang benar
 
-    console.log('💰 Updating Market tab with stats:', {
-      totalRevenue: totalRevenue,
-      avgMonthlyRevenue: avgMonthlyRevenue,
-      monthlyRevenue: monthlyRevenue,
-      revenueTrend: revenueTrend,
-      productCount: stats.productCount
-    });
 
     const totalRevenueEl = document.getElementById('ts-total-revenue');
     const avgMonthlyRevenueEl = document.getElementById('ts-avg-monthly-revenue');
@@ -332,7 +318,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       ShopeeUtils.applyTrendStyling(revenueTrendEl, revenueTrend);
     }
     
-    console.log('💰 Market tab updated successfully');
+    
   }
 
   static updateVolumeTab(stats, observer) {
@@ -355,22 +341,22 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
 
   static updateProductDetailUI(observer) {
-    console.log('🛍️ Updating product detail UI');
-    console.log('📊 Observer data:', observer);
-    console.log('🔍 API Data keys:', Object.keys(observer.apiData));
+    
+    
+    
     
     // Extract product stats
     const stats = ShopeeDataExtractor.extractStatsFromAPIData(observer);
-    console.log('📈 Extracted stats:', stats);
+    
     
     if (!stats || !stats.productDetail) {
-      console.log('❌ No product detail data available');
+      
       this.showProductDetailLoadingState();
       return;
     }
     
     const detail = stats.productDetail;
-    console.log('✅ Updating product detail UI with data:', detail);
+    
     
     // Update Product Info Tab
     this.updateElement('ts-product-current-price', ShopeeUtils.formatCurrency(detail.currentPrice));
@@ -410,7 +396,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
   static showProductDetailLoadingState() {
     // DEPRECATED: No longer show loading states - use defaults instead
-    console.log('⚠️ showProductDetailLoadingState() called but showing defaults instead');
+    
     this.showDefaultValues('product');
   }
 
@@ -442,11 +428,10 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   static updateProductVariants(tierVariations, models) {
     const variantsContainer = document.getElementById('ts-product-variants');
     if (!variantsContainer) {
-      console.warn('⚠️ ts-product-variants container not found');
       return;
     }
     
-    console.log('🔄 Updating product variants with:', { tierVariations, models });
+    
     
     if (!models || models.length === 0) {
       variantsContainer.innerHTML = '<div class="ts-no-variants"><p>Produk ini tidak memiliki varian atau data model tidak tersedia</p></div>';
@@ -458,7 +443,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       .sort((a, b) => (b.sold || 0) - (a.sold || 0))
       .slice(0, 50); // Show top 10 instead of 5 for better visibility
     
-    console.log('📊 Top models to display:', topModels);
+    
     
     const variantsHTML = `
       <div class="ts-variants-list">
@@ -515,10 +500,9 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     // Initialize sorting functionality
     setTimeout(() => {
       if (typeof window.TopModelsSorter !== 'undefined') {
-        console.log('✅ TopModelsSorter is available and ready');
+        
         this.setupSortingEventListeners();
       } else {
-        console.warn('⚠️ TopModelsSorter not found, trying to load...');
         this.ensureTopModelsSorterLoaded();
       }
     }, 100);
@@ -564,10 +548,10 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     const checkAndRetry = () => {
       attempts++;
-      console.log(`🔄 Attempting to load TopModelsSorter (${attempts}/${maxAttempts})`);
+      
       
       if (typeof window.TopModelsSorter !== 'undefined') {
-        console.log('✅ TopModelsSorter found on retry');
+        
         this.setupSortingEventListeners();
         return;
       }
@@ -575,7 +559,6 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       if (attempts < maxAttempts) {
         setTimeout(checkAndRetry, 500);
       } else {
-        console.error('❌ Failed to load TopModelsSorter after all attempts');
       }
     };
     
@@ -592,7 +575,6 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
         if (window.TopModelsSorter && typeof window.TopModelsSorter.sortByHeader === 'function') {
           window.TopModelsSorter.sortByHeader(sortType);
         } else {
-          console.error('❌ TopModelsSorter.sortByHeader is not available');
         }
       });
     });
@@ -604,7 +586,6 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
         if (window.TopModelsSorter && typeof window.TopModelsSorter.sortModels === 'function') {
           window.TopModelsSorter.sortModels(this.value);
         } else {
-          console.error('❌ TopModelsSorter.sortModels is not available');
         }
       });
     }
@@ -642,13 +623,13 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   }
 
   static updateShopRevenueTab(stats, observer) {
-    console.log('📊 Updating shop revenue tab with stats:', stats);
+    
     if (stats.shopStats) {
       this.updateShopElements(stats.shopStats);
     }
   }
   static updateShopProductsTab(stats, observer) {
-    console.log('🛍️ Updating shop products tab');
+    
     
     // Get product cards from UI generator
     const productCardsResult = ShopeeUIGenerator.generateShopProductCards(observer);
@@ -665,10 +646,10 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       productGridEl.innerHTML = productCardsResult.html;
     }
     
-    console.log(`✅ Shop products tab updated with ${productCardsResult.count} products`);
+    
   }
   static updateShopInfoTab(stats, observer) {
-    console.log('ℹ️ Updating shop info tab with stats:', stats);
+    
     if (stats.shopStats) {
       this.updateShopElements(stats.shopStats);
     }
@@ -730,7 +711,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
                             currentPage < 15 ||
                             (totalProducts === 0 && currentPage < 20);
           
-          console.log(`📂 Category button logic: hasMorePages=${hasMorePages}, totalProducts=${totalProducts}, currentPage=${currentPage}, shouldShow=${shouldShowButton}`);
+          
         }
         
         if (shouldShowButton) {
@@ -746,7 +727,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
       }
     }
     
-    console.log(`📄 Pagination info updated: Page ${currentPage + 1}, Total products: ${totalProducts}, Has more: ${hasMorePages}, Page type: ${observer.currentPageType}`);
+    
   }
 
   static showPaginationLoading() {
@@ -778,18 +759,18 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   
   // Helper method untuk manual category stats extraction
   static extractCategoryStatsManual(observer) {
-    console.log('🔧 Manual category stats extraction...');
+    
     
     // Coba extract dari CATEGORY_DATA
     if (observer.apiData.CATEGORY_DATA) {
       const data = observer.apiData.CATEGORY_DATA.data;
-      console.log('📦 Manual extraction from CATEGORY_DATA:', data);
+      
       
       if (data && data.data && data.data.units) {
         const units = data.data.units;
         const itemUnits = units.filter(unit => unit.data_type === 'item' && unit.item);
         
-        console.log(`✅ Manual extraction found ${itemUnits.length} items from ${units.length} units`);
+        
         
         if (itemUnits.length > 0) {
           return {
@@ -803,15 +784,15 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     // Coba extract dari SEARCH_DATA
     if (observer.apiData.SEARCH_DATA) {
-      console.log('📦 Manual extraction from SEARCH_DATA for category');
+      
       const searchStats = ShopeeDataExtractor.extractSearchStats(observer.apiData.SEARCH_DATA.data);
       if (searchStats) {
-        console.log('✅ Manual extraction succeeded from SEARCH_DATA');
+        
         return searchStats;
       }
     }
     
-    console.log('❌ Manual extraction failed');
+    
     return null;
   }
 }

@@ -473,9 +473,7 @@ class ShopeeUIGenerator {
     // Jika ada accumulated data, gunakan semua produk yang tersedia
     if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
       productCount = observer.accumulatedData.totalProducts;
-      console.log(`📊 Using all ${productCount} accumulated products for detailed analysis`);
     } else {
-      console.log('📊 Using default 60 products for detailed analysis');
     }
     
     const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
@@ -484,11 +482,9 @@ class ShopeeUIGenerator {
       return '<div class="ts-no-products">Tidak ada produk dengan data lengkap ditemukan</div>';
     }
 
-    console.log(`✅ Generated product grid with ${products.length} products`);
     let grid = '';
     
     for (let i = 0; i < products.length; i++) {const product = products[i];
-      console.log(`Generating real product ${i + 1}:`, product);
       const isActive = true; // Assume products from API are active
       
       grid += `
@@ -840,13 +836,11 @@ class ShopeeUIGenerator {
     `;
   }
   static generateTrendsContent(stats, observer) {
-    console.log('🔥 Generating trends content for page type:', observer.currentPageType);
     
     // PERBAIKAN: Tambahkan null safety check untuk menghindari error "Cannot read properties of null (reading 'map')"
     const products = ShopeeProductProcessor.extractProductsFromAPI(5, observer);
     
     if (!products || !Array.isArray(products) || products.length === 0) {
-      console.log('⚠️ No products available for trending section on category page');
       return `
         <div class="ts-trends-content">
           <div class="ts-trending-products">
@@ -861,7 +855,6 @@ class ShopeeUIGenerator {
       `;
     }
 
-    console.log('✅ Found products for trending:', products.length);
     
     return `
       <div class="ts-trends-content">

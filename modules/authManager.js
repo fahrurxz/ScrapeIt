@@ -21,7 +21,6 @@ class AuthManager {
           return this.isAuthenticated;
         } catch (error) {
           retryCount++;
-          console.log(`⏳ Auth initialization attempt ${retryCount}/${maxRetries} failed:`, error.message);
           
           if (retryCount < maxRetries) {
             // Wait before retry (exponential backoff)
@@ -34,7 +33,6 @@ class AuthManager {
       
       return this.isAuthenticated;
     } catch (error) {
-      console.error('Auth initialization failed after all retries:', error);
       this.blockExtensionFunctions();
       return false;
     }
@@ -61,14 +59,12 @@ class AuthManager {
       if (isValid) {
         this.authToken = token;
         this.isAuthenticated = true;
-        console.log('✅ Authentication successful');
         this.executeAuthCallbacks();
         
         // Refresh halaman hanya jika belum pernah refresh setelah auth
         // if (!this.hasRefreshedAfterAuth) {
         //   this.hasRefreshedAfterAuth = true;
         //   setTimeout(() => {
-        //     console.log('🔄 Refreshing page after successful authentication...');
         //     window.location.reload();
         //   }, 1000);
         // }
@@ -77,12 +73,9 @@ class AuthManager {
         await this.removeTokenFromStorage();
         await this.showTokenInputPopup();
       }
-    } catch (error) {
-      console.error('Authentication check failed:', error);
-      
+    } catch (error) {      
       // If DOM related error, try again after delay
       if (error.message.includes('appendChild') || error.message.includes('Cannot read properties of null')) {
-        console.log('⏳ DOM not ready, retrying authentication in 1 second...');
         setTimeout(() => {
           this.checkAuthentication();
         }, 1000);
@@ -129,7 +122,6 @@ class AuthManager {
     // Safety check for document.body
     const targetElement = document.body || document.documentElement;
     if (!targetElement) {
-      console.error('Cannot find DOM element to append modal');
       this.blockExtensionFunctions();
       return;
     }
@@ -151,14 +143,12 @@ class AuthManager {
           this.authToken = token;
           this.isAuthenticated = true;
           modal.remove();
-          console.log('✅ Token saved and authenticated');
           this.executeAuthCallbacks();
           
           // Refresh halaman setelah token berhasil disimpan dan diverifikasi
           // Set flag untuk mencegah refresh berulang
           this.hasRefreshedAfterAuth = true;
           setTimeout(() => {
-            console.log('🔄 Refreshing page after successful token verification...');
             window.location.reload();
           }, 500);
           
@@ -364,7 +354,6 @@ class AuthManager {
 
       return response.status === 200;
     } catch (error) {
-      console.error('Token verification failed:', error);
       return false;
     }
   }
@@ -388,10 +377,8 @@ class AuthManager {
         existingUI.remove();
       }
     } catch (error) {
-      console.log('Note: Could not remove existing UI (DOM not ready)');
     }
 
-    console.log('🚫 Extension functions blocked due to authentication failure');
   }
 
   // Add callback to execute after successful authentication
@@ -409,7 +396,6 @@ class AuthManager {
       try {
         callback();
       } catch (error) {
-        console.error('Auth callback error:', error);
       }
     });
     this.authCallbacks = [];
@@ -438,10 +424,8 @@ class AuthManager {
         existingUI.remove();
       }
     } catch (error) {
-      console.log('Note: Could not remove UI during logout (DOM not ready)');
     }
     
-    console.log('🔓 User logged out');
   }
 
   // Update auth server URL

@@ -1,0 +1,531 @@
+/* ====================================
+   CSS untuk Modal Analisa Semua Produk Toko
+   File: shop-analysis-modal.css
+   Khusus untuk styling modal hasil analisa toko
+   ==================================== */
+
+/* Override untuk modal custom yang menampilkan hasil analisa */
+#ts-custom-modal .ts-modal-container {
+  max-width: 95vw !important;
+  width: 1000px !important;
+  margin: 0 auto !important;
+}
+
+#ts-custom-modal .ts-modal-content {
+  background: #f8fafc !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+}
+
+.ts-progress-actions {
+    margin-bottom: 20px;
+}
+
+#ts-cancel-analysis {
+    background: #ffd4d4; 
+    color: #390000;
+}
+#ts-shop-analyze-btn {
+    margin-right: 15px;
+}
+#ts-custom-modal .ts-modal-header {
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  color: white !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding: 24px !important;
+  border-bottom: none !important;
+}
+
+#ts-custom-modal .ts-modal-title {
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+  color: white !important;
+}
+
+#ts-custom-modal .ts-modal-close {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#ts-custom-modal .ts-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: rotate(90deg) !important;
+}
+
+#ts-custom-modal .ts-modal-body {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Container utama untuk hasil analisa */
+.ts-full-analysis-results {
+  font-family: ui-sans-serif, system-ui, sans-serif !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Header ringkasan analisa */
+.ts-results-summary {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.ts-results-summary h4 {
+  color: #1e293b;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-results-summary h4::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 2px;
+}
+
+/* Grid statistik yang lebih menarik */
+.ts-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(278px, 1fr)) !important;
+  gap: 16px !important;
+  margin: 20px 0 !important;
+}
+
+/* Card statistik dengan design modern */
+.ts-stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ts-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+  border-radius: 12px 12px 0 0;
+}
+
+.ts-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+}
+
+.ts-stat-card h5 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.ts-stat-card p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Styling khusus untuk jenis statistik tertentu */
+.ts-stat-card:nth-child(1) h5 { color: #059669; } /* Total Produk - hijau */
+.ts-stat-card:nth-child(2) h5 { color: #dc2626; } /* Total Omset - merah */
+.ts-stat-card:nth-child(3) h5 { color: #7c3aed; } /* Total Terjual - ungu */
+.ts-stat-card:nth-child(4) h5 { color: #ea580c; } /* Harga Rata-rata - orange */
+.ts-stat-card:nth-child(5) h5 { color: #0891b2; } /* Rating - cyan */
+.ts-stat-card:nth-child(6) h5 { color: #4338ca; } /* Waktu - indigo */
+
+/* Container untuk tombol aksi */
+.ts-results-actions {
+  margin: 24px 0 !important;
+  text-align: center !important;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+/* Styling tombol yang lebih menarik */
+.ts-results-actions .ts-btn {
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  font-size: 14px !important;
+  margin: 0 8px !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.ts-results-actions .ts-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Tombol export hijau */
+.ts-results-actions .ts-bg-green-600 {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+.ts-results-actions .ts-bg-green-600:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+}
+
+/* Tombol show top biru */
+.ts-results-actions .ts-bg-blue-600 {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+}
+
+.ts-results-actions .ts-bg-blue-600:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+}
+
+/* Container daftar top produk */
+#ts-top-products-list {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+#ts-top-products-list h4 {
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#ts-top-products-list h4::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 2px;
+}
+
+/* List produk */
+.ts-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Item produk individual */
+.ts-product-item {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 16px !important;
+  margin: 0 !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.ts-product-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 10px 0 0 10px;
+}
+
+.ts-product-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.ts-product-item > div {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.ts-product-item strong {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white !important;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 12px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.ts-product-item span {
+  color: #374151;
+  font-weight: 500;
+  flex: 1;
+  padding-right: 16px;
+}
+
+.ts-product-item > div > div:last-child {
+  text-align: right !important;
+  min-width: 120px;
+}
+
+.ts-product-item > div > div:last-child > div:first-child {
+  font-weight: 700;
+  color: #059669;
+  font-size: 15px;
+}
+
+.ts-product-item > div > div:last-child > small {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Progress modal styling yang sudah ada - tetap gunakan style lama */
+#ts-full-analysis-progress .ts-modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#ts-full-analysis-progress .ts-modal-header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+  padding: 20px;
+}
+
+#ts-full-analysis-progress .ts-modal-header h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+#ts-full-analysis-progress .ts-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#ts-full-analysis-progress .ts-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .ts-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  
+  .ts-stat-card {
+    padding: 16px;
+  }
+  
+  .ts-stat-card h5 {
+    font-size: 20px;
+  }
+  
+  .ts-results-actions .ts-btn {
+    margin: 4px !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+  }
+  
+  .ts-product-item {
+    padding: 12px !important;
+  }
+  
+  .ts-product-item > div {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  
+  .ts-product-item > div > div:last-child {
+    text-align: left !important;
+    min-width: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ts-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .ts-full-analysis-results {
+    padding: 16px;
+  }
+  
+  .ts-results-summary,
+  .ts-results-actions,
+  #ts-top-products-list {
+    padding: 16px;
+  }
+}
+
+/* Animasi smooth untuk transisi */
+.ts-full-analysis-results * {
+  transition: all 0.3s ease;
+}
+
+/* Animasi muncul untuk modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#ts-custom-modal {
+  animation: fadeIn 0.3s ease-out !important;
+}
+
+#ts-custom-modal .ts-modal-content {
+  animation: slideUp 0.4s ease-out !important;
+}
+
+.ts-stat-card {
+  animation: slideUp 0.5s ease-out !important;
+}
+
+.ts-stat-card:nth-child(1) { animation-delay: 0.1s; }
+.ts-stat-card:nth-child(2) { animation-delay: 0.2s; }
+.ts-stat-card:nth-child(3) { animation-delay: 0.3s; }
+.ts-stat-card:nth-child(4) { animation-delay: 0.4s; }
+.ts-stat-card:nth-child(5) { animation-delay: 0.5s; }
+.ts-stat-card:nth-child(6) { animation-delay: 0.6s; }
+
+.ts-product-item {
+  animation: slideUp 0.4s ease-out !important;
+}
+
+.ts-product-item:nth-child(1) { animation-delay: 0.1s; }
+.ts-product-item:nth-child(2) { animation-delay: 0.15s; }
+.ts-product-item:nth-child(3) { animation-delay: 0.2s; }
+.ts-product-item:nth-child(4) { animation-delay: 0.25s; }
+.ts-product-item:nth-child(5) { animation-delay: 0.3s; }
+.ts-product-item:nth-child(6) { animation-delay: 0.35s; }
+.ts-product-item:nth-child(7) { animation-delay: 0.4s; }
+.ts-product-item:nth-child(8) { animation-delay: 0.45s; }
+.ts-product-item:nth-child(9) { animation-delay: 0.5s; }
+.ts-product-item:nth-child(10) { animation-delay: 0.55s; }
+
+/* Loading dan progress states */
+.ts-progress-container {
+  padding: 20px;
+}
+
+.ts-progress-info {
+  margin-bottom: 16px;
+}
+
+.ts-progress-status {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.ts-progress-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.ts-progress-bar-container {
+  margin-top: 16px;
+}
+
+.ts-progress-bar {
+  background: #e5e7eb;
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.ts-progress-fill {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.ts-progress-percentage {
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}

@@ -3,14 +3,12 @@ class TopModelsSorter {
   static sortModels(sortType) {
     const tbody = document.querySelector('.ts-top-models-tbody');
     if (!tbody) {
-      console.warn('⚠️ TopModelsSorter: tbody not found');
       return;
     }
     
     try {
       const modelsData = JSON.parse(tbody.dataset.models);
       if (!Array.isArray(modelsData) || modelsData.length === 0) {
-        console.warn('⚠️ TopModelsSorter: No valid models data');
         return;
       }
       
@@ -41,24 +39,20 @@ class TopModelsSorter {
       
       this.updateTable(sortedModels);
       this.updateDataSet(sortedModels);
-      console.log(`📊 Models sorted by: ${sortType}`, sortedModels);
       
     } catch (error) {
-      console.error('❌ Error sorting top models:', error);
     }
   }
 
   static sortByHeader(column) {
     const tbody = document.querySelector('.ts-top-models-tbody');
     if (!tbody) {
-      console.warn('⚠️ TopModelsSorter: tbody not found for header sort');
       return;
     }
     
     try {
       const modelsData = JSON.parse(tbody.dataset.models);
       if (!Array.isArray(modelsData) || modelsData.length === 0) {
-        console.warn('⚠️ TopModelsSorter: No valid models data for header sort');
         return;
       }
       
@@ -103,7 +97,6 @@ class TopModelsSorter {
             (b.sold || 0) - (a.sold || 0));
           break;
         default:
-          console.warn(`⚠️ Unknown sort column: ${column}`);
           return;
       }
       
@@ -112,10 +105,8 @@ class TopModelsSorter {
       
       this.updateTable(sortedModels);
       this.updateDataSet(sortedModels);
-      console.log(`📊 Models sorted by ${column} (${isAscending ? 'asc' : 'desc'}):`, sortedModels);
       
     } catch (error) {
-      console.error('❌ Error sorting by header:', error);
     }
   }
 
@@ -153,7 +144,6 @@ class TopModelsSorter {
         </tr>
       `).join('');
     } catch (error) {
-      console.error('❌ Error updating table:', error);
     }
   }
 
@@ -220,19 +210,14 @@ class TopModelsSorter {
 // Make it globally available with multiple fallbacks
 if (typeof window !== 'undefined') {
   window.TopModelsSorter = TopModelsSorter;
-  console.log('✅ TopModelsSorter exposed to global scope');
 } else if (typeof global !== 'undefined') {
   global.TopModelsSorter = TopModelsSorter;
-  console.log('✅ TopModelsSorter exposed to global scope (Node.js)');
 } else if (typeof self !== 'undefined') {
   self.TopModelsSorter = TopModelsSorter;
-  console.log('✅ TopModelsSorter exposed to global scope (Web Worker)');
 } else {
-  console.warn('⚠️ No global object available for TopModelsSorter');
 }
 
 // Additional fallback: try to expose to globalThis
 if (typeof globalThis !== 'undefined') {
   globalThis.TopModelsSorter = TopModelsSorter;
-  console.log('✅ TopModelsSorter exposed to globalThis');
 }

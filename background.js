@@ -28,7 +28,6 @@ class ShopeeAPIInterceptor {
   }
 
   handleAPIRequest(details) {
-    console.log('API Request intercepted:', details.url);
     
     // Store request details
     this.apiData[details.requestId] = {
@@ -40,7 +39,6 @@ class ShopeeAPIInterceptor {
   }
 
   handleAPIResponse(details) {
-    console.log('API Response intercepted:', details.url);
     
     if (this.apiData[details.requestId]) {
       this.apiData[details.requestId].statusCode = details.statusCode;
@@ -58,7 +56,6 @@ class ShopeeAPIInterceptor {
         data: apiData
       });
     } catch (error) {
-      console.log('Could not send message to content script:', error);
     }
   }
 

@@ -125,7 +125,7 @@ app.post('/api/verify-token', (req, res) => {
     }
     
     // Log successful verification
-    console.log(`✅ Token verified for user: ${user.username} (${user.email}) - Extension: ${extension} v${version}`);
+    
     
     // Return success dengan user info
     res.status(200).json({
@@ -221,16 +221,16 @@ app.get('/api/health', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 ScrapeIt Auth Server running on port ${PORT}`);
-  console.log(`📋 Available endpoints:`);
-  console.log(`   POST /api/login - Login and get token`);
-  console.log(`   POST /api/verify-token - Verify extension token`);
-  console.log(`   POST /api/refresh-token - Refresh expired token`);
-  console.log(`   POST /api/logout - Revoke token`);
-  console.log(`   GET /api/health - Health check`);
-  console.log(`\n🔑 Demo credentials:`);
-  console.log(`   Username: admin, Password: demo123`);
-  console.log(`   Username: user1, Password: demo123`);
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 });
 
 // Export untuk testing

@@ -355,7 +355,7 @@ class ShopeeModalManager {
     }
   }
   static handleSortChange(sortValue, observer) {
-    console.log('Sorting products by:', sortValue);
+    
     
     const container = document.getElementById('ts-products-container');
     if (!container) return;
@@ -366,16 +366,16 @@ class ShopeeModalManager {
     // Jika ada accumulated data, gunakan semua produk yang tersedia
     if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
       productCount = observer.accumulatedData.totalProducts;
-      console.log(`📊 Using all ${productCount} accumulated products for sorting`);
+      
     } else {
-      console.log('📊 Using default 60 products for sorting');
+      
     }
 
     // Get current products
     const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
     if (!products || products.length === 0) return;
 
-    console.log(`✅ Sorting ${products.length} products by: ${sortValue}`);
+    
 
     // Sort products based on selected option
     let sortedProducts = [...products];
@@ -405,7 +405,7 @@ class ShopeeModalManager {
     container.innerHTML = ShopeeUIGenerator.generateSortedProductGrid(sortedProducts);
   }
   static handleViewToggle(viewType, observer) {
-    console.log('Switching view to:', viewType);
+    
     
     // Update button states
     document.querySelectorAll('.ts-toggle-btn').forEach(btn => {
@@ -425,14 +425,14 @@ class ShopeeModalManager {
     // Jika ada accumulated data, gunakan semua produk yang tersedia
     if (observer.accumulatedData && observer.accumulatedData.totalProducts > 60) {
       productCount = observer.accumulatedData.totalProducts;
-      console.log(`📊 Using all ${productCount} accumulated products for ${viewType} view`);
+      
     } else {
-      console.log(`📊 Using default 60 products for ${viewType} view`);
+      
     }
     
     // Re-generate content with appropriate view
     const products = ShopeeProductProcessor.extractProductsFromAPI(productCount, observer);
-    if (!products || products.length === 0) return;    console.log(`✅ Generated ${viewType} view with ${products.length} products`);
+    if (!products || products.length === 0) return;    
 
     if (viewType === 'list') {
       container.innerHTML = ShopeeUIGenerator.generateProductListView(products);
@@ -500,7 +500,7 @@ class ShopeeModalManager {
   }
 
   static showProductDetailModal(product, observer) {
-    console.log('🔍 Showing product detail modal for:', product.name);
+    
     
     const modalHTML = `
       <div id="ts-product-detail-modal" class="ts-modal-overlay">
@@ -581,7 +581,7 @@ class ShopeeModalManager {
   }
 
   static showProductAnalysisModal(product, observer) {
-    console.log('📊 Showing product analysis modal for:', product.name);
+    
     
     const revenue30d = product.price * product.sold30d;
     const estimatedMonthlyRevenue = revenue30d; // This is already 30 days
@@ -754,12 +754,12 @@ class ShopeeModalManager {
   static attachSortableListeners(observer) {
     // Add event listeners for sortable list headers
     const sortableHeaders = document.querySelectorAll('.ts-sortable');
-    console.log('🔧 Attaching sortable listeners to', sortableHeaders.length, 'headers');
+    
     
     if (sortableHeaders.length === 0) {
       setTimeout(() => {
         const retryHeaders = document.querySelectorAll('.ts-sortable');
-        console.log('🔄 Retry: Found', retryHeaders.length, 'sortable headers');
+        
         if (retryHeaders.length > 0) {
           this.attachSortableListenersToElements(retryHeaders, observer);
         }
@@ -772,23 +772,18 @@ class ShopeeModalManager {
 
   static attachSortableListenersToElements(sortableHeaders, observer) {
     sortableHeaders.forEach((header, index) => {
-      console.log(`🔗 Attaching listener to header ${index}:`, header.dataset.sort, header);
+      
       header.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('🎯 Header clicked:', header.dataset.sort);
+        
         this.handleListSort(header, observer);
       });
     });
-    console.log('✅ All sortable listeners attached successfully');
+    
   }
   static handleListSort(header, observer) {
     const sortField = header.dataset.sort;
-    console.log('🔄 Sorting list by:', sortField);
-    console.log('📊 Observer data:', {
-      accumulatedData: observer.accumulatedData,
-      totalProducts: observer.accumulatedData?.totalProducts || 0,
-      hasSearchData: !!observer.accumulatedData?.searchData
-    });
+    
     
     // Remove active sort class from all headers
     document.querySelectorAll('.ts-sortable').forEach(h => {
@@ -822,7 +817,7 @@ class ShopeeModalManager {
     // Sort products based on field and direction
     const sortedProducts = this.sortProductsByField(products, sortField, sortDirection);
     
-    console.log(`✅ Sorted ${sortedProducts.length} products by ${sortField} (${sortDirection})`);
+    
     
     // Update the list view
     const container = document.getElementById('ts-products-container');
