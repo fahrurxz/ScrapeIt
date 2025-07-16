@@ -286,6 +286,8 @@
   transform: translateX(4px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   border-color: #3b82f6;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
 }
 
 .ts-product-item > div {
@@ -311,6 +313,28 @@
   font-weight: 500;
   flex: 1;
   padding-right: 16px;
+}
+
+/* Style for clickable product items */
+.ts-product-item[onclick] {
+  cursor: pointer !important;
+}
+
+.ts-product-item[onclick]:hover span {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Style for non-clickable product items */
+.ts-product-item:not([onclick]) {
+  cursor: default !important;
+  opacity: 0.85;
+}
+
+.ts-product-item:not([onclick]):hover {
+  transform: none !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-color: #e2e8f0 !important;
 }
 
 .ts-product-item > div > div:last-child {

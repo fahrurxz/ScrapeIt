@@ -938,6 +938,19 @@ class ShopeeEventHandlers {
           if (processedItem.itemid && processedItem.shopid) {
             // Calculate revenue
             processedItem.revenue = ((processedItem.price || 0) / 100000) * (processedItem.historical_sold || 0);
+            
+            // Generate product URL
+            if (processedItem.name) {
+              const urlSlug = processedItem.name
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+                .replace(/^-+|-+$/g, '') || 'product'; // Remove leading/trailing hyphens
+              
+              processedItem.url = `https://shopee.co.id/${urlSlug}-i.${processedItem.shopid}.${processedItem.itemid}`;
+            }
+            
             products.push(processedItem);
           } else {
 
@@ -1220,6 +1233,28 @@ class ShopeeEventHandlers {
     
     const validProducts = products.filter(p => p.price > 0);
     
+    // Sort products by revenue and get top 10, ensure they have URLs
+    const topProducts = products
+      .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+      .slice(0, 10)
+      .map(product => {
+        // Ensure product has URL - use existing or generate new one
+        let productUrl = product.url;
+        if (!productUrl && product.itemid && product.shopid && product.name) {
+          productUrl = `https://shopee.co.id/${product.name
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '') || 'product'}-i.${product.shopid}.${product.itemid}`;
+        }
+        
+        return {
+          ...product,
+          url: productUrl
+        };
+      });
+    
     const stats = {
       totalProducts: products.length,
       totalRevenue: products.reduce((sum, p) => sum + (p.revenue || 0), 0),
@@ -1233,9 +1268,7 @@ class ShopeeEventHandlers {
       avgRating: products.filter(p => p.rating_star > 0).length > 0 ?
         products.filter(p => p.rating_star > 0).reduce((sum, p) => sum + p.rating_star, 0) / 
         products.filter(p => p.rating_star > 0).length : 0,
-      topProducts: products
-        .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
-        .slice(0, 10)
+      topProducts: topProducts
     };
     
     return stats;
@@ -1295,20 +1328,49 @@ class ShopeeEventHandlers {
         <div id="ts-top-products-list" style="display: none;">
           <h4>🏆 Top 10 Produk Berdasarkan Omset</h4>
           <div class="ts-products-list">
-            ${stats.topProducts.map((product, index) => `
-              <div class="ts-product-item" style="border: 1px solid #ddd; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <strong>#${index + 1}</strong>
-                    <span>${product.name}</span>
-                  </div>
-                  <div style="text-align: right;">
-                    <div>${formatCurrency(product.revenue || 0)}</div>
-                    <small>${formatNumber(product.historical_sold || 0)} terjual</small>
+            ${stats.topProducts.map((product, index) => {
+              // Ensure product has URL - generate if not exists
+              let productUrl = product.url;
+              if (!productUrl && product.itemid && product.shopid && product.name) {
+                productUrl = `https://shopee.co.id/${product.name
+                  .toLowerCase()
+                  .replace(/[^\w\s-]/g, '')
+                  .replace(/\s+/g, '-')
+                  .replace(/-+/g, '-')
+                  .replace(/^-+|-+$/g, '') || 'product'}-i.${product.shopid}.${product.itemid}`;
+              }
+              
+              return `
+                <div class="ts-product-item" 
+                     style="border: 1px solid #ddd; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; cursor: ${productUrl ? 'pointer' : 'default'}; transition: all 0.3s ease;" 
+                     ${productUrl ? `onclick="
+                       try {
+                         window.open('${productUrl}', '_blank');
+                       } catch(e) {
+                         alert('Tidak dapat membuka link produk');
+                       }
+                     "` : ''}
+                     onmouseover="if('${productUrl}') { this.style.backgroundColor='#f0f8ff'; this.style.borderColor='#007bff'; }" 
+                     onmouseout="this.style.backgroundColor=''; this.style.borderColor='#ddd';"
+                     title="${productUrl ? 'Klik untuk membuka produk di Shopee' : 'Link produk tidak tersedia'}">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong style="color: #ff6b35;">#${index + 1}</strong>
+                      <span style="margin-left: 8px; color: #333; font-weight: 500;">
+                        ${productUrl ? 
+                          `${product.name} 🔗` : 
+                          product.name
+                        }
+                      </span>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-weight: bold; color: #28a745;">${formatCurrency(product.revenue || 0)}</div>
+                      <small style="color: #666;">${formatNumber(product.historical_sold || 0)} terjual</small>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
       </div>
