@@ -688,8 +688,17 @@ class ShopeeEventHandlers {
       // Start listening for shop API data
       this.setupShopAPIListener(observer);
       
-      // Process current page first (page 1)
-      await this.processCurrentShopPage(observer, 1);
+      // PERBAIKAN: Process current page first (page 1) - ambil data yang sudah ada
+      console.log('📦 Processing existing page 1 data...');
+      if (observer.apiData && observer.apiData.SHOP_DATA && observer.apiData.SHOP_DATA.data) {
+        const existingShopData = observer.apiData.SHOP_DATA.data;
+        console.log('✅ Found existing page 1 shop data');
+        this.processShopAPIResponse(observer, existingShopData);
+        this.updateProgress(observer, 'Page 1 data loaded...', 1, totalPages, observer._fullAnalysisData.allProducts.length);
+      } else {
+        console.log('⚠️ No existing page 1 data found, waiting for API...');
+        await this.processCurrentShopPage(observer, 1);
+      }
       
       // If there are more pages, continue with pagination
       if (totalPages > 1) {
@@ -710,7 +719,13 @@ class ShopeeEventHandlers {
           
           // Process the new page
           await this.processCurrentShopPage(observer, page);
+          
+          // Update progress setelah setiap halaman selesai
+          this.updateProgress(observer, `Halaman ${page} selesai`, page, totalPages, observer._fullAnalysisData.allProducts.length);
         }
+      } else {
+        // Single page only, update final progress
+        this.updateProgress(observer, 'Mengumpulkan data...', 1, 1, observer._fullAnalysisData.allProducts.length);
       }
       
       // Analysis complete
@@ -819,8 +834,18 @@ class ShopeeEventHandlers {
     
     // Add to accumulated data
     if (products.length > 0) {
-      observer._fullAnalysisData.allProducts.push(...products);
-      console.log(`📊 Total products collected: ${observer._fullAnalysisData.allProducts.length}`);
+      // Prevent duplicates by checking itemid
+      const existingIds = new Set(observer._fullAnalysisData.allProducts.map(p => p.itemid));
+      const newProducts = products.filter(p => !existingIds.has(p.itemid));
+      
+      observer._fullAnalysisData.allProducts.push(...newProducts);
+      console.log(`📊 Added ${newProducts.length} new products. Total: ${observer._fullAnalysisData.allProducts.length}`);
+      
+      if (newProducts.length < products.length) {
+        console.log(`⚠️ Skipped ${products.length - newProducts.length} duplicate products`);
+      }
+    } else {
+      console.log('⚠️ No products extracted from this API call');
     }
   }
   
