@@ -263,7 +263,6 @@ class ShopeeUIGenerator {
             <span class="ts-text-black/[0.5] ts-ml-1 ts-leading-none">Data</span>            <div class="ts-tabs">
               <a href="#" class="ts-tab-active" data-tab="summary">Ringkasan</a>
             </div>
-            <div class="ts-text-black/[0.5] ts-ml-auto" id="ts-shop-status">Memuat Data Produk...</div>
           </div>
           
           <!-- Summary Tab Content -->
@@ -287,7 +286,7 @@ class ShopeeUIGenerator {
               </div>              <div class="ts-col-start-7 ts-items-center ts-justify-center ts-flex">
                 <div class="ts-relative ts-flex ts-gap-2">
                   <button class="ts-btn ts-bg-orange-600 ts-hover:bg-orange-700 ts-active:bg-orange-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-analyze-btn">
-                    Berdasarkan 30 Produk
+                    Memuat Data Produk...
                   </button>
                   <button class="ts-btn ts-bg-blue-600 ts-hover:bg-blue-700 ts-active:bg-blue-800 ts-px-4 ts-py-2 ts-text-base ts-text-white ts-rounded-lg ts-justify-center ts-mx-auto ts-overflow-hidden ts-transition-all" id="ts-shop-analyze-all-btn">
                     Analisa Semua Produk

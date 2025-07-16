@@ -168,7 +168,7 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     
     // Update status indicator
-    this.updateElement('ts-shop-status', `Berdasarkan ${shopStats.productCount || 0} produk`);
+    this.updateElement('ts-shop-analyze-btn', `Berdasarkan ${shopStats.productCount || 0} produk`);
     
     // Update Summary Tab
     const priceRange = shopStats.minPrice && shopStats.maxPrice 
