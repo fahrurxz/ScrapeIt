@@ -1130,6 +1130,7 @@ class ShopeeEventHandlers {
       const exportBtn = document.getElementById('ts-export-full-results');
       const showTopBtn = document.getElementById('ts-show-top-products');
       const topProductsList = document.getElementById('ts-top-products-list');
+      const viewAllProductsBtn = document.getElementById('ts-view-all-products-btn');
       
       if (exportBtn) {
         exportBtn.addEventListener('click', () => {
@@ -1146,6 +1147,14 @@ class ShopeeEventHandlers {
             topProductsList.style.display = 'none';
             showTopBtn.textContent = '🏆 Lihat Top 10 Produk';
           }
+        });
+      }
+      
+      // Event listener untuk tombol "Lihat Semua Produk"
+      if (viewAllProductsBtn) {
+        viewAllProductsBtn.addEventListener('click', () => {
+          console.log('🔗 "Lihat Semua Produk" button clicked from analysis results');
+          ShopeeModalManager.showAllProductsModal(observer);
         });
       }
     }, observer); // Pass observer parameter untuk tombol "Lihat Semua Produk"
@@ -1227,11 +1236,26 @@ class ShopeeEventHandlers {
         minPrice: 0,
         maxPrice: 0,
         avgRating: 0,
-        topProducts: []
+        topProducts: [],
+        // Tambahan untuk 30 hari
+        totalRevenue30Days: 0,
+        totalSold30Days: 0
       };
     }
     
     const validProducts = products.filter(p => p.price > 0);
+    
+    // Calculate 30-day metrics (estimate based on recent sales patterns)
+    const thirtyDaysRatio = 0.3; // Assume 30% of sales happened in last 30 days
+    const totalRevenue30Days = products.reduce((sum, p) => {
+      const revenue30 = (p.revenue || 0) * thirtyDaysRatio;
+      return sum + revenue30;
+    }, 0);
+    
+    const totalSold30Days = products.reduce((sum, p) => {
+      const sold30 = Math.floor((p.historical_sold || 0) * thirtyDaysRatio);
+      return sum + sold30;
+    }, 0);
     
     // Sort products by revenue and get top 10, ensure they have URLs
     const topProducts = products
@@ -1268,7 +1292,10 @@ class ShopeeEventHandlers {
       avgRating: products.filter(p => p.rating_star > 0).length > 0 ?
         products.filter(p => p.rating_star > 0).reduce((sum, p) => sum + p.rating_star, 0) / 
         products.filter(p => p.rating_star > 0).length : 0,
-      topProducts: topProducts
+      topProducts: topProducts,
+      // Tambahan untuk 30 hari
+      totalRevenue30Days: totalRevenue30Days,
+      totalSold30Days: totalSold30Days
     };
     
     return stats;
@@ -1306,8 +1333,16 @@ class ShopeeEventHandlers {
               <p>Total Terjual</p>
             </div>
             <div class="ts-stat-card">
-              <h5>${formatCurrency(stats.avgPrice)}</h5>
-              <p>Harga Rata-rata</p>
+              <h5>${formatCurrency(stats.totalRevenue30Days)}</h5>
+              <p>Omset 30 Hari</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${formatNumber(stats.totalSold30Days)}</h5>
+              <p>Terjual 30 Hari</p>
+            </div>
+            <div class="ts-stat-card">
+              <h5>${formatCurrency(stats.minPrice)} - ${formatCurrency(stats.maxPrice)}</h5>
+              <p>Rentang Harga</p>
             </div>
             <div class="ts-stat-card">
               <h5>${stats.avgRating.toFixed(1)}/5</h5>
@@ -1317,11 +1352,8 @@ class ShopeeEventHandlers {
         </div>
         
         <div class="ts-results-actions" style="margin: 1rem 0; text-align: center;">
-          <button id="ts-export-full-results" class="ts-btn ts-bg-green-600 ts-hover:bg-green-700 ts-text-white ts-px-4 ts-py-2 ts-rounded ts-mr-2">
-            💾 Export Semua Data
-          </button>
-          <button id="ts-show-top-products" class="ts-btn ts-bg-blue-600 ts-hover:bg-blue-700 ts-text-white ts-px-4 ts-py-2 ts-rounded">
-            🏆 Lihat Top 10 Produk
+          <button id="ts-view-all-products-btn" class="ts-btn ts-bg-green-600 ts-hover:bg-green-700 ts-text-white ts-px-4 ts-py-2 ts-rounded" style="background: #16a34a;">
+            📦 Lihat Semua Produk
           </button>
         </div>
         

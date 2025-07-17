@@ -38,12 +38,12 @@
   border-bottom: none !important;
 }
 
-#ts-custom-modal .ts-modal-title {
+/* #ts-custom-modal .ts-modal-title {
   font-size: 24px !important;
   font-weight: 800 !important;
   margin: 0 !important;
   color: white !important;
-}
+} */
 
 #ts-custom-modal .ts-modal-close {
   background: rgba(255, 255, 255, 0.1) !important;

@@ -198,6 +198,400 @@
   display: block !important;
 }
 
+/* Tooltip Styles */
+.ts-tooltip {
+  position: relative;
+  cursor: help;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.ts-tooltip:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ts-tooltip:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  z-index: 1000;
+}
+
+/* Enhanced Grid Card Styles - Matching provided example */
+.ts-shop-all-products-grid-full {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.ts-product-card-full {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.ts-product-card-full:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.ts-product-header {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-product-image {
+  flex-shrink: 0;
+}
+
+.ts-product-image img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-product-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  font-size: 32px;
+}
+
+.ts-product-info {
+  flex: 1;
+}
+
+.ts-product-name {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ts-product-link {
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.ts-product-link:hover {
+  color: #ff6b35;
+}
+
+.ts-product-basic-info {
+  margin-bottom: 20px;
+}
+
+.ts-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.ts-info-row:last-child {
+  border-bottom: none;
+}
+
+.ts-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ts-value {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.ts-section {
+  margin-bottom: 20px;
+}
+
+.ts-section:last-child {
+  margin-bottom: 0;
+}
+
+.ts-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.ts-trend-grid,
+.ts-performance-grid,
+.ts-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.ts-trend-item,
+.ts-perf-item,
+.ts-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #f3f4f6;
+}
+
+.ts-trend-label,
+.ts-perf-label,
+.ts-stat-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ts-label-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ts-tooltip-icon {
+  position: relative;
+  cursor: help;
+  color: #9ca3af;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.ts-tooltip-icon:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-width: 300px;
+  z-index: 1000002;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: tooltip-fade-in 0.2s ease-in-out;
+}
+
+.ts-tooltip-icon:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  z-index: 1000002;
+  animation: tooltip-fade-in 0.2s ease-in-out;
+}
+
+.ts-trend-value,
+.ts-perf-value,
+.ts-stat-value {
+  font-size: 13px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.ts-trend-value.positive {
+  color: #10b981;
+}
+
+.ts-trend-value.negative {
+  color: #ef4444;
+}
+
+/* Enhanced List View Styles */
+.ts-shop-all-products-list-full {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.ts-modal-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: rgb(31, 41, 55) !important;
+}
+#ts-custom-modal .ts-modal-header {
+    background: #fff !important;
+}
+.ts-stat-card p {
+    font-size: 13px !important;
+    color: rgba(0, 0, 0, 0.6) !important;
+    display: block;
+    font-weight: 500 !important;
+    text-transform: capitalize !important;
+    letter-spacing: normal !important;
+    margin: 0px;
+}
+.ts-stat-card h5 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: rgb(31, 41, 55) !important;
+}
+.ts-info-row {
+    margin-bottom: 0px !important;
+    padding: 4px !important;
+}
+h5.ts-section-title {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+.ts-product-image img {
+    width: 60px !important;
+    height: 60px !important;
+}
+.ts-trend-grid, .ts-performance-grid, .ts-stats-grid {
+    gap: 6px !important;
+}
+.ts-shop-all-products-list-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px 80px;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.ts-shop-all-list-header-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ts-shop-all-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.ts-shop-all-sortable:hover {
+  color: #ff6b35;
+}
+
+.ts-sort-indicator {
+  opacity: 0.5;
+  font-size: 14px;
+}
+
+.ts-shop-all-sortable.ts-sort-asc .ts-sort-indicator::after {
+  content: ' ↑';
+  color: #ff6b35;
+  opacity: 1;
+}
+
+.ts-shop-all-sortable.ts-sort-desc .ts-sort-indicator::after {
+  content: ' ↓';
+  color: #ff6b35;
+  opacity: 1;
+}
+
+.ts-shop-all-product-list-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px 80px;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.ts-shop-all-product-list-item:hover {
+  background: #f8fafc;
+}
+
+.ts-shop-all-list-cell {
+  font-size: 13px;
+  color: #374151;
+}
+
+.ts-shop-all-list-product-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-shop-all-list-product-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  font-size: 16px;
+}
+
+.ts-shop-all-list-product-name {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.ts-shop-all-list-product-name a {
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.ts-shop-all-list-product-name a:hover {
+  color: #ff6b35;
+}
+
+.ts-shop-all-list-product-shop {
+  font-size: 11px;
+  color: #6b7280;
+}
+
 /* Products Section - Identik dengan ts-products-section */
 .ts-shop-all-products-section {
   display: flex;
@@ -347,7 +741,7 @@
 
 .ts-shop-all-products-list-header {
   display: grid;
-  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px 80px;
   gap: 12px;
   padding: 12px 16px;
   background: #f8fafc;
@@ -361,7 +755,7 @@
 
 .ts-shop-all-product-list-item {
   display: grid;
-  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px 80px;
   gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid #f1f5f9;
@@ -742,4 +1136,83 @@
   padding: 6px 16px;
   border-radius: 20px;
   font-weight: 600;
+}
+
+/* Utility Classes */
+.positive {
+  color: #10b981 !important;
+}
+
+.negative {
+  color: #ef4444 !important;
+}
+
+/* List View Styles */
+.ts-shop-all-products-list {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ts-shop-all-products-list th {
+  background: #f8fafc;
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ts-shop-all-products-list th:hover {
+  background: #f1f5f9;
+}
+
+.ts-shop-all-products-list td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.ts-shop-all-products-list tr:last-child td {
+  border-bottom: none;
+}
+
+.ts-shop-all-products-list tr:hover {
+  background: #f9fafb;
+}
+
+.ts-shop-list-product-name {
+  font-weight: 600;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-shop-list-product-name a {
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.ts-shop-list-product-name a:hover {
+  color: #ff6b35;
+}
+
+/* Animation */
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
