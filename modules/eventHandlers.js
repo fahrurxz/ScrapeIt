@@ -1124,7 +1124,7 @@ class ShopeeEventHandlers {
     // Create results modal
     const modalHTML = this.createFullAnalysisResultsModal(stats, allProducts, totalPages, duration);
     
-    // Show modal with event listeners
+    // Show modal with event listeners - pass observer untuk tombol "Lihat Semua Produk"
     ShopeeModalManager.showCustomModal('Hasil Analisa Semua Produk', modalHTML, () => {
       // Add event listeners after modal is ready
       const exportBtn = document.getElementById('ts-export-full-results');
@@ -1148,7 +1148,7 @@ class ShopeeEventHandlers {
           }
         });
       }
-    });
+    }, observer); // Pass observer parameter untuk tombol "Lihat Semua Produk"
   }
   
   static exportFullAnalysisResults(products, stats) {

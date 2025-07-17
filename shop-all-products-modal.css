@@ -1,0 +1,745 @@
+/* 
+ * Shop All Products Modal Styles
+ * Mengcopy 100% styling dari ts-detail-modal yang sudah ada
+ * Untuk modal "Lihat Semua Produk" di halaman toko
+ */
+
+/* Global Font Family - Identik dengan ts-detail-modal */
+.ts-shop-all-modal *, 
+.ts-shop-all-modal *:before, 
+.ts-shop-all-modal *:after {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* Modal Overlay - Identik dengan ts-modal-overlay */
+.ts-shop-all-modal-overlay {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+     tab-size: 4;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+  font-feature-settings: normal !important;
+  font-variation-settings: normal !important;
+  -webkit-tap-highlight-color: transparent !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1000001;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Modal Container - Identik dengan ts-modal-container */
+.ts-shop-all-modal-container {
+  background: white;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 1700px;
+  max-width: 95vw;
+  min-height: 80vh;
+  margin: auto;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* Modal Content - Identik dengan ts-modal-content */
+.ts-shop-all-modal-content {
+  background: #f8f8f8;
+  position: relative;
+}
+
+/* Modal Header - Identik dengan ts-modal-header */
+.ts-shop-all-modal-header {
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  height: 60px;
+}
+
+.ts-shop-all-modal-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.ts-shop-all-logo-medium {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  border-radius: 0.375rem;
+  margin-right: 0.75rem;
+}
+
+.ts-shop-all-modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-shop-all-modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.ts-shop-all-modal-title-section h2 {
+  margin: 0;
+}
+
+.ts-shop-all-modal-title-section p {
+  margin: 0.25rem 0 0 0;
+}
+
+.ts-shop-all-modal-header-right {
+  margin-left: auto;
+  margin-right: 1rem;
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ts-shop-all-modal-timestamp {
+  margin-right: 0.5rem;
+}
+
+.ts-shop-all-modal-refresh {
+  color: #0ea5e9;
+  text-decoration: underline;
+}
+
+.ts-shop-all-modal-close {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ts-shop-all-modal-close svg {
+  fill: #6b7280;
+}
+
+.ts-shop-all-modal-close:hover svg {
+  fill: #374151;
+}
+
+/* Modal Body - Identik dengan ts-modal-body */
+.ts-shop-all-modal-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Modal Tabs - Identik dengan ts-modal-tabs */
+.ts-shop-all-modal-tabs {
+  display: flex;
+  border-bottom: 2px solid #f3f4f6;
+  background: white;
+  padding: 0 32px;
+  overflow-x: auto;
+}
+
+.ts-shop-all-modal-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.ts-shop-all-modal-tab:hover {
+  color: #ea580c;
+  background: #fff7ed;
+}
+
+.ts-shop-all-modal-tab-active {
+  color: #ea580c !important;
+  border-bottom-color: #ea580c !important;
+  background: #fff7ed !important;
+}
+
+.ts-shop-all-tab-icon {
+  font-size: 16px;
+}
+
+/* Tab Content Panels - Identik dengan ts-modal-tab-content */
+.ts-shop-all-modal-tab-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+.ts-shop-all-modal-tab-panel {
+  padding: 32px;
+  min-height: 100%;
+}
+
+.ts-shop-all-modal-tab-panel[style*="display: none"] {
+  display: none !important;
+}
+
+.ts-shop-all-modal-tab-panel[style*="display: block"] {
+  display: block !important;
+}
+
+/* Products Section - Identik dengan ts-products-section */
+.ts-shop-all-products-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.ts-shop-all-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Product Filters - Identik dengan ts-products-filters */
+.ts-shop-all-products-filters {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ts-shop-all-filter-group {
+  display: flex;
+  gap: 16px;
+}
+
+.ts-shop-all-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ts-shop-all-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.ts-shop-all-checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.ts-shop-all-checkbox input[type="checkbox"]:checked + .ts-shop-all-checkmark {
+  background: #ea580c;
+  border-color: #ea580c;
+}
+
+.ts-shop-all-checkbox input[type="checkbox"]:checked + .ts-shop-all-checkmark::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* View Toggle - Identik dengan ts-view-toggle */
+.ts-shop-all-view-toggle {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ts-shop-all-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: white;
+  font-size: 14px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ts-shop-all-toggle-btn:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.ts-shop-all-toggle-active {
+  background: #ea580c !important;
+  color: white !important;
+}
+
+.ts-shop-all-toggle-btn svg {
+  fill: currentColor;
+}
+
+/* Sort Options - Identik dengan ts-sort-options */
+.ts-shop-all-sort-options {
+  display: flex;
+  align-items: center;
+}
+
+.ts-shop-all-select {
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.ts-shop-all-select:focus {
+  outline: none;
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+}
+
+/* Products Grid Full - Identik dengan ts-products-grid-full */
+.ts-shop-all-products-grid-full {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Products List Full - Identik dengan ts-products-list-full */
+.ts-shop-all-products-list-full {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ts-shop-all-products-list-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.ts-shop-all-product-list-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 100px 100px 120px 120px 100px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.ts-shop-all-product-list-item:hover {
+  background-color: #f8fafc;
+}
+
+.ts-shop-all-product-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Product Card Full - Identik dengan ts-product-card-full */
+.ts-shop-all-product-card-full {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.ts-shop-all-product-card-full:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+.ts-shop-all-product-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.ts-shop-all-product-image img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-shop-all-product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ts-shop-all-product-name a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ts-shop-all-product-name a:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+/* Product Basic Info - Identik dengan ts-product-basic-info */
+.ts-shop-all-product-basic-info {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ts-shop-all-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0px;
+  font-size: 12px;
+}
+
+.ts-shop-all-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.ts-shop-all-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ts-shop-all-value {
+  color: #111827;
+  font-weight: 600;
+}
+
+.ts-shop-all-section {
+  margin-bottom: 16px;
+}
+
+.ts-shop-all-section:last-child {
+  margin-bottom: 0;
+}
+
+.ts-shop-all-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ts-shop-all-trend-grid, 
+.ts-shop-all-performance-grid, 
+.ts-shop-all-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ts-shop-all-trend-item, 
+.ts-shop-all-perf-item, 
+.ts-shop-all-stat-item {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.ts-shop-all-trend-label, 
+.ts-shop-all-perf-label, 
+.ts-shop-all-stat-label {
+  display: block;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 4px;
+}
+
+.ts-shop-all-trend-value, 
+.ts-shop-all-perf-value, 
+.ts-shop-all-stat-value {
+  display: block;
+  font-size: 14px;
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Product List Item - Identik dengan list styling */
+.ts-shop-all-list-product-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.ts-shop-all-list-product-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ts-shop-all-list-product-name a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ts-shop-all-list-product-name a:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+.ts-shop-all-list-product-shop {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.ts-shop-all-list-cell {
+  font-size: 13px;
+  color: #374151;
+}
+
+.ts-shop-all-col-price {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.ts-shop-all-col-sold, 
+.ts-shop-all-col-sold-30 {
+  font-weight: 500;
+  font-size: 13px;
+  color: #059669;
+}
+
+.ts-shop-all-col-revenue, 
+.ts-shop-all-col-revenue-30 {
+  font-weight: 500;
+  color: #7c3aed;
+}
+
+.ts-shop-all-list-rating {
+  font-weight: 500;
+  color: #f59e0b;
+}
+
+.ts-shop-all-list-reviews {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+
+.ts-shop-all-trend-indicator {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ts-shop-all-trend-positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ts-shop-all-trend-negative {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.ts-shop-all-trend-neutral {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* No Products Message */
+.ts-shop-all-no-products {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: 768px) {
+  .ts-shop-all-modal-overlay {
+    padding: 10px;
+  }
+  
+  .ts-shop-all-modal-container {
+    width: 100%;
+    max-width: 100vw;
+    min-height: 90vh;
+  }
+  
+  .ts-shop-all-modal-header {
+    padding: 12px 16px;
+  }
+  
+  .ts-shop-all-modal-tabs {
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+  
+  .ts-shop-all-modal-tab-panel {
+    padding: 16px;
+  }
+  
+  .ts-shop-all-products-grid-full {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .ts-shop-all-products-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    padding: 16px;
+  }
+  
+  .ts-shop-all-products-filters {
+    justify-content: space-between;
+  }
+  
+  .ts-shop-all-view-toggle {
+    align-self: flex-end;
+  }
+  
+  .ts-shop-all-products-list-header,
+  .ts-shop-all-product-list-item {
+    grid-template-columns: 50px 1fr 80px 70px 60px 80px 60px 80px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ts-shop-all-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  
+  .ts-shop-all-modal-container {
+    width: 100%;
+    max-width: 100vw;
+    min-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  .ts-shop-all-modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .ts-shop-all-modal-title {
+    font-size: 1rem;
+  }
+  
+  .ts-shop-all-products-grid-full {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-shop-all-products-list-header,
+  .ts-shop-all-product-list-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Enhanced Modal Tab Content */
+.ts-shop-all-modal-tab-content {
+  padding: 24px 32px 32px 32px;
+  min-height: calc(80vh - 140px);
+}
+
+#ts-shop-all-modal-products {
+  padding: 10px !important;
+}
+
+.ts-shop-all-modal-products-container {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ts-shop-all-modal-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.ts-shop-all-modal-products-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.ts-shop-all-modal-products-count {
+  font-size: 14px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+}

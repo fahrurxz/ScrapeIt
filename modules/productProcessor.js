@@ -367,8 +367,15 @@ class ShopeeProductProcessor {
       return null; // Return null instead of creating fake products
     }
     
-    // Extract real product data from API items
-    const maxCount = Math.min(count, items.length);
+    // PERBAIKAN: Untuk shop pages, jangan batasi jumlah produk
+    let maxCount;
+    if (observer.currentPageType === 'shop') {
+      maxCount = items.length; // Get ALL products for shop pages
+      
+    } else {
+      maxCount = Math.min(count, items.length); // Use original logic for other pages
+      
+    }
     
     
     for (let i = 0; i < maxCount; i++) {
@@ -824,8 +831,8 @@ class ShopeeProductProcessor {
       
     }
 
-    // Get products data
-    const products = this.extractProductsFromAPI(999, observer); // Get all products
+    // Get products data - PERBAIKAN: Panggil dengan parameter count yang sangat besar untuk memastikan semua produk diambil
+    const products = this.extractProductsFromAPI(9999, observer); // Get ALL products with very high limit
     if (products && products.length > 0) {
       stats.productCount = products.length;
       

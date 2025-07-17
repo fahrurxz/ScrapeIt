@@ -31,7 +31,7 @@
         "modules/topModelsSorter.js",
         "content.js"
       ],
-      "css": ["styles.css", "shop-analysis-modal.css"],
+      "css": ["styles.css", "shop-analysis-modal.css", "shop-all-products-modal.css"],
       "run_at": "document_start"
     }
   ],
@@ -39,7 +39,7 @@
     "service_worker": "background.js"
   },  "web_accessible_resources": [
     {
-      "resources": ["injected.js", "test_reload.js", "test_auth_system.js", "auto_test_auth.js"],
+      "resources": ["injected.js", "test_reload.js", "test_auth_system.js", "auto_test_auth.js", "shop-all-products-modal.css"],
       "matches": ["https://shopee.co.id/*"]
     }
   ]
