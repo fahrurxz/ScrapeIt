@@ -651,9 +651,6 @@ class ShopeeDataExtractor {
       itemTotalOmset = price * itemTotalTerjual;
       itemOmset30Hari = price * itemTerjual30Hari;
 
-      // Log successful real data extraction
-      console.log(`✅ Real API data extracted for "${itemData.name}": ${itemTotalTerjual} total sales, ${itemTerjual30Hari} monthly sales, price: ${price}`);
-
       // PERBAIKAN: Debug first few items in category calculation
       if (index < 3) {
         console.log('📊 Category revenue calculation debug (item ' + (index + 1) + '):', {
@@ -903,8 +900,8 @@ class ShopeeDataExtractor {
         description: description,
         models: models,
         tierVariations: tierVariations,
-        monthlyEstimate: monthlyEstimate,
-        revenue: revenue,
+        monthlyEstimate: soldPerMonth,
+        revenue: totalRevenue,
         // Add product URL
         url: this.generateProductURL(shopId, itemId, title),
         createdTime: item.ctime || Date.now() / 1000,
@@ -1451,4 +1448,9 @@ class ShopeeDataExtractor {
       return processedModel;
     });
   }
+}
+
+// Export the class for testing
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ShopeeDataExtractor };
 }
