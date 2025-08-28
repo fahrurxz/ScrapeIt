@@ -675,177 +675,87 @@ class ShopeeEventHandlers {
   
   static async executeFullShopScraping(observer) {
     try {
-      console.log('🔄 Starting shop scraping with page default system');
-      this.updateProgress(observer, 'Memulai analisa dengan data halaman default...', 0, 0, 0);
+      console.log('🚀 SIMPLIFIED: Starting shop analysis - tracking rcmd_items API only');
+      this.updateProgress(observer, 'Memulai analisa sederhana...', 0, 0, 0);
       
-      // STEP 1: Process page default data (data halaman pertama yang sudah di-intercept)
-      let defaultPageProducts = [];
-      let hasDefaultPageData = false;
+      // Clear any existing products
+      observer._fullAnalysisData.allProducts = [];
+      observer._accumulatedApiProducts = [];
       
+      // STEP 1: Capture existing page 1 data (if available) BEFORE setting up tracker
+      let page1Products = 0;
       if (observer.apiData && observer.apiData.SHOP_DATA && observer.apiData.SHOP_DATA.data) {
         const shopData = observer.apiData.SHOP_DATA.data;
         
+        // Check for existing data from page 1 (defaultPageData or itemsData)
+        let existingData = null;
         if (shopData.defaultPageData && shopData.defaultPageData.data) {
-          console.log('📋 Processing default page data (page 1) - using defaultPageData structure');
-          defaultPageProducts = this.extractProductsFromShopAPI(shopData.defaultPageData.data);
-          hasDefaultPageData = true;
+          existingData = shopData.defaultPageData.data;
+          console.log('📋 SIMPLE: Found existing page 1 data in defaultPageData');
         } else if (shopData.itemsData && shopData.itemsData.data) {
-          // Fallback to legacy itemsData structure - ini adalah page 1
-          console.log('📋 Processing default page data (page 1) - using legacy itemsData structure');
-          defaultPageProducts = this.extractProductsFromShopAPI(shopData.itemsData.data);
-          hasDefaultPageData = true;
+          existingData = shopData.itemsData.data;
+          console.log('📋 SIMPLE: Found existing page 1 data in itemsData');
         }
         
-        if (hasDefaultPageData && defaultPageProducts.length > 0) {
-          observer._fullAnalysisData.allProducts.push(...defaultPageProducts);
-          observer._fullAnalysisData.currentPage = 1; // Set current page to 1
-          
-          console.log(`✅ Page 1 (default page) processed: ${defaultPageProducts.length} products`);
-          console.log(`🔍 DEBUG: Total products after page 1: ${observer._fullAnalysisData.allProducts.length}`);
-          this.updateProgress(observer, `Page 1 selesai: ${defaultPageProducts.length} produk`, 1, '?', defaultPageProducts.length);
-        } else {
-          console.log('⚠️ No default page data found, will collect from current page');
-          this.updateProgress(observer, 'Mengumpulkan data halaman 1...', 1, '?', 0);
-          
-          // Trigger a small scroll to ensure API is called
-          window.scrollBy(0, 100);
-          setTimeout(() => window.scrollBy(0, -100), 500);
-          
-          // Wait for API response
-          await this.waitForDefaultPageData(observer);
-          hasDefaultPageData = true; // Mark as processed after waiting
+        if (existingData) {
+          const products = this.extractProductsFromShopAPI(existingData);
+          if (products.length > 0) {
+            observer._accumulatedApiProducts.push(...products);
+            page1Products = products.length;
+            console.log(`✨ SIMPLE: Captured ${page1Products} existing products from page 1`);
+          }
         }
-      } else {
-        console.log('⚠️ No shop data available, triggering API call');
-        this.updateProgress(observer, 'Memuat data halaman 1...', 1, '?', 0);
-        
-        // Trigger API call by scrolling
-        window.scrollBy(0, 100);
-        setTimeout(() => window.scrollBy(0, -100), 500);
-        
-        // Wait for API response
-        await this.waitForDefaultPageData(observer);
-        hasDefaultPageData = true; // Mark as processed after waiting
       }
       
-      // Pastikan kita sudah memiliki data page 1 sebelum lanjut
-      if (!hasDefaultPageData || observer._fullAnalysisData.allProducts.length === 0) {
-        console.log('❌ Failed to get page 1 data, stopping analysis');
-        throw new Error('Gagal mendapatkan data halaman pertama');
-      }
+      // STEP 2: Setup API tracker for future pages
+      this.setupSimpleAPITracker(observer);
       
-      // STEP 2: Scroll to bottom to detect pagination
+      // Get total pages
       await this.scrollToShopPagination();
-      this.updateProgress(observer, 'Mencari halaman tambahan...', 1, '?', observer._fullAnalysisData.allProducts.length);
+      const totalPages = Math.min(this.getTotalShopPages(), 10); // Max 10 pages
       
-      // STEP 3: Get total pages from pagination
-      const totalPages = this.getTotalShopPages();
-      observer._fullAnalysisData.totalPages = totalPages;
+      console.log(`📊 Total pages to process: ${totalPages}`);
+      this.updateProgress(observer, `Akan memproses ${totalPages} halaman`, 1, totalPages, page1Products);
       
-      console.log(`📊 Total pages detected: ${totalPages}`);
-      this.updateProgress(observer, `Ditemukan ${totalPages} halaman total`, 1, totalPages, observer._fullAnalysisData.allProducts.length);
-      
-      // STEP 4: Setup API listener for pagination
-      this.setupShopAPIListenerWithAccumulation(observer);
-      
-      // STEP 5: Process additional pages if any (MULAI DARI PAGE 2)
-      // PERBAIKAN: Batasi maksimal 10 halaman dan 300 produk
-      const maxPages = 10;
-      const maxProducts = 300;
-      const actualTotalPages = Math.min(totalPages, maxPages);
-      
-      if (totalPages > maxPages) {
-        console.log(`📊 Total pages detected: ${totalPages}, but limiting to ${maxPages} pages`);
-        this.updateProgress(observer, `Ditemukan ${totalPages} halaman, diproses ${maxPages} halaman`, 1, actualTotalPages, observer._fullAnalysisData.allProducts.length);
-      }
-      
-      if (actualTotalPages > 1) {
-        // Setup API listener untuk menangkap data pagination
-        this.setupShopAPIListenerWithAccumulation(observer);
-        
-        for (let page = 2; page <= actualTotalPages; page++) {
-          if (!observer._fullAnalysisRunning) {
-            console.log('❌ Analysis cancelled by user');
-            break;
-          }
-          
-          // PERBAIKAN: Check if we've reached max products limit
-          if (observer._fullAnalysisData.allProducts.length >= maxProducts) {
-            console.log(`� Reached maximum product limit (${maxProducts}). Stopping analysis.`);
-            this.updateProgress(observer, `Maksimal ${maxProducts} produk tercapai`, page - 1, actualTotalPages, observer._fullAnalysisData.allProducts.length);
-            break;
-          }
-          
-          console.log(`�🔄 Processing page ${page}/${actualTotalPages} (navigating to next page)`);
-          this.updateProgress(observer, `Navigasi ke halaman ${page}...`, page, actualTotalPages, observer._fullAnalysisData.allProducts.length);
-          
-          // Navigate to next page (ini akan menuju ke page 2, 3, 4, dst)
-          await this.navigateToNextPage();
-          
-          // Wait for page load - PERBAIKAN: Tingkatkan timeout untuk memastikan data dimuat
-          await this.waitForPageLoad(1500);
-          
-          // Update progress setelah navigation
-          this.updateProgress(observer, `Memuat data halaman ${page}...`, page, actualTotalPages, observer._fullAnalysisData.allProducts.length);
-          
-          // Wait for new page data - PERBAIKAN: Tingkatkan timeout dan tambah retry
-          const beforeCount = observer._fullAnalysisData.allProducts.length;
-          await this.waitForShopPageData(observer, page, 8000);
-          
-          // PERBAIKAN: Check if we got new products, if not try to trigger API manually
-          const afterCount = observer._fullAnalysisData.allProducts.length;
-          if (afterCount === beforeCount) {
-            console.log(`⚠️ No new products added for page ${page}, trying manual trigger...`);
-            // Trigger scroll to force API call
-            window.scrollBy(0, 100);
-            await this.waitForPageLoad(500);
-            window.scrollBy(0, -100);
-            await this.waitForShopPageData(observer, page, 5000);
-          }
-          
-          // Update progress setelah setiap halaman selesai
-          this.updateProgress(observer, `Halaman ${page} selesai`, page, actualTotalPages, observer._fullAnalysisData.allProducts.length);
-          
-          console.log(`✅ Page ${page} completed. Total products so far: ${observer._fullAnalysisData.allProducts.length}`);
-          
-          // PERBAIKAN: Check if we're stuck with low product count
-          const expectedMinProducts = page * 20; // At least 20 products per page
-          const currentProducts = observer._fullAnalysisData.allProducts.length;
-          
-          if (currentProducts < expectedMinProducts && page >= 3) {
-            console.log(`⚠️ STUCK DETECTION: Page ${page} but only ${currentProducts} products (expected: ${expectedMinProducts}+)`);
-            console.log(`🔄 Attempting recovery by processing all available data...`);
-            
-            // Force process any available data
-            if (window.shopeeAPIData?.SHOP_DATA?.data) {
-              const event = new CustomEvent('shopeeAPIData', {
-                detail: {
-                  type: 'SHOP_DATA',
-                  data: window.shopeeAPIData.SHOP_DATA.data
-                }
-              });
-              window.dispatchEvent(event);
-              await this.waitForPageLoad(1000);
-            }
-          }
-          
-          // PERBAIKAN: Check again after processing page data
-          if (observer._fullAnalysisData.allProducts.length >= maxProducts) {
-            console.log(`📊 Reached maximum product limit (${maxProducts}) after processing page ${page}. Stopping analysis.`);
-            this.updateProgress(observer, `Maksimal ${maxProducts} produk tercapai`, page, actualTotalPages, observer._fullAnalysisData.allProducts.length);
-            break;
-          }
-        }
+      // STEP 3: Process page 1 if we don't have data yet
+      if (page1Products === 0) {
+        console.log('📋 Processing page 1 (current page) - no existing data');
+        await this.triggerAPICall();
+        await this.waitForPageLoad(2000);
       } else {
-        // Single page only, update final progress
-        console.log('ℹ️ Only 1 page detected, analysis complete with default page data');
-        this.updateProgress(observer, 'Analisa selesai - 1 halaman', 1, 1, observer._fullAnalysisData.allProducts.length);
+        console.log(`📋 Page 1 already processed: ${page1Products} products`);
       }
       
-      // STEP 6: Process any accumulated data that might have been missed
-      this.processAccumulatedShopData(observer);
+      this.updateProgress(observer, 'Halaman 1 selesai', 1, totalPages, observer._accumulatedApiProducts.length);
       
-      // Analysis complete
+      // STEP 4: Navigate through pages 2 to totalPages
+      for (let page = 2; page <= totalPages; page++) {
+        if (!observer._fullAnalysisRunning) {
+          console.log('❌ Analysis cancelled by user');
+          break;
+        }
+        
+        console.log(`🔄 Navigating to page ${page}`);
+        this.updateProgress(observer, `Navigasi ke halaman ${page}...`, page, totalPages, observer._accumulatedApiProducts.length);
+        
+        // Navigate to next page
+        await this.navigateToNextPage();
+        await this.waitForPageLoad(3000); // Wait for page load and API call
+        
+        this.updateProgress(observer, `Halaman ${page} selesai`, page, totalPages, observer._accumulatedApiProducts.length);
+        console.log(`✅ Page ${page} completed. Total products: ${observer._accumulatedApiProducts.length}`);
+        
+        // Stop if we have reached 300 products
+        if (observer._accumulatedApiProducts.length >= 300) {
+          console.log('📊 Reached 300 products limit');
+          break;
+        }
+      }
+      
+      // Copy accumulated products to fullAnalysisData
+      observer._fullAnalysisData.allProducts = [...observer._accumulatedApiProducts];
+      
+      console.log(`🎉 SIMPLE ANALYSIS COMPLETE: ${observer._fullAnalysisData.allProducts.length} products`);
       this.completeFullAnalysis(observer);
       
     } catch (error) {
@@ -854,295 +764,92 @@ class ShopeeEventHandlers {
     }
   }
   
-  // === HELPER FUNCTIONS FOR PAGE DEFAULT SYSTEM ===
-  
-  // PERBAIKAN: Kurangi timeout dari 5000ms menjadi 3000ms untuk mempercepat analisa
-  static async waitForDefaultPageData(observer, timeout = 3000) {
-    console.log('⏳ Waiting for default page data...');
-    
-    return new Promise((resolve) => {
-      const timeoutId = setTimeout(() => {
-        console.log('⚠️ Timeout waiting for default page data');
-        resolve();
-      }, timeout);
-      
-      const dataListener = (event) => {
-        const { type, data } = event.detail;
-        
-        if (type === 'SHOP_DATA' && data && (data.defaultPageData || data.itemsData)) {
-          clearTimeout(timeoutId);
-          window.removeEventListener('shopeeAPIData', dataListener);
-          
-          console.log('✅ Default page data received');
-          const apiData = data.defaultPageData ? data.defaultPageData.data : data.itemsData.data;
-          const products = this.extractProductsFromShopAPI(apiData);
-          observer._fullAnalysisData.allProducts.push(...products);
-          
-          resolve();
-        }
-      };
-      
-      window.addEventListener('shopeeAPIData', dataListener);
-    });
-  }
-  
-  // PERBAIKAN: Kurangi default timeout dari 10000ms menjadi 5000ms untuk mempercepat analisa
-  static async waitForShopPageData(observer, pageNumber, timeout = 5000) {
-    console.log(`⏳ Waiting for page ${pageNumber} data...`);
-    
-    return new Promise((resolve) => {
-      const timeoutId = setTimeout(() => {
-        console.log(`⚠️ Timeout waiting for page ${pageNumber} data`);
-        resolve();
-      }, timeout);
-      
-      const dataListener = (event) => {
-        const { type, data } = event.detail;
-        
-        if (type === 'SHOP_DATA' && data) {
-          console.log(`📡 Shop data received for potential page ${pageNumber}:`, {
-            hasAccumulatedData: !!(data.accumulatedData && data.accumulatedData.length > 0),
-            hasItemsData: !!(data.itemsData),
-            currentPage: data.currentPage
-          });
-          
-          // Cek apakah ada data baru yang masuk
-          let hasNewData = false;
-          
-          // Method 1: Check accumulated data for this page
-          if (data.accumulatedData && data.accumulatedData.length > 0) {
-            const latestPageData = data.accumulatedData[data.accumulatedData.length - 1];
-            if (latestPageData && latestPageData.page >= pageNumber) {
-              console.log(`✅ Found accumulated data for page ${pageNumber}`);
-              hasNewData = true;
-            }
-          }
-          
-          // Method 2: Check if we received new itemsData (untuk compatibility)
-          if (!hasNewData && data.itemsData && data.currentPage >= pageNumber) {
-            console.log(`✅ Found itemsData for page ${pageNumber}`);
-            hasNewData = true;
-          }
-          
-          // Method 3: Check if current page tracking indicates new page
-          if (!hasNewData && data.currentPage && data.currentPage >= pageNumber) {
-            console.log(`✅ Current page tracking indicates page ${pageNumber} is loaded`);
-            hasNewData = true;
-          }
-          
-          if (hasNewData) {
-            clearTimeout(timeoutId);
-            window.removeEventListener('shopeeAPIData', dataListener);
-            console.log(`✅ Page ${pageNumber} data confirmed received`);
-            resolve();
-          }
-        }
-      };
-      
-      window.addEventListener('shopeeAPIData', dataListener);
-    });
-  }
-  
-  static setupShopAPIListenerWithAccumulation(observer) {
+  static setupSimpleAPITracker(observer) {
     // Remove existing listener if any
-    if (observer._shopAPIListener) {
-      window.removeEventListener('shopeeAPIData', observer._shopAPIListener);
+    if (observer._simpleAPIListener) {
+      window.removeEventListener('shopeeAPIData', observer._simpleAPIListener);
     }
     
-    console.log('🎧 Setting up shop API listener for pagination data accumulation');
+    // Initialize products array
+    if (!observer._accumulatedApiProducts) {
+      observer._accumulatedApiProducts = [];
+    }
     
-    observer._shopAPIListener = (event) => {
+    console.log('🎧 Setting up SIMPLE API tracker for rcmd_items');
+    
+    observer._simpleAPIListener = (event) => {
       const { type, data } = event.detail;
       
       if (type === 'SHOP_DATA' && data) {
-        console.log('📡 Shop API data received during pagination:', {
-          hasAccumulatedData: !!(data.accumulatedData && data.accumulatedData.length > 0),
-          hasItemsData: !!(data.itemsData),
-          currentPage: data.currentPage
-        });
+        console.log('🚀 SIMPLE: rcmd_items API response received');
         
-        let newProductsAdded = 0;
+        // Extract products from the API response data
+        let rcmdData = null;
         
-        // Process accumulated data from pagination (Method 1 - Preferred)
-        if (data.accumulatedData && data.accumulatedData.length > 0) {
-          console.log(`🔍 DEBUG: Processing ${data.accumulatedData.length} accumulated page(s)`);
-          console.log(`🔍 DEBUG: Current processed pages:`, observer._processedPages || []);
-          
+        // Check for different data structures
+        if (data.defaultPageData && data.defaultPageData.data) {
+          rcmdData = data.defaultPageData.data;
+          console.log('📋 SIMPLE: Using defaultPageData structure');
+        } else if (data.itemsData && data.itemsData.data) {
+          rcmdData = data.itemsData.data;
+          console.log('📋 SIMPLE: Using itemsData structure');
+        } else if (data.accumulatedData && data.accumulatedData.length > 0) {
+          // Process all accumulated data
+          console.log(`📋 SIMPLE: Processing ${data.accumulatedData.length} accumulated pages`);
           data.accumulatedData.forEach((pageData, index) => {
-            // PERBAIKAN CRITICAL: Gunakan URL navigation page number, bukan API page number
-            // API selalu return page=0, tapi kita track berdasarkan halaman navigasi
-            const urlPageNumber = observer._currentNavigationPage || (index + 2);
-            const pageNum = urlPageNumber;
-            
-            // Create unique page identifier based on index and data signature
-            const dataSignature = pageData.data?.centralize_item_card?.item_cards?.length || 0;
-            const pageIdentifier = `${index}_${dataSignature}`;
-            
-            const alreadyProcessed = observer._processedPages && observer._processedPages.includes(pageIdentifier);
-            
-            console.log(`🔍 DEBUG Page ${pageNum}: API_page=${pageData.page}, URL_page=${urlPageNumber}, index=${index}, signature=${dataSignature}`);
-            console.log(`🔍 DEBUG Page ${pageNum}: pageIdentifier=${pageIdentifier}, alreadyProcessed=${alreadyProcessed}`);
-            
-            // PERBAIKAN: Force processing if we have low product count
-            const currentTotal = observer._fullAnalysisData.allProducts.length;
-            const shouldForceProcess = currentTotal < 200 && !alreadyProcessed; // Force if less than 200 products
-            
-            if (!alreadyProcessed || shouldForceProcess) {
-              if (shouldForceProcess) {
-                console.log(`🔄 FORCE Processing page ${pageNum} due to low product count (${currentTotal})`);
-              } else {
-                console.log(`🔄 Processing accumulated data for page ${pageNum}`);
-              }
-              
+            if (pageData && pageData.data) {
               const products = this.extractProductsFromShopAPI(pageData.data);
-              
-              // ENHANCED DEBUG: Inspect data structure if no products found
-              if (products.length === 0) {
-                console.log(`🔍 ENHANCED DEBUG Page ${pageNum}: No products extracted, inspecting data structure...`);
-                console.log(`🔍 pageData.data keys:`, Object.keys(pageData.data || {}));
-                
-                // Check standard path
-                const centralizeItemCard = pageData.data?.centralize_item_card;
-                console.log(`🔍 centralize_item_card exists:`, !!centralizeItemCard);
-                if (centralizeItemCard) {
-                  console.log(`🔍 centralize_item_card keys:`, Object.keys(centralizeItemCard));
-                  console.log(`🔍 item_cards exists:`, !!centralizeItemCard.item_cards);
-                  console.log(`🔍 item_cards length:`, centralizeItemCard.item_cards?.length || 0);
-                }
-                
-                // Search for alternative product arrays
-                function findProductArrays(obj, path = '') {
-                  if (!obj || typeof obj !== 'object') return [];
-                  let results = [];
-                  
-                  Object.keys(obj).forEach(key => {
-                    const fullPath = path ? `${path}.${key}` : key;
-                    const value = obj[key];
-                    
-                    if (Array.isArray(value) && value.length > 0) {
-                      const firstItem = value[0];
-                      if (firstItem && typeof firstItem === 'object') {
-                        const keys = Object.keys(firstItem);
-                        if (keys.some(k => ['itemid', 'item_id', 'name', 'title', 'price'].includes(k.toLowerCase()))) {
-                          results.push({ path: fullPath, length: value.length, keys });
-                        }
-                      }
-                    } else if (typeof value === 'object' && value !== null) {
-                      results.push(...findProductArrays(value, fullPath));
-                    }
-                  });
-                  
-                  return results;
-                }
-                
-                const productArrays = findProductArrays(pageData.data);
-                console.log(`🔍 Found ${productArrays.length} potential product arrays:`, productArrays);
-              }
-              
-              console.log(`🔍 DEBUG Page ${pageNum}: Extracted ${products.length} products from API`);
-              
-              // PERBAIKAN: Less aggressive duplicate filtering
-              const existingIds = new Set(observer._fullAnalysisData.allProducts.map(p => p.itemid));
-              let newProducts = products.filter(p => p.itemid && !existingIds.has(p.itemid));
-              
-              // PERBAIKAN: If no new products but we have valid products, check if it's really duplicates
-              if (newProducts.length === 0 && products.length > 0) {
-                console.log(`🔍 DEBUG Page ${pageNum}: Zero new products, checking if products are valid...`);
-                const validProducts = products.filter(p => p.itemid && p.name);
-                console.log(`🔍 DEBUG Page ${pageNum}: ${validProducts.length} valid products found`);
-                
-                // If we have valid products but they're all "duplicates", add them anyway if total is low
-                if (validProducts.length > 0 && observer._fullAnalysisData.allProducts.length < 150) {
-                  console.log(`🔄 FORCE Adding ${validProducts.length} products despite duplicates (low total count)`);
-                  newProducts = validProducts.slice(0, 20); // Add max 20 to avoid too many duplicates
-                }
-              }
-              
-              console.log(`🔍 DEBUG Page ${pageNum}: ${newProducts.length} new products after filtering (${products.length - newProducts.length} duplicates/invalid)`);
-              console.log(`🔍 DEBUG Page ${pageNum}: Sample itemids - Products: [${products.slice(0,3).map(p => p.itemid).join(', ')}], Existing: [${Array.from(existingIds).slice(0,3).join(', ')}]`);
-              
-              observer._fullAnalysisData.allProducts.push(...newProducts);
-              newProductsAdded += newProducts.length;
-              
-              // Track processed pages - PERBAIKAN: Use pageIdentifier instead of pageNum
-              if (!observer._processedPages) observer._processedPages = [];
-              if (newProducts.length > 0 && !observer._processedPages.includes(pageIdentifier)) {
-                observer._processedPages.push(pageIdentifier);
-              }
-              
-              console.log(`✅ Page ${pageNum} processed: ${newProducts.length} new products added (identifier: ${pageIdentifier})`);
-              console.log(`📊 Current total products: ${observer._fullAnalysisData.allProducts.length}`);
+              this.addUniqueProducts(observer, products);
+              console.log(`📋 SIMPLE: Added ${products.length} products from accumulated page ${index + 1}`);
             }
           });
+          return; // Exit early for accumulated data
         }
         
-        // Fallback: Process itemsData if no accumulated data (Method 2 - Legacy compatibility)
-        if (newProductsAdded === 0 && data.itemsData && data.itemsData.data) {
-          const currentPage = data.currentPage || 2; // Assume page 2+ for pagination
-          const alreadyProcessed = observer._processedPages && observer._processedPages.includes(currentPage);
-          
-          if (!alreadyProcessed) {
-            console.log(`🔄 Processing legacy itemsData for page ${currentPage}`);
-            const products = this.extractProductsFromShopAPI(data.itemsData.data);
-            
-            // Prevent duplicates
-            const existingIds = new Set(observer._fullAnalysisData.allProducts.map(p => p.itemid));
-            const newProducts = products.filter(p => !existingIds.has(p.itemid));
-            
-            observer._fullAnalysisData.allProducts.push(...newProducts);
-            newProductsAdded += newProducts.length;
-            
-            // Track processed pages
-            if (!observer._processedPages) observer._processedPages = [];
-            observer._processedPages.push(currentPage);
-            
-            console.log(`✅ Legacy page ${currentPage} processed: ${newProducts.length} new products`);
-          }
-        }
-        
-        if (newProductsAdded > 0) {
-          console.log(`📊 Total products accumulated: ${observer._fullAnalysisData.allProducts.length} (+${newProductsAdded} new)`);
+        if (rcmdData) {
+          const products = this.extractProductsFromShopAPI(rcmdData);
+          this.addUniqueProducts(observer, products);
+          console.log(`✨ SIMPLE: Added ${products.length} unique products. Total: ${observer._accumulatedApiProducts.length}`);
         } else {
-          console.log('ℹ️ No new products added (might be duplicates or already processed)');
+          console.log('⚠️ SIMPLE: No valid rcmd data found in response');
         }
       }
     };
     
-    window.addEventListener('shopeeAPIData', observer._shopAPIListener);
-    console.log('✅ Shop API listener setup complete');
+    window.addEventListener('shopeeAPIData', observer._simpleAPIListener);
+    console.log('✅ SIMPLE: API tracker setup complete');
   }
   
-  static processAccumulatedShopData(observer) {
-    // Final check to process any accumulated data that might have been missed
-    if (observer.apiData && observer.apiData.SHOP_DATA && observer.apiData.SHOP_DATA.data) {
-      const shopData = observer.apiData.SHOP_DATA.data;
-      
-      if (shopData.accumulatedData && shopData.accumulatedData.length > 0) {
-        console.log(`📋 Final processing of ${shopData.accumulatedData.length} accumulated pages`);
-        
-        shopData.accumulatedData.forEach((pageData, index) => {
-          const pageNum = pageData.page || (index + 2);
-          const alreadyProcessed = observer._processedPages && observer._processedPages.includes(pageNum);
-          
-          if (!alreadyProcessed) {
-            console.log(`🔄 Final processing of page ${pageNum}`);
-            const products = this.extractProductsFromShopAPI(pageData.data);
-            
-            // Prevent duplicates
-            const existingIds = new Set(observer._fullAnalysisData.allProducts.map(p => p.itemid));
-            const newProducts = products.filter(p => !existingIds.has(p.itemid));
-            
-            observer._fullAnalysisData.allProducts.push(...newProducts);
-            
-            if (!observer._processedPages) observer._processedPages = [];
-            observer._processedPages.push(pageNum);
-            
-            console.log(`✅ Final page ${pageNum} processed: ${newProducts.length} new products`);
-          }
-        });
-      }
+  static addUniqueProducts(observer, products) {
+    if (!observer._accumulatedApiProducts) {
+      observer._accumulatedApiProducts = [];
     }
     
+    const existingIds = new Set(observer._accumulatedApiProducts.map(p => p.itemid));
+    const newProducts = products.filter(p => p.itemid && !existingIds.has(p.itemid));
+    
+    observer._accumulatedApiProducts.push(...newProducts);
+    
+    if (newProducts.length !== products.length) {
+      console.log(`🔍 SIMPLE: Filtered ${products.length - newProducts.length} duplicates`);
+    }
+  }
+  
+  static async triggerAPICall() {
+    // Simple trigger to ensure API call is made
+    console.log('🔄 SIMPLE: Triggering API call');
+    window.scrollBy(0, 50);
+    await this.waitForPageLoad(500);
+    window.scrollBy(0, -50);
+  }
+  
+  // === HELPER FUNCTIONS FOR PAGE DEFAULT SYSTEM ===
+  
+  // SIMPLIFIED: Old complex functions removed - simple approach doesn't need them
+  
+  static processAccumulatedShopData(observer) {
+    // SIMPLIFIED: No longer needed - simple API tracker handles everything
+    console.log('🎉 SIMPLE: processAccumulatedShopData - skipped (using simple tracker)');
     console.log(`📊 Final analysis result: ${observer._fullAnalysisData.allProducts.length} total products`);
   }
   
@@ -1213,21 +920,9 @@ class ShopeeEventHandlers {
   }
   
   static setupShopAPIListener(observer) {
-    // Listen for shop API responses during pagination
-    if (observer._shopAPIListener) {
-      window.removeEventListener('shopeeAPIData', observer._shopAPIListener);
-    }
-    
-    observer._shopAPIListener = (event) => {
-      const { type, data } = event.detail;
-      
-      if (type === 'SHOP_DATA' && data && data.itemsData) {
-        
-        this.processShopAPIResponse(observer, data);
-      }
-    };
-    
-    window.addEventListener('shopeeAPIData', observer._shopAPIListener);
+    // Legacy function - now redirects to simple API tracker
+    console.log('🔄 setupShopAPIListener: Redirecting to simple API tracker');
+    this.setupSimpleAPITracker(observer);
   }
   
   static processShopAPIResponse(observer, shopData) {

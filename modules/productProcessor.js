@@ -49,7 +49,7 @@ class ShopeeProductProcessor {
     const products = [];
     let items = [];
     
-    // HANYA ambil data dari defaultPageData untuk shop stats (page 0)
+    // Extract shop data using new prioritized structure
     if (observer.currentPageType === 'shop' && observer.apiData.SHOP_DATA) {
       // PERBAIKAN: Akses layer yang benar - observer.apiData.SHOP_DATA.data.defaultPageData
       const shopDataWrapper = observer.apiData.SHOP_DATA;
@@ -58,77 +58,43 @@ class ShopeeProductProcessor {
       console.log('🔍 [Shop Stats Debug] SHOP_DATA wrapper keys:', Object.keys(shopDataWrapper || {}));
       console.log('🔍 [Shop Stats Debug] Actual shopData keys:', Object.keys(shopData || {}));
       
-      // Prioritas 1: defaultPageData (page 0 data yang sudah tersimpan)
-      if (shopData.defaultPageData) {
-        const defaultData = shopData.defaultPageData.data; // defaultPageData.data
-        const pageNumber = shopData.defaultPageData.page || 0;
+      // Prioritas 1: itemsData (primary shop items - new structure)
+      if (shopData.itemsData) {
+        const data = shopData.itemsData.data;
+        console.log('✅ [Shop Stats] Using itemsData (primary structure)');
         
-        console.log(`🎯 [Shop Stats] Using defaultPageData from page ${pageNumber}`);
-        
-        console.log('🔍 [Shop Stats Debug] defaultPageData structure:', {
-          hasData: !!defaultData,
-          dataKeys: defaultData ? Object.keys(defaultData) : 'no data',
-          page: pageNumber
-        });
-        
-        if (defaultData && defaultData.data && defaultData.data.centralize_item_card && defaultData.data.centralize_item_card.item_cards) {
-          items = defaultData.data.centralize_item_card.item_cards;
-          console.log(`📊 [Shop Stats] Found ${items.length} products in page 0 defaultPageData.centralize_item_card`);
-        } else if (defaultData && defaultData.items) {
-          items = defaultData.items;
-          console.log(`📊 [Shop Stats] Found ${items.length} products in page 0 defaultPageData.items`);
-        } else {
-          console.warn('⚠️ [Shop Stats] page 0 defaultPageData structure not recognized');
-          console.log('🔍 [Shop Stats Debug] Expected structure not found in page 0 defaultPageData:', defaultData);
+        if (data && data.data && data.data.centralize_item_card && data.data.centralize_item_card.item_cards) {
+          items = data.data.centralize_item_card.item_cards;
+          console.log(`📊 [Shop Stats] Found ${items.length} products in itemsData.centralize_item_card`);
+        } else if (data && data.items) {
+          items = data.items;
+          console.log(`📊 [Shop Stats] Found ${items.length} products in itemsData.items`);
         }
-      } else {
-        console.warn('⚠️ [Shop Stats] No defaultPageData found, checking fallback options');
-        console.log('🔍 [Shop Stats Debug] shopData structure:', {
-          hasItemsData: !!shopData.itemsData,
-          hasDefaultPageData: !!shopData.defaultPageData,
-          hasAccumulatedData: !!shopData.accumulatedData,
-          accumulatedLength: shopData.accumulatedData ? shopData.accumulatedData.length : 0,
-          allKeys: Object.keys(shopData || {}),
-          itemsDataPage: shopData.itemsData ? shopData.itemsData.page : 'no page info'
-        });
+      }
+      // Prioritas 2: regularItemsData (fallback)
+      else if (shopData.regularItemsData) {
+        const data = shopData.regularItemsData.data;
+        console.log('✅ [Shop Stats] Using regularItemsData (fallback)');
         
-        // PERBAIKAN: Try multiple fallback options
-        if (shopData.itemsData) {
-          const data = shopData.itemsData.data;
-          console.log('✅ [Shop Stats] Using itemsData fallback');
-          console.log('🔍 [Shop Stats Debug] itemsData structure:', {
-            hasData: !!data,
-            dataKeys: data ? Object.keys(data) : 'no data',
-            pageNumber: shopData.itemsData.page
-          });
-          
-          if (data && data.data && data.data.centralize_item_card && data.data.centralize_item_card.item_cards) {
-            items = data.data.centralize_item_card.item_cards;
-            console.log(`📊 [Shop Stats] Fallback: Found ${items.length} products in itemsData.centralize_item_card`);
-          } else if (data && data.items) {
-            items = data.items;
-            console.log(`📊 [Shop Stats] Fallback: Found ${items.length} products in itemsData.items`);
-          } else {
-            console.warn('⚠️ [Shop Stats] itemsData structure not recognized');
-            console.log('🔍 [Shop Stats Debug] itemsData.data content:', data);
-          }
-        } else if (shopData.accumulatedData && shopData.accumulatedData.length > 0) {
-          console.log('� [Shop Stats] Using accumulatedData as fallback');
-          // Gunakan halaman pertama yang ada atau yang paling banyak produk
-          let bestPage = shopData.accumulatedData[0];
-          for (const pageData of shopData.accumulatedData) {
-            if ((pageData.productCount || 0) > (bestPage.productCount || 0)) {
-              bestPage = pageData;
-            }
-          }
-          
-          const pageItemsData = bestPage.data;
-          if (pageItemsData && pageItemsData.data && pageItemsData.data.centralize_item_card && pageItemsData.data.centralize_item_card.item_cards) {
-            items = pageItemsData.data.centralize_item_card.item_cards;
-            console.log(`� [Shop Stats] Found ${items.length} products in accumulatedData page ${bestPage.page} fallback`);
-          }
-        } else {
-          console.warn('⚠️ [Shop Stats] No itemsData found either');
+        if (data && data.data && data.data.centralize_item_card && data.data.centralize_item_card.item_cards) {
+          items = data.data.centralize_item_card.item_cards;
+          console.log(`📊 [Shop Stats] Found ${items.length} products in regularItemsData.centralize_item_card`);
+        } else if (data && data.items) {
+          items = data.items;
+          console.log(`📊 [Shop Stats] Found ${items.length} products in regularItemsData.items`);
+        }
+      }
+      // Prioritas 3: soldOutData (additional fallback)
+      else if (shopData.soldOutData) {
+        const data = shopData.soldOutData.data;
+        console.log('✅ [Shop Stats] Using soldOutData (additional fallback)');
+        
+        if (data && data.data && data.data.centralize_item_card && data.data.centralize_item_card.item_cards) {
+          items = data.data.centralize_item_card.item_cards;
+          console.log(`📊 [Shop Stats] Found ${items.length} products in soldOutData.centralize_item_card`);
+        } else if (data && data.items) {
+          items = data.items;
+          console.log(`📊 [Shop Stats] Found ${items.length} products in soldOutData.items`);
         }
       }
     } else {
@@ -141,12 +107,12 @@ class ShopeeProductProcessor {
     }
     
     if (items.length === 0) {
-      console.warn('⚠️ [Shop Stats] No products found in page 0 defaultPageData - shop stats will show 0');
-      console.log('🔍 [Shop Stats Debug] Possible causes:');
-      console.log('   - Page not fully loaded yet');
-      console.log('   - API interception failed');
-      console.log('   - Different page structure than expected');
-      console.log('   - Page 0 data not saved correctly');
+      // Log available data for debugging without warning
+      console.log('🔍 [Shop Stats Debug] No products found - available data sources:', {
+        hasItemsData: !!(observer.apiData.SHOP_DATA && (observer.apiData.SHOP_DATA.data || observer.apiData.SHOP_DATA).itemsData),
+        hasRegularItemsData: !!(observer.apiData.SHOP_DATA && (observer.apiData.SHOP_DATA.data || observer.apiData.SHOP_DATA).regularItemsData),
+        hasSoldOutData: !!(observer.apiData.SHOP_DATA && (observer.apiData.SHOP_DATA.data || observer.apiData.SHOP_DATA).soldOutData)
+      });
       return [];
     }
     
@@ -158,7 +124,7 @@ class ShopeeProductProcessor {
       }
     });
     
-    console.log(`✅ [Shop Stats] Successfully processed ${products.length} products from page 0 defaultPageData`);
+    console.log(`✅ [Shop Stats] Successfully processed ${products.length} products from shop API data`);
     return products;
   }
 

@@ -1412,15 +1412,22 @@ class ShopeeModalManager {
         year: 'numeric' 
       });
       
-      // Calculate monthly averages based on actual product age from API data
-      const actualMonthsElapsed = product.monthsElapsed || Math.max(1, Math.floor((Date.now() / 1000 - (product.ctimeSeconds || Date.now() / 1000)) / (30 * 24 * 3600)));
+      // Calculate product age based on the same creation date used for display
+      const now = new Date();
+      const ageInMonths = Math.max(1, Math.floor((now - creationDate) / (30 * 24 * 60 * 60 * 1000)));
+      
+      // Calculate monthly averages based on realistic product age
+      const actualMonthsElapsed = product.monthsElapsed || ageInMonths;
       const avgMonthlyRevenue = (product.revenue || 0) / actualMonthsElapsed;
-      const avgMonthlySold = product.terjualPerBulan || Math.floor((product.totalTerjual || 0) / actualMonthsElapsed);
+      const avgMonthlySold = product.terjualPerBulan || Math.max(1, Math.floor((product.sold || 0) / actualMonthsElapsed));
 
       // DEBUG: Log product data for first few products
       if (index < 3) {
         console.log(`🔍 [Modal Debug] Product ${index + 1}:`, {
           name: product.name,
+          sold: product.sold,
+          creationDate: formattedDate,
+          ageInMonths: ageInMonths,
           terjualPerBulan: product.terjualPerBulan,
           totalTerjual: product.totalTerjual,
           monthsElapsed: product.monthsElapsed,
@@ -1435,8 +1442,9 @@ class ShopeeModalManager {
       const trendClass = trendValue >= 0 ? 'positive' : 'negative';
       const trendSymbol = trendValue >= 0 ? '+' : '';
       
-      // Calculate percentage of shop revenue (demo calculation)
-      const shopRevenuePercentage = ((product.revenue || 0) / 20000000 * 100).toFixed(1);
+      // Calculate percentage of shop revenue (use a realistic total shop revenue estimate)
+      const estimatedShopRevenue = 50000000; // 50M estimate for realistic percentages
+      const shopRevenuePercentage = Math.min(100, ((product.revenue || 0) / estimatedShopRevenue * 100)).toFixed(1);
       
       html += `
         <div class="ts-product-card-full">
@@ -1556,7 +1564,7 @@ class ShopeeModalManager {
                   Umur Produk 
                   <span class="ts-tooltip-icon" data-tooltip="Lama waktu sejak produk pertama kali di upload di toko ini hingga hari ini">ⓘ</span>
                 </span>
-                <span class="ts-stat-value">${productAgeInMonths} bulan</span>
+                <span class="ts-stat-value">${actualMonthsElapsed} bulan</span>
               </div>
               <div class="ts-stat-item">
                 <span class="ts-stat-label ts-label-with-tooltip">

@@ -331,12 +331,22 @@
       notifyContentScript('PRODUCT_DATA', data);
     }
     else if (url.includes('/shop/rcmd_items')) {
-      // Shop API processing - compatible with productProcessor.js expectations
+      // Shop API processing - compatible with productProcessor.js expectations AND pagination
       if (!window.shopeeAPIData.shopData) {
-        window.shopeeAPIData.shopData = {};
+        window.shopeeAPIData.shopData = {
+          // New structure for productProcessor compatibility
+          itemsData: null,
+          regularItemsData: null,
+          soldOutData: null,
+          // Pagination tracking for eventHandlers (RESTORED)
+          defaultPageData: null,
+          accumulatedData: [],
+          currentPage: 0,
+          totalPages: 0
+        };
       }
       
-      // Parse page information from URL
+      // Parse page information from URL - FIXED: Proper offset-based page detection
       let currentPage = 0;
       let offset = 0;
       let limit = 30;
@@ -348,12 +358,16 @@
         
         offset = parseInt(urlParams.get('offset')) || 0;
         limit = parseInt(urlParams.get('limit')) || 30;
+        
+        // CRITICAL FIX: Page calculation based on offset (working version logic)
         currentPage = Math.floor(offset / limit);
         
         // Check if this is a sold out items query
         isSoldOutQuery = (urlParams.get('filter_sold_out') === '1' || 
                          urlParams.get('sold_out') === '1' ||
                          urlParams.get('item_status') === '2');
+        
+        console.log(`🔍 [Shop API] Page detection: offset=${offset}, limit=${limit}, currentPage=${currentPage}, isSoldOut=${isSoldOutQuery}`);
       } catch (e) {
         // Fallback parsing
         const offsetMatch = url.match(/offset=(\d+)/);
@@ -367,6 +381,8 @@
         isSoldOutQuery = url.includes('filter_sold_out=1') || 
                         url.includes('sold_out=1') ||
                         url.includes('item_status=2');
+        
+        console.log(`🔍 [Shop API] Fallback page detection: offset=${offset}, limit=${limit}, currentPage=${currentPage}`);
       }
       
       // Extract and validate product data
@@ -394,17 +410,62 @@
           productCount: productCount
         };
         
-        // Store as itemsData for page 0 (main shop items)
+        // Store as itemsData for page 0 (main shop items) - for productProcessor.js
         if (currentPage === 0 && !isSoldOutQuery) {
           window.shopeeAPIData.shopData.itemsData = shopItemsData;
         }
         
-        // Store as regularItemsData or soldOutData based on query type
-        if (isSoldOutQuery) {
-          window.shopeeAPIData.shopData.soldOutData = shopItemsData;
-        } else {
+        // Store as regularItemsData ONLY for page 0 - for productProcessor.js
+        if (currentPage === 0 && !isSoldOutQuery) {
           window.shopeeAPIData.shopData.regularItemsData = shopItemsData;
         }
+        
+        // Store soldOutData if it's a sold out query - for productProcessor.js
+        if (isSoldOutQuery) {
+          window.shopeeAPIData.shopData.soldOutData = shopItemsData;
+        }
+        
+        // CRITICAL: Store as defaultPageData (RESTORED from working version)
+        const shouldUseForShopStats = productCount >= 20; // Same threshold as working version
+        if (shouldUseForShopStats || !window.shopeeAPIData.shopData.defaultPageData) {
+          console.log(`📋 [PERBAIKAN] Page ${currentPage} has ${productCount} products - USING FOR SHOP STATS`);
+          shopItemsData.isDefaultPage = true;
+          window.shopeeAPIData.shopData.defaultPageData = shopItemsData;
+        } else {
+          console.log(`📋 [INFO] Page ${currentPage} has ${productCount} products - NOT using for shop stats (threshold: 20)`);
+        }
+        
+        // ALWAYS store for pagination tracking - for eventHandlers.js
+        console.log(`📋 [Accumulation] Adding page ${currentPage} data to accumulation`);
+        
+        const existingPageIndex = window.shopeeAPIData.shopData.accumulatedData.findIndex(
+          item => item.page === currentPage
+        );
+        
+        if (existingPageIndex >= 0) {
+          // Update existing page data
+          console.log(`🔄 Updating existing page ${currentPage} data in accumulation`);
+          window.shopeeAPIData.shopData.accumulatedData[existingPageIndex] = shopItemsData;
+        } else {
+          // Add new page data
+          window.shopeeAPIData.shopData.accumulatedData.push(shopItemsData);
+        }
+        
+        // Update pagination tracking - FIXED: Increment currentPage properly like working version
+        const oldCurrentPage = window.shopeeAPIData.shopData.currentPage;
+        window.shopeeAPIData.shopData.currentPage = Math.max(
+          window.shopeeAPIData.shopData.currentPage, 
+          currentPage + 1
+        );
+        
+        console.log(`🏠 Shop rcmd_items data processed:`, {
+          page: currentPage,
+          productCount: productCount,
+          oldCurrentPage: oldCurrentPage,
+          newCurrentPage: window.shopeeAPIData.shopData.currentPage,
+          totalAccumulated: window.shopeeAPIData.shopData.accumulatedData.length,
+          hasDefaultPage: !!window.shopeeAPIData.shopData.defaultPageData
+        });
         
         notifyContentScript('SHOP_DATA', window.shopeeAPIData.shopData);
       }
@@ -413,7 +474,17 @@
     else if (url.includes('/shop/') && (url.includes('/get_shop_tab') || url.includes('/get_shop_seo'))) {
       // Handle shop metadata APIs
       if (!window.shopeeAPIData.shopData) {
-        window.shopeeAPIData.shopData = {};
+        window.shopeeAPIData.shopData = {
+          // New structure for productProcessor compatibility
+          itemsData: null,
+          regularItemsData: null,
+          soldOutData: null,
+          // Pagination tracking for eventHandlers (RESTORED)
+          defaultPageData: null,
+          accumulatedData: [],
+          currentPage: 0,
+          totalPages: 0
+        };
       }
       
       // Store shop metadata
