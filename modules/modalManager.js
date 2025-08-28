@@ -26,6 +26,23 @@ class ShopeeModalManager {
     const pageTypeText = ShopeeUIGenerator.getPageTypeText(observer);
     const lastUpdate = new Date().toLocaleString('id-ID');
     
+    // PERBAIKAN: Use cached shop stats if available
+    const cachedShopStats = observer._cachedShopStats;
+    let shopStats30Days = null;
+    
+    if (cachedShopStats && observer.currentPageType === 'shop') {
+      shopStats30Days = {
+        sold30Days: cachedShopStats.totalSold30Days || 0,
+        revenue30Days: cachedShopStats.totalRevenue30Days || 0,
+        productCount: cachedShopStats.productCount || 0,
+        priceRange: {
+          min: cachedShopStats.minPrice || 0,
+          max: cachedShopStats.maxPrice || 0
+        }
+      };
+      console.log('💾 [Modal] Using cached shop stats for 30-day data:', shopStats30Days);
+    }
+    
     // Tentukan title berdasarkan page type
     let modalTitle;
     let modalSubtitle;
@@ -99,33 +116,35 @@ class ShopeeModalManager {
                       <div class="ts-summary-card">
                         <div class="ts-card-icon">💰</div>
                         <div class="ts-card-content">
-                          <h3>${ShopeeUtils.formatCurrency(stats.totalRevenue)}</h3>
-                          <p>Total Omset 30 Hari</p>
-                          <span class="ts-trend-positive">+12.5%</span>
+                          <h3>${shopStats30Days ? ShopeeUtils.formatCurrency(shopStats30Days.revenue30Days) : ShopeeUtils.formatCurrency(stats.totalRevenue)}</h3>
+                          <p>${shopStats30Days ? 'Omset 30 Hari (Toko)' : 'Total Omset 30 Hari'}</p>
+                          <span class="ts-trend-info">${shopStats30Days ? 'Data Real' : 'Estimasi'}</span>
                         </div>
                       </div>
                       <div class="ts-summary-card">
                         <div class="ts-card-icon">📦</div>
                         <div class="ts-card-content">
-                          <h3>${ShopeeUtils.formatNumber(stats.totalSold)}</h3>
-                          <p>Total Terjual</p>
-                          <span class="ts-trend-positive">+8.3%</span>
+                          <h3>${shopStats30Days ? ShopeeUtils.formatNumber(shopStats30Days.sold30Days) : ShopeeUtils.formatNumber(stats.totalSold)}</h3>
+                          <p>${shopStats30Days ? 'Terjual 30 Hari (Toko)' : 'Total Terjual'}</p>
+                          <span class="ts-trend-info">${shopStats30Days ? 'Data Real' : 'Estimasi'}</span>
                         </div>
                       </div>
                       <div class="ts-summary-card">
                         <div class="ts-card-icon">🏪</div>
                         <div class="ts-card-content">
-                          <h3>${stats.productCount}</h3>
-                          <p>Produk Ditemukan</p>
-                          <span class="ts-trend-neutral">Total</span>
+                          <h3>${shopStats30Days ? shopStats30Days.productCount : stats.productCount}</h3>
+                          <p>Produk ${shopStats30Days ? 'Halaman 1' : 'Ditemukan'}</p>
+                          <span class="ts-trend-neutral">${shopStats30Days ? 'dari 30' : 'Total'}</span>
                         </div>
                       </div>
                       <div class="ts-summary-card">
                         <div class="ts-card-icon">💎</div>
                         <div class="ts-card-content">
-                          <h3>${ShopeeUtils.formatCurrency((stats.minPrice + stats.maxPrice) / 2)}</h3>
+                          <h3>${shopStats30Days && shopStats30Days.priceRange.max > 0 ? 
+                            ShopeeUtils.formatCurrency((shopStats30Days.priceRange.min + shopStats30Days.priceRange.max) / 2) : 
+                            ShopeeUtils.formatCurrency((stats.minPrice + stats.maxPrice) / 2)}</h3>
                           <p>Rata-rata Harga</p>
-                          <span class="ts-trend-info">Range</span>
+                          <span class="ts-trend-info">${shopStats30Days ? 'Toko' : 'Range'}</span>
                         </div>
                       </div>
                     </div>
@@ -1227,7 +1246,14 @@ class ShopeeModalManager {
               const newProducts = [];
               items.forEach((item, index) => {
                 if (item) {
+                  console.log(`🔍 [Modal] Processing item ${index}:`, item.name || item.item_basic?.name || 'Unknown');
                   const product = ShopeeProductProcessor.extractRealProductData(item, index);
+                  console.log(`🔍 [Modal] Product created:`, {
+                    name: product?.name,
+                    terjualPerBulan: product?.terjualPerBulan,
+                    totalTerjual: product?.totalTerjual,
+                    hasProduct: !!product
+                  });
                   if (product && !allProducts.find(p => p.id === product.id)) {
                     newProducts.push(product);
                   }
@@ -1386,10 +1412,23 @@ class ShopeeModalManager {
         year: 'numeric' 
       });
       
-      // Calculate monthly averages based on actual product age
-      const productAgeInMonths = Math.max(randomMonthsAgo, 1); // At least 1 month
-      const avgMonthlyRevenue = (product.revenue || 0) / productAgeInMonths;
-      const avgMonthlySold = Math.floor((product.sold || 0) / productAgeInMonths);
+      // Calculate monthly averages based on actual product age from API data
+      const actualMonthsElapsed = product.monthsElapsed || Math.max(1, Math.floor((Date.now() / 1000 - (product.ctimeSeconds || Date.now() / 1000)) / (30 * 24 * 3600)));
+      const avgMonthlyRevenue = (product.revenue || 0) / actualMonthsElapsed;
+      const avgMonthlySold = product.terjualPerBulan || Math.floor((product.totalTerjual || 0) / actualMonthsElapsed);
+
+      // DEBUG: Log product data for first few products
+      if (index < 3) {
+        console.log(`🔍 [Modal Debug] Product ${index + 1}:`, {
+          name: product.name,
+          terjualPerBulan: product.terjualPerBulan,
+          totalTerjual: product.totalTerjual,
+          monthsElapsed: product.monthsElapsed,
+          actualMonthsElapsed: actualMonthsElapsed,
+          avgMonthlySold: avgMonthlySold,
+          hasTerjualPerBulan: !!product.terjualPerBulan
+        });
+      }
       
       // Generate realistic trend
       const trendValue = this.generateRealisticTrend(product, index);

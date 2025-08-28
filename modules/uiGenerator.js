@@ -23,9 +23,10 @@ class ShopeeUIGenerator {
             <span class="ts-text-black/[0.5] ts-ml-1 ts-leading-none">Shopee Scraper</span>
             <div class="ts-tabs">
               <a href="#" class="ts-tab-active" data-tab="summary">Ringkasan</a>
-              <a href="#" class="" data-tab="market">Market Size</a>
-              <a href="#" class="" data-tab="volume">Volume</a>
             </div>
+            <button id="ts-refresh-btn" style="border: none; background: none;" class="" title="Refresh data">
+              🔄
+            </button>
           </div>
             <!-- Summary Tab Content -->
           <div id="ts-tab-summary" class="ts-tab-content">
@@ -190,6 +191,9 @@ class ShopeeUIGenerator {
             <div class="ts-tabs">
               <a href="#" class="ts-tab-active" data-tab="sales-analysis">Analisis Penjualan</a>
             </div>
+            <button id="ts-refresh-btn" style="background:none;border:none;" title="Refresh data">
+              🔄
+            </button>
           </div>
           
           
@@ -263,6 +267,9 @@ class ShopeeUIGenerator {
             <span class="ts-text-black/[0.5] ts-ml-1 ts-leading-none">Data</span>            <div class="ts-tabs">
               <a href="#" class="ts-tab-active" data-tab="summary">Ringkasan</a>
             </div>
+            <button id="ts-refresh-btn" style="background:none;border:none;" title="Refresh data">
+              🔄
+            </button>
           </div>
           
           <!-- Summary Tab Content -->

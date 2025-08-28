@@ -1,6 +1,53 @@
 // Utility functions for Shopee Analytics Observer
 class ShopeeUtils {
   
+  // PERBAIKAN: Add function to get cached shop stats
+  static getCachedShopStats(observer) {
+    if (!observer) {
+      console.warn('⚠️ [Utils] No observer provided');
+      return null;
+    }
+    
+    if (!observer._cachedShopStats) {
+      console.warn('⚠️ [Utils] No cached shop stats available in observer');
+      console.log('🔍 [Utils] Observer keys:', Object.keys(observer));
+      return null;
+    }
+    
+    console.log('💾 [Utils] Retrieved cached shop stats with revenue30Days:', observer._cachedShopStats.totalRevenue30Days);
+    return observer._cachedShopStats;
+  }
+  
+  // PERBAIKAN: Add function to get 30-day data from cached stats
+  static getShop30DayData(observer) {
+    console.log('🔍 [Utils] Getting shop 30 day data...');
+    const cached = this.getCachedShopStats(observer);
+    if (!cached) {
+      console.warn('⚠️ [Utils] No cached shop stats available for 30 day data');
+      return null;
+    }
+    
+    const result = {
+      sold30Days: cached.totalSold30Days || 0,
+      revenue30Days: cached.totalRevenue30Days || 0,
+      productCount: cached.productCount || 0,
+      priceRange: {
+        min: cached.minPrice || 0,
+        max: cached.maxPrice || 0
+      },
+      shopName: cached.shopName || 'Toko',
+      timestamp: Date.now()
+    };
+    
+    console.log('✅ [Utils] Shop 30 day data retrieved:', {
+      revenue30Days: result.revenue30Days,
+      sold30Days: result.sold30Days,
+      source: 'cached shop stats'
+    });
+    
+    return result;
+  }
+  
   static formatNumber(num) {
     if (!num || isNaN(num)) return '0';
     

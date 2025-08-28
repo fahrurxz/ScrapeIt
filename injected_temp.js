@@ -17,6 +17,36 @@
     lastUpdate: null
   };
   
+  // Helper function to parse sales count from text format
+  function parseSalesFromText(text) {
+    if (!text) return 0;
+    
+    // Convert text to lowercase for easier comparison
+    const lowerText = text.toLowerCase();
+    
+    // Parse numeric patterns like "739 Terjual/Bln" or "1RB+ Terjual/Bln"
+    try {
+      // Handle "RB+" format (ribuan)
+      if (lowerText.includes('rb+') || lowerText.includes('rb')) {
+        const numPart = lowerText.replace(/[^\d,]/g, '');
+        return parseInt(numPart) * 1000;
+      }
+      // Handle "JT+" format (jutaan)
+      else if (lowerText.includes('jt+') || lowerText.includes('jt')) {
+        const numPart = lowerText.replace(/[^\d,]/g, '');
+        return parseInt(numPart) * 1000000;
+      }
+      // Regular number format
+      else {
+        const numPart = lowerText.replace(/[^\d]/g, '');
+        return parseInt(numPart) || 0;
+      }
+    } catch (e) {
+      console.error('Failed to parse sales count from text:', text, e);
+      return 0;
+    }
+  }
+  
   // Intercept fetch requests
   window.fetch = async function(...args) {
     const response = await originalFetch.apply(this, args);
@@ -688,64 +718,42 @@
     else if (url.includes('/pdp/') && !url.includes('/pdp/get_pc')) {
       console.log('🔧 Ignoring product API that might conflict');
     }
-    // Process shop API - HANYA intercept rcmd_items untuk data toko
+    // Process shop API - HANYA DARI /shop/rcmd_items
     else if (url.includes('/shop/rcmd_items')) {
       
-      console.log('🏪 Shop rcmd_items API intercepted (ONLY source for shop data)');
+      console.log('🏪 Shop API intercepted:', url.substring(url.indexOf('/shop/')));
       console.log('🔍 [Debug] Full URL:', url);
       console.log('🔍 [Debug] Current window location:', window.location.href);
       
-      // PERBAIKAN: Initialize or reset shop data structure
       if (!window.shopeeAPIData.shopData) {
-        console.log('🏪 [Debug] Initializing fresh shop data structure');
         window.shopeeAPIData.shopData = {
           defaultPageData: null, // Data halaman pertama (page default)
           accumulatedData: [],   // Akumulasi semua data dari halaman berikutnya
           currentPage: 1,        // Tracking halaman saat ini
           totalPages: 0          // Total halaman yang ditemukan
         };
-      } else {
-        console.log('🏪 [Debug] Using existing shop data structure');
       }
       
-      if (url.includes('/shop/rcmd_items')) {
-        // Deteksi apakah ini halaman pertama (page default) atau pagination
-        let urlParams = null;
-        let currentPage = 1;
+      // Deteksi apakah ini halaman pertama (page default) atau pagination
+      let urlParams = null;
+      let currentPage = 1;
         
         try {
-          // PERBAIKAN CRITICAL: Gunakan window.location untuk mendapatkan page number sebenarnya
-          // API URL /shop/rcmd_items tidak punya parameter pagination, tapi window.location punya
-          const windowUrl = new URL(window.location.href);
-          const windowParams = new URLSearchParams(windowUrl.search);
-          const pageFromWindow = parseInt(windowParams.get('page') || '1');
-          
           if (url.startsWith('http')) {
             urlParams = new URLSearchParams(new URL(url).search);
           } else {
-            // Handle relative URL - but use window location for page detection
+            // Handle relative URL
             const fullUrl = url.startsWith('/') ? window.location.origin + url : window.location.origin + '/' + url;
             urlParams = new URLSearchParams(new URL(fullUrl).search);
           }
           
-          // PERBAIKAN CRITICAL: Use page from window.location, not from API URL
-          // API URL doesn't contain page info, but window.location does
-          console.log(`🔍 [Page Detection] API URL: ${url}, Window URL: ${window.location.href}`);
-          console.log(`🔍 [Page Detection] Page from window.location: ${pageFromWindow}`);
-          
-          // Convert to 0-based indexing: page 1 -> 0, page 2 -> 1, etc.
-          currentPage = Math.max(0, pageFromWindow - 1);
-          
-          console.log(`🔍 [Page Detection] Final currentPage: ${currentPage} (from window page ${pageFromWindow})`);
-          
-          // Legacy fallback for offset-based detection (should not be needed now)
+          // PERBAIKAN: Check untuk parameter offset atau page yang menandakan pagination
+          // Gunakan offset=0 sebagai "page 0" (halaman awal/default)
           const offset = parseInt(urlParams.get('offset') || '0');
           const limit = parseInt(urlParams.get('limit') || '30');
-          const offsetBasedPage = Math.floor(offset / limit);
           
-          if (offsetBasedPage !== currentPage) {
-            console.log(`🔍 [Page Detection] Offset-based page (${offsetBasedPage}) differs from window-based page (${currentPage}), using window-based`);
-          }
+          // Page 0 = offset 0 (initial load), Page 1 = offset 30, dst
+          currentPage = Math.floor(offset / limit);
         } catch (e) {
           console.warn('Failed to parse shop API URL parameters:', e);
           // Fallback: assume page 0 (initial load) if parsing fails
@@ -804,24 +812,76 @@
           console.log(`📋 [INFO] Page ${currentPage} has ${productCount} products - NOT using for shop stats (threshold: 20)`);
         }
         
-        // PERBAIKAN CRITICAL: Proper page accumulation logic
+        // Process monthly_sold_count_text from the API response
+        // Extract and handle monthly sales data
+        let totalMonthlySales = 0;
+        let validProductCount = 0;
+        
+        try {
+          const responseData = data.data || data;
+          if (responseData && responseData.centralize_item_card && responseData.centralize_item_card.item_cards) {
+            const itemCards = responseData.centralize_item_card.item_cards;
+            console.log(`📊 [Shop API] Found ${itemCards.length} items in response`);
+            
+            // Process each product to extract monthly sales data
+            itemCards.forEach((itemCard, index) => {
+              try {
+                if (itemCard && itemCard.item_card_display_sold_count) {
+                  const soldCount = itemCard.item_card_display_sold_count;
+                  
+                  // Extract monthly sales
+                  let monthlySales = 0;
+                  
+                  // First check if we have the monthly_sold_count numeric field
+                  if (soldCount.monthly_sold_count) {
+                    monthlySales = soldCount.monthly_sold_count;
+                  } 
+                  // Otherwise parse from the text field
+                  else if (soldCount.monthly_sold_count_text) {
+                    monthlySales = parseSalesFromText(soldCount.monthly_sold_count_text);
+                    console.log(`📊 [Shop API] Parsed monthly sales from text "${soldCount.monthly_sold_count_text}": ${monthlySales}`);
+                  }
+                  
+                  if (monthlySales > 0) {
+                    totalMonthlySales += monthlySales;
+                    validProductCount++;
+                  }
+                }
+              } catch (e) {
+                console.error(`Failed to process item ${index}:`, e);
+              }
+            });
+            
+            // Update the shop data with the monthly sales information
+            if (validProductCount > 0) {
+              console.log(`📊 [Shop API] Total monthly sales across ${validProductCount} products: ${totalMonthlySales}`);
+              window.shopeeAPIData.shopData.monthlySales = totalMonthlySales;
+              window.shopeeAPIData.shopData.validProductCount = validProductCount;
+              
+              // Add the monthly sales info to the shop data
+              shopItemsData.monthlySales = totalMonthlySales;
+              shopItemsData.validProductCount = validProductCount;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to extract monthly sales data:', e);
+        }
+        
+        // PERBAIKAN: Selalu tambahkan ke akumulasi untuk modal "Analisa Semua Produk"
         console.log(`📋 [Accumulation] Adding page ${currentPage} data to accumulation`);
         
         // Cek apakah data untuk page ini sudah ada di accumulation
-        // PERBAIKAN: Gunakan currentPage yang sudah benar dari window.location
         const existingPageIndex = window.shopeeAPIData.shopData.accumulatedData.findIndex(
           item => item.page === currentPage
         );
         
         if (existingPageIndex >= 0) {
-          // Update existing page data - ini seharusnya jarang terjadi kecuali refresh
-          console.log(`🔄 Updating existing page ${currentPage} data in accumulation (rare case - page refresh?)`);
+          // Update existing page data
+          console.log(`🔄 Updating existing page ${currentPage} data in accumulation`);
           window.shopeeAPIData.shopData.accumulatedData[existingPageIndex] = shopItemsData;
         } else {
-          // Add new page data - ini yang normal untuk pagination
-          console.log(`➕ Adding NEW page ${currentPage} data to accumulation (current total: ${window.shopeeAPIData.shopData.accumulatedData.length} pages)`);
+          // Add new page data
           window.shopeeAPIData.shopData.accumulatedData.push(shopItemsData);
-          console.log(`✅ Accumulation now contains ${window.shopeeAPIData.shopData.accumulatedData.length} pages: [${window.shopeeAPIData.shopData.accumulatedData.map(p => p.page).join(', ')}]`);
         }
         
         // Update current page tracking
@@ -830,29 +890,34 @@
         console.log('🏪 Shop rcmd_items data processed:', {
           page: currentPage,
           productCount: productCount,
-          isUsedForShopStats: productCount >= 30,
+          monthlySales: totalMonthlySales,
+          validProductCount: validProductCount,
+          isUsedForShopStats: productCount >= 20,
           totalAccumulated: window.shopeeAPIData.shopData.accumulatedData.length,
-          hasDefaultPage: !!window.shopeeAPIData.shopData.defaultPageData,
-          note: productCount >= 30 ? 'USED FOR SHOP STATS' : 'NOT used for shop stats (accumulation only)'
+          hasDefaultPage: !!window.shopeeAPIData.shopData.defaultPageData
         });
-        
-        // PERBAIKAN: Debug data sebelum dikirim ke content script
-        console.log('🔍 [Debug] Data yang akan dikirim ke content script:', {
-          hasDefaultPageData: !!window.shopeeAPIData.shopData.defaultPageData,
-          hasAccumulatedData: !!window.shopeeAPIData.shopData.accumulatedData,
-          dataKeys: Object.keys(window.shopeeAPIData.shopData),
-          defaultPageDataKeys: window.shopeeAPIData.shopData.defaultPageData ? 
-            Object.keys(window.shopeeAPIData.shopData.defaultPageData) : 'none'
-        });
-        
-        // PERBAIKAN: Selalu kirim notification untuk rcmd_items
-        notifyContentScript('SHOP_DATA', window.shopeeAPIData.shopData);
       }
+      
+      // Debug data sebelum dikirim ke content script
+      console.log('🔍 [Debug] Data yang akan dikirim ke content script:', {
+        hasDefaultPageData: !!window.shopeeAPIData.shopData.defaultPageData,
+        hasAccumulatedData: !!window.shopeeAPIData.shopData.accumulatedData,
+        monthlySales: window.shopeeAPIData.shopData.monthlySales || 0,
+        validProductCount: window.shopeeAPIData.shopData.validProductCount || 0,
+        dataKeys: Object.keys(window.shopeeAPIData.shopData),
+        defaultPageDataKeys: window.shopeeAPIData.shopData.defaultPageData ? 
+          Object.keys(window.shopeeAPIData.shopData.defaultPageData) : 'none'
+      });
+      
+      // Kirim notification untuk shop data dari rcmd_items
+      notifyContentScript('SHOP_DATA', window.shopeeAPIData.shopData);
     }
     
     window.shopeeAPIData.lastUpdate = Date.now();
   }
 
+  
+  
   function notifyContentScript(type, data) {
     try {
       // Add retry mechanism for critical events
@@ -916,38 +981,6 @@
       }
     }
   }
-
-  // PERBAIKAN: Add listener for clearing shop data when changing shops
-  window.addEventListener('clearShopData', function(event) {
-    console.log('🧹 [Injected] Received clearShopData event - clearing shop data due to shop change');
-    if (window.shopeeAPIData) {
-      const hadShopData = !!window.shopeeAPIData.shopData;
-      const hadProductData = !!window.shopeeAPIData.productData;
-      
-      window.shopeeAPIData.shopData = null;
-      window.shopeeAPIData.productData = null;
-      
-      console.log(`✅ [Injected] Shop data cleared - had shop data: ${hadShopData}, had product data: ${hadProductData}`);
-    } else {
-      console.log('⚠️ [Injected] No shopeeAPIData found when trying to clear shop data');
-    }
-  });
-
-  // PERBAIKAN: Add listener for clearing category data when changing categories  
-  window.addEventListener('clearCategoryData', function(event) {
-    console.log('🧹 [Injected] Received clearCategoryData event - clearing category data due to category change');
-    if (window.shopeeAPIData) {
-      const hadCategoryData = !!window.shopeeAPIData.categoryData;
-      const hadSearchData = !!window.shopeeAPIData.searchData;
-      
-      window.shopeeAPIData.categoryData = null;
-      window.shopeeAPIData.searchData = null;
-      
-      console.log(`✅ [Injected] Category data cleared - had category data: ${hadCategoryData}, had search data: ${hadSearchData}`);
-    } else {
-      console.log('⚠️ [Injected] No shopeeAPIData found when trying to clear category data');
-    }
-  });
 
   console.log('🚀 Shopee API interceptor loaded');
 })();

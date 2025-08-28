@@ -167,6 +167,13 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
   static updateShopElements(shopStats) {
     
     
+    // PERBAIKAN: Ensure shop stats are also available for modal access
+    // Cache the shop stats in the global observer for modal usage
+    if (window.shopeeEcommerceObserver) {
+      window.shopeeEcommerceObserver._cachedShopStats = shopStats;
+      console.log('💾 [UI] Shop stats cached in observer for modal access');
+    }
+    
     // Update status indicator
     this.updateElement('ts-shop-analyze-btn', `Berdasarkan ${shopStats.productCount || 0} produk`);
     
@@ -186,10 +193,23 @@ class ShopeeUIUpdater {  static updateUIWithData(observer) {
     
     // Update actual values in elements
     this.updateElement('ts-shop-price-range', priceRange);
+    // Update shop stats display
+    console.log(`🏪 [UI Update] Updating shop stats display with:`, {
+      totalSold30Days: shopStats.totalSold30Days,
+      totalRevenue30Days: shopStats.totalRevenue30Days,
+      source: 'defaultPageData (page 1 only) - PERBAIKAN applied'
+    });
+    
     this.updateElement('ts-shop-sold-30', ShopeeUtils.formatNumber(shopStats.totalSold30Days || 0));
     this.updateElement('ts-shop-revenue-30', ShopeeUtils.formatCurrency(shopStats.totalRevenue30Days || 0));
     
     if (priceRangeLabel) priceRangeLabel.textContent = priceRange;
+    
+    console.log(`🔄 [UI Update] Direct element update - PERBAIKAN stats from page 1:`, {
+      sold30Days: shopStats.totalSold30Days || 0,
+      revenue30Days: shopStats.totalRevenue30Days || 0
+    });
+    
     if (sold30Label) sold30Label.textContent = ShopeeUtils.formatNumber(shopStats.totalSold30Days || 0);
     if (revenue30Label) revenue30Label.textContent = ShopeeUtils.formatCurrency(shopStats.totalRevenue30Days || 0);
     
